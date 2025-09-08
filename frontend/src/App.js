@@ -221,7 +221,309 @@ const AuthPage = () => {
   );
 };
 
-// Dashboard Components
+// Advanced Analytics Dashboard
+const AdvancedDashboard = () => {
+  const [stats, setStats] = useState({});
+  const [scenarios, setScenarios] = useState([]);
+  const [advancedAnalytics, setAdvancedAnalytics] = useState({});
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchAdvancedDashboardData();
+  }, []);
+
+  const fetchAdvancedDashboardData = async () => {
+    try {
+      const [statsRes, scenariosRes, analyticsRes] = await Promise.all([
+        axios.get(`${API}/dashboard/stats`),
+        axios.get(`${API}/scenarios`),
+        axios.get(`${API}/dashboard/advanced-analytics`)
+      ]);
+      setStats(statsRes.data);
+      setScenarios(scenariosRes.data);
+      setAdvancedAnalytics(analyticsRes.data);
+    } catch (error) {
+      console.error('Failed to fetch dashboard data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getHealthScoreColor = (score) => {
+    if (score >= 0.8) return 'text-green-600';
+    if (score >= 0.6) return 'text-yellow-600';
+    if (score >= 0.4) return 'text-orange-600';
+    return 'text-red-600';
+  };
+
+  const getHealthScoreBg = (score) => {
+    if (score >= 0.8) return 'bg-green-50 border-green-200';
+    if (score >= 0.6) return 'bg-yellow-50 border-yellow-200';
+    if (score >= 0.4) return 'bg-orange-50 border-orange-200';
+    return 'bg-red-50 border-red-200';
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <Brain className="w-12 h-12 animate-pulse text-blue-500 mx-auto mb-4" />
+          <p className="text-gray-600">Loading advanced analytics...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* System Health Overview */}
+      <Card className={`${getHealthScoreBg(advancedAnalytics.system_health_score || 0.5)}`}>
+        <CardContent className="p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900">System Health Score</h3>
+              <p className="text-sm text-gray-600">Overall polycrisis simulation system performance</p>
+            </div>
+            <div className="text-right">
+              <div className={`text-4xl font-bold ${getHealthScoreColor(advancedAnalytics.system_health_score || 0.5)}`}>
+                {Math.round((advancedAnalytics.system_health_score || 0.5) * 100)}%
+              </div>
+              <div className="flex items-center gap-1 text-sm text-gray-600">
+                <Activity className="w-4 h-4" />
+                <span>{advancedAnalytics.monitoring_coverage || 'Basic'} Monitoring</span>
+              </div>
+            </div>
+          </div>
+          
+          <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="text-center">
+              <div className="text-lg font-semibold text-gray-900">
+                {Math.round((advancedAnalytics.average_resilience_score || 0.5) * 100)}%
+              </div>
+              <div className="text-xs text-gray-600">Resilience Score</div>
+            </div>
+            <div className="text-center">
+              <div className="text-lg font-semibold text-gray-900">
+                {advancedAnalytics.total_monitor_agents || 0}
+              </div>
+              <div className="text-xs text-gray-600">AI Monitors</div>
+            </div>
+            <div className="text-center">
+              <div className="text-lg font-semibold text-gray-900">
+                {advancedAnalytics.learning_insights_generated || 0}
+              </div>
+              <div className="text-xs text-gray-600">Learning Insights</div>
+            </div>
+            <div className="text-center">
+              <div className="text-lg font-semibold text-gray-900">
+                {advancedAnalytics.complex_systems_analyzed || 0}
+              </div>
+              <div className="text-xs text-gray-600">Complex Systems</div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Advanced Metrics Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-blue-600 font-medium">Active Scenarios</p>
+                <p className="text-3xl font-bold text-blue-900">{stats.active_scenarios || 0}</p>
+                <p className="text-xs text-blue-700">of {stats.total_scenarios || 0} total</p>
+              </div>
+              <Globe className="w-10 h-10 text-blue-500" />
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-purple-600 font-medium">AI Monitor Agents</p>
+                <p className="text-3xl font-bold text-purple-900">{advancedAnalytics.total_monitor_agents || 0}</p>
+                <p className="text-xs text-purple-700">Real-time monitoring</p>
+              </div>
+              <Monitor className="w-10 h-10 text-purple-500" />
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-green-600 font-medium">Adaptive Learning</p>
+                <p className="text-3xl font-bold text-green-900">
+                  {advancedAnalytics.adaptive_learning_active ? 'ON' : 'OFF'}
+                </p>
+                <p className="text-xs text-green-700">{advancedAnalytics.learning_insights_generated || 0} insights</p>
+              </div>
+              <Brain className="w-10 h-10 text-green-500" />
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-orange-600 font-medium">Complex Systems</p>
+                <p className="text-3xl font-bold text-orange-900">{advancedAnalytics.complex_systems_analyzed || 0}</p>
+                <p className="text-xs text-orange-700">Analyzed systems</p>
+              </div>
+              <Network className="w-10 h-10 text-orange-500" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Real-Time Analytics Section */}
+      <div className="grid md:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <BarChart3 className="w-5 h-5 text-blue-600" />
+              System Performance Metrics
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-600">Resilience Score</span>
+                <div className="flex items-center gap-2">
+                  <div className="w-32 bg-gray-200 rounded-full h-2">
+                    <div 
+                      className="bg-green-500 h-2 rounded-full" 
+                      style={{width: `${(advancedAnalytics.average_resilience_score || 0.5) * 100}%`}}
+                    ></div>
+                  </div>
+                  <span className="text-sm font-medium">{Math.round((advancedAnalytics.average_resilience_score || 0.5) * 100)}%</span>
+                </div>
+              </div>
+              
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-600">System Health</span>
+                <div className="flex items-center gap-2">
+                  <div className="w-32 bg-gray-200 rounded-full h-2">
+                    <div 
+                      className="bg-blue-500 h-2 rounded-full" 
+                      style={{width: `${(advancedAnalytics.system_health_score || 0.5) * 100}%`}}
+                    ></div>
+                  </div>
+                  <span className="text-sm font-medium">{Math.round((advancedAnalytics.system_health_score || 0.5) * 100)}%</span>
+                </div>
+              </div>
+              
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-600">Monitoring Coverage</span>
+                <Badge variant="outline" className="text-xs">
+                  {advancedAnalytics.monitoring_coverage || 'Basic'}
+                </Badge>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Zap className="w-5 h-5 text-purple-600" />
+              AI Monitor Agents Status
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-200">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                  <span className="text-sm font-medium text-green-800">Risk Monitor</span>
+                </div>
+                <Badge className="bg-green-100 text-green-800">Active</Badge>
+              </div>
+              
+              <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-200">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                  <span className="text-sm font-medium text-blue-800">Performance Tracker</span>
+                </div>
+                <Badge className="bg-blue-100 text-blue-800">Active</Badge>
+              </div>
+              
+              <div className="flex items-center justify-between p-3 bg-orange-50 rounded-lg border border-orange-200">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                  <span className="text-sm font-medium text-orange-800">Anomaly Detector</span>
+                </div>
+                <Badge className="bg-orange-100 text-orange-800">Monitoring</Badge>
+              </div>
+              
+              <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg border border-purple-200">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                  <span className="text-sm font-medium text-purple-800">Trend Analyzer</span>
+                </div>
+                <Badge className="bg-purple-100 text-purple-800">Learning</Badge>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Recent Scenarios with Enhanced Actions */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <AlertTriangle className="w-5 h-5" />
+            Enhanced Scenarios with AI Monitoring
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {scenarios.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">
+              <Globe className="w-12 h-12 mx-auto mb-4 opacity-50" />
+              <p>No scenarios created yet. Start by creating your first crisis scenario with AI monitoring.</p>
+            </div>
+          ) : (
+            <div className="grid gap-4">
+              {scenarios.slice(0, 3).map((scenario) => (
+                <div key={scenario.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors">
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-gray-900">{scenario.title}</h3>
+                    <p className="text-sm text-gray-600 truncate">{scenario.description}</p>
+                    <div className="flex items-center gap-2 mt-2">
+                      <Badge variant={scenario.status === 'active' ? 'default' : 'secondary'}>
+                        {scenario.status}
+                      </Badge>
+                      <Badge variant="outline">{scenario.crisis_type}</Badge>
+                      <span className="text-xs text-gray-500">Severity: {scenario.severity_level}/10</span>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm">
+                      <Eye className="w-4 h-4" />
+                    </Button>
+                    <Button variant="outline" size="sm">
+                      <Monitor className="w-4 h-4" />
+                    </Button>
+                    <Button variant="outline" size="sm">
+                      <Network className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
+
+// Basic Dashboard (keeping for compatibility)
 const Dashboard = () => {
   const [stats, setStats] = useState({});
   const [scenarios, setScenarios] = useState([]);
