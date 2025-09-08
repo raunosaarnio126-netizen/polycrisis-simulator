@@ -1012,6 +1012,18 @@ const ScenarioManagement = ({ onScenarioSelect }) => {
   const [systemMetrics, setSystemMetrics] = useState({});
   const [complexSystems, setComplexSystems] = useState({});
   const [learningInsights, setLearningInsights] = useState({});
+  const [monitoringSources, setMonitoringSources] = useState({});
+  const [smartSuggestions, setSmartSuggestions] = useState({});
+  const [monitoringDashboard, setMonitoringDashboard] = useState({});
+  const [showMonitoringDialog, setShowMonitoringDialog] = useState(null);
+  const [showAddSourceDialog, setShowAddSourceDialog] = useState(null);
+  const [newSourceData, setNewSourceData] = useState({
+    source_type: '',
+    source_url: '',
+    source_name: '',
+    monitoring_frequency: 'daily',
+    data_keywords: []
+  });
 
   useEffect(() => {
     fetchScenarios();
