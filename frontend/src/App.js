@@ -3915,12 +3915,22 @@ const AppContent = () => {
             <AdvancedDashboard />
           </TabsContent>
           
+          {user?.email === 'rauno.saarnio@xr-presence.com' && (
+            <TabsContent value="admin">
+              <AdminDashboard />
+            </TabsContent>
+          )}
+          
           <TabsContent value="company">
             <CompanyManagement />
           </TabsContent>
           
           <TabsContent value="documents">
             <DocumentManagement />  
+          </TabsContent>
+          
+          <TabsContent value="avatars">
+            <AvatarCompetenceManager />
           </TabsContent>
           
           <TabsContent value="create">
