@@ -780,6 +780,10 @@ async def deploy_monitor_agents(scenario_id: str, current_user: User = Depends(g
                 "Early warning: Supply chain vulnerabilities detected",
                 "Potential cascade effects identified in infrastructure"
             ],
+            anomalies_detected=[
+                "Unusual resource consumption pattern detected",
+                "Unexpected correlation between economic and social factors"
+            ],
             risk_level="medium"
         )
         
@@ -797,6 +801,9 @@ async def deploy_monitor_agents(scenario_id: str, current_user: User = Depends(g
                 "Communication protocols showing 85% effectiveness",
                 "Resource allocation optimized for current conditions",
                 "Stakeholder engagement levels within acceptable range"
+            ],
+            anomalies_detected=[
+                "Response time variance higher than expected"
             ],
             risk_level="low"
         )
