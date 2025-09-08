@@ -743,6 +743,277 @@ class PolycrisisAPITester:
         print(f"   Successfully added {added_sources}/{len(sources_data)} team sources")
         return added_sources > 0
 
+    # ========== ENTERPRISE FEATURES TESTING ==========
+    
+    def test_create_company(self):
+        """Test Company Management System - Create Company"""
+        company_data = {
+            "company_name": "Test Enterprise Corp",
+            "industry": "Technology",
+            "company_size": "medium",
+            "website_url": "https://example.com",
+            "description": "A test company for crisis management simulation",
+            "location": "San Francisco, CA"
+        }
+        
+        success, response = self.run_test(
+            "Create Company Profile",
+            "POST",
+            "companies",
+            200,
+            data=company_data
+        )
+        
+        if success and 'id' in response:
+            self.company_id = response['id']
+            print(f"   Created company ID: {self.company_id}")
+            print(f"   Company name: {response.get('company_name', 'N/A')}")
+            print(f"   Industry: {response.get('industry', 'N/A')}")
+            print(f"   Size: {response.get('company_size', 'N/A')}")
+            print(f"   Location: {response.get('location', 'N/A')}")
+            print(f"   Website analysis: {len(response.get('website_analysis', '')) if response.get('website_analysis') else 0} chars")
+            print(f"   Business model: {len(response.get('business_model', '')) if response.get('business_model') else 0} chars")
+            print(f"   Key assets: {len(response.get('key_assets', []))}")
+            print(f"   Vulnerabilities: {len(response.get('vulnerabilities', []))}")
+            print(f"   Stakeholders: {len(response.get('stakeholders', []))}")
+            return True
+        return False
+
+    def test_get_company(self):
+        """Test Get Company Details"""
+        if not hasattr(self, 'company_id') or not self.company_id:
+            print("❌ No company ID available for testing")
+            return False
+            
+        success, response = self.run_test(
+            "Get Company Details",
+            "GET",
+            f"companies/{self.company_id}",
+            200
+        )
+        
+        if success and 'id' in response:
+            print(f"   Retrieved company: {response.get('company_name', 'N/A')}")
+            print(f"   Website analysis available: {bool(response.get('website_analysis'))}")
+            print(f"   Business model available: {bool(response.get('business_model'))}")
+            return True
+        return False
+
+    def test_upload_business_document(self):
+        """Test Document Intelligence Platform - Upload Document"""
+        if not hasattr(self, 'company_id') or not self.company_id:
+            print("❌ No company ID available for document upload")
+            return False
+            
+        document_data = {
+            "document_name": "Business Continuity Plan 2025",
+            "document_type": "business_plan",
+            "document_content": """
+            BUSINESS CONTINUITY PLAN
+            
+            Executive Summary:
+            This document outlines our comprehensive business continuity strategy for maintaining operations during crisis situations.
+            
+            Key Objectives:
+            1. Ensure employee safety and well-being
+            2. Maintain critical business operations
+            3. Protect key assets and data
+            4. Minimize financial impact
+            5. Ensure rapid recovery
+            
+            Risk Assessment:
+            - Natural disasters (earthquakes, floods)
+            - Cyber security threats
+            - Supply chain disruptions
+            - Pandemic scenarios
+            - Economic downturns
+            
+            Critical Business Functions:
+            - Customer service operations
+            - IT infrastructure and data centers
+            - Financial systems and accounting
+            - Supply chain management
+            - Human resources
+            
+            Recovery Strategies:
+            - Remote work capabilities
+            - Backup data centers
+            - Alternative suppliers
+            - Emergency communication systems
+            - Crisis management team activation
+            
+            Testing and Maintenance:
+            Regular testing of all systems and procedures to ensure effectiveness.
+            """
+        }
+        
+        success, response = self.run_test(
+            "Upload Business Document",
+            "POST",
+            f"companies/{self.company_id}/documents",
+            200,
+            data=document_data
+        )
+        
+        if success and 'id' in response:
+            self.document_id = response['id']
+            print(f"   Uploaded document ID: {self.document_id}")
+            print(f"   Document name: {response.get('document_name', 'N/A')}")
+            print(f"   Document type: {response.get('document_type', 'N/A')}")
+            print(f"   AI analysis: {len(response.get('ai_analysis', '')) if response.get('ai_analysis') else 0} chars")
+            print(f"   Key insights: {len(response.get('key_insights', []))}")
+            print(f"   Risk factors: {len(response.get('risk_factors', []))}")
+            print(f"   Strategic priorities: {len(response.get('strategic_priorities', []))}")
+            print(f"   File size: {response.get('file_size', 'N/A')}")
+            return True
+        return False
+
+    def test_get_company_documents(self):
+        """Test Get Company Documents"""
+        if not hasattr(self, 'company_id') or not self.company_id:
+            print("❌ No company ID available for getting documents")
+            return False
+            
+        success, response = self.run_test(
+            "Get Company Documents",
+            "GET",
+            f"companies/{self.company_id}/documents",
+            200
+        )
+        
+        if success and isinstance(response, list):
+            print(f"   Found {len(response)} documents")
+            for doc in response:
+                print(f"   - {doc.get('document_name')}: {doc.get('document_type')} (AI analysis: {bool(doc.get('ai_analysis'))})")
+            return True
+        return False
+
+    def test_create_team(self):
+        """Test Team Management & Collaboration - Create Team"""
+        if not hasattr(self, 'company_id') or not self.company_id:
+            print("❌ No company ID available for team creation")
+            return False
+            
+        team_data = {
+            "team_name": "Crisis Response Team Alpha",
+            "team_description": "Primary crisis response and management team for enterprise operations",
+            "team_members": ["crisis.manager@example.com", "operations.lead@example.com", "communications.director@example.com"],
+            "team_roles": ["crisis_manager", "analyst", "coordinator"]
+        }
+        
+        success, response = self.run_test(
+            "Create Team",
+            "POST",
+            f"companies/{self.company_id}/teams",
+            200,
+            data=team_data
+        )
+        
+        if success and 'id' in response:
+            self.team_id = response['id']
+            print(f"   Created team ID: {self.team_id}")
+            print(f"   Team name: {response.get('team_name', 'N/A')}")
+            print(f"   Team description: {response.get('team_description', 'N/A')}")
+            print(f"   Team members: {len(response.get('team_members', []))}")
+            print(f"   Team roles: {response.get('team_roles', [])}")
+            print(f"   Access level: {response.get('access_level', 'N/A')}")
+            return True
+        return False
+
+    def test_get_company_teams(self):
+        """Test Get Company Teams"""
+        if not hasattr(self, 'company_id') or not self.company_id:
+            print("❌ No company ID available for getting teams")
+            return False
+            
+        success, response = self.run_test(
+            "Get Company Teams",
+            "GET",
+            f"companies/{self.company_id}/teams",
+            200
+        )
+        
+        if success and isinstance(response, list):
+            print(f"   Found {len(response)} teams")
+            for team in response:
+                print(f"   - {team.get('team_name')}: {len(team.get('team_members', []))} members ({team.get('access_level', 'N/A')} access)")
+            return True
+        return False
+
+    def test_generate_rapid_analysis(self):
+        """Test Rapid Analysis Tools - Generate Analysis"""
+        if not hasattr(self, 'company_id') or not self.company_id:
+            print("❌ No company ID available for rapid analysis")
+            return False
+            
+        # Test different types of rapid analysis
+        analysis_types = [
+            "vulnerability_assessment",
+            "business_impact", 
+            "scenario_recommendation",
+            "competitive_analysis"
+        ]
+        
+        successful_analyses = 0
+        
+        for analysis_type in analysis_types:
+            success, response = self.run_test(
+                f"Generate Rapid Analysis - {analysis_type}",
+                "POST",
+                f"companies/{self.company_id}/rapid-analysis",
+                200,
+                data={"analysis_type": analysis_type}
+            )
+            
+            if success and 'id' in response:
+                successful_analyses += 1
+                print(f"   ✅ {analysis_type} analysis generated")
+                print(f"     Analysis ID: {response.get('id')}")
+                print(f"     Title: {response.get('analysis_title', 'N/A')}")
+                print(f"     Content length: {len(response.get('analysis_content', ''))}")
+                print(f"     Key findings: {len(response.get('key_findings', []))}")
+                print(f"     Recommendations: {len(response.get('recommendations', []))}")
+                print(f"     Priority level: {response.get('priority_level', 'N/A')}")
+                print(f"     Confidence score: {response.get('confidence_score', 'N/A')}")
+            else:
+                print(f"   ❌ Failed to generate {analysis_type} analysis")
+        
+        print(f"   Successfully generated {successful_analyses}/{len(analysis_types)} rapid analyses")
+        return successful_analyses > 0
+
+    def test_create_company_scenario(self):
+        """Test Company-Specific Scenario Creation"""
+        if not hasattr(self, 'company_id') or not self.company_id:
+            print("❌ No company ID available for company scenario creation")
+            return False
+            
+        company_scenario_data = {
+            "title": "Enterprise Data Center Outage Crisis",
+            "description": "Major data center failure affecting all enterprise operations with potential for extended downtime and data loss",
+            "crisis_type": "cyber_attack",
+            "severity_level": 9,
+            "affected_regions": ["San Francisco", "Remote Workforce", "Global Operations"],
+            "key_variables": ["Data recovery time", "Customer impact", "Revenue loss", "Reputation damage", "Regulatory compliance"]
+        }
+        
+        success, response = self.run_test(
+            "Create Company-Specific Scenario",
+            "POST",
+            f"companies/{self.company_id}/scenarios",
+            200,
+            data=company_scenario_data
+        )
+        
+        if success and 'id' in response:
+            self.company_scenario_id = response['id']
+            print(f"   Created company scenario ID: {self.company_scenario_id}")
+            print(f"   Scenario title: {response.get('title', 'N/A')}")
+            print(f"   Crisis type: {response.get('crisis_type', 'N/A')}")
+            print(f"   Severity level: {response.get('severity_level', 'N/A')}")
+            print(f"   Company context: {bool(response.get('company_id'))}")
+            return True
+        return False
+
 def main():
     print("🚀 Starting Polycrisis Simulator API Tests")
     print("=" * 50)
