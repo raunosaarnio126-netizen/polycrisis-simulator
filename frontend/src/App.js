@@ -19,7 +19,7 @@ import { toast } from './hooks/use-toast';
 import { Toaster } from './components/ui/toaster';
 
 // Icons
-import { AlertTriangle, Brain, Globe, Shield, TrendingUp, Users, Plus, Play, Eye, MessageSquare } from 'lucide-react';
+import { AlertTriangle, Brain, Globe, Shield, TrendingUp, Users, Plus, Play, Eye, MessageSquare, BookOpen, CheckSquare, Target, FileText, Download } from 'lucide-react';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
