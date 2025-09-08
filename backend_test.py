@@ -35,6 +35,8 @@ class PolycrisisAPITester:
                 response = requests.post(url, json=data, headers=test_headers, timeout=30)
             elif method == 'PUT':
                 response = requests.put(url, json=data, headers=test_headers, timeout=30)
+            elif method == 'DELETE':
+                response = requests.delete(url, headers=test_headers, timeout=30)
 
             print(f"   Status Code: {response.status_code}")
             
