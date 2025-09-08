@@ -702,6 +702,9 @@ const ScenarioManagement = ({ onScenarioSelect }) => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [scenarioToDelete, setScenarioToDelete] = useState(null);
   const [editingScenario, setEditingScenario] = useState(null);
+  const [implementationView, setImplementationView] = useState(null);
+  const [implementationData, setImplementationData] = useState({});
+  const [generatingImplementation, setGeneratingImplementation] = useState(false);
 
   useEffect(() => {
     fetchScenarios();
