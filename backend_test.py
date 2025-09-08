@@ -260,6 +260,118 @@ class PolycrisisAPITester:
             return True
         return False
 
+    def test_generate_game_book(self):
+        """Test Game Book generation"""
+        if not self.created_scenario_id:
+            print("❌ No scenario ID available for Game Book generation")
+            return False
+            
+        success, response = self.run_test(
+            "Generate Game Book",
+            "POST",
+            f"scenarios/{self.created_scenario_id}/game-book",
+            200
+        )
+        
+        if success and 'game_book_content' in response:
+            print(f"   Game Book content length: {len(response.get('game_book_content', ''))}")
+            print(f"   Decision points: {len(response.get('decision_points', []))}")
+            print(f"   Resource requirements: {len(response.get('resource_requirements', []))}")
+            print(f"   Timeline phases: {len(response.get('timeline_phases', []))}")
+            print(f"   Success metrics: {len(response.get('success_metrics', []))}")
+            return True
+        return False
+
+    def test_generate_action_plan(self):
+        """Test Action Plan generation"""
+        if not self.created_scenario_id:
+            print("❌ No scenario ID available for Action Plan generation")
+            return False
+            
+        success, response = self.run_test(
+            "Generate Action Plan",
+            "POST",
+            f"scenarios/{self.created_scenario_id}/action-plan",
+            200
+        )
+        
+        if success and 'immediate_actions' in response:
+            print(f"   Immediate actions: {len(response.get('immediate_actions', []))}")
+            print(f"   Short-term actions: {len(response.get('short_term_actions', []))}")
+            print(f"   Long-term actions: {len(response.get('long_term_actions', []))}")
+            print(f"   Responsible parties: {len(response.get('responsible_parties', []))}")
+            print(f"   Priority level: {response.get('priority_level', 'N/A')}")
+            return True
+        return False
+
+    def test_generate_strategy_implementation(self):
+        """Test Strategy Implementation generation"""
+        if not self.created_scenario_id:
+            print("❌ No scenario ID available for Strategy Implementation generation")
+            return False
+            
+        success, response = self.run_test(
+            "Generate Strategy Implementation",
+            "POST",
+            f"scenarios/{self.created_scenario_id}/strategy-implementation",
+            200
+        )
+        
+        if success and 'implementation_strategy' in response:
+            print(f"   Implementation strategy length: {len(response.get('implementation_strategy', ''))}")
+            print(f"   Organizational changes: {len(response.get('organizational_changes', []))}")
+            print(f"   Policy recommendations: {len(response.get('policy_recommendations', []))}")
+            print(f"   Training requirements: {len(response.get('training_requirements', []))}")
+            print(f"   Budget considerations: {len(response.get('budget_considerations', []))}")
+            print(f"   Stakeholder engagement: {len(response.get('stakeholder_engagement', []))}")
+            return True
+        return False
+
+    def test_get_game_book(self):
+        """Test retrieving Game Book"""
+        if not self.created_scenario_id:
+            print("❌ No scenario ID available for Game Book retrieval")
+            return False
+            
+        success, response = self.run_test(
+            "Get Game Book",
+            "GET",
+            f"scenarios/{self.created_scenario_id}/game-book",
+            200
+        )
+        
+        return success and 'game_book_content' in response
+
+    def test_get_action_plan(self):
+        """Test retrieving Action Plan"""
+        if not self.created_scenario_id:
+            print("❌ No scenario ID available for Action Plan retrieval")
+            return False
+            
+        success, response = self.run_test(
+            "Get Action Plan",
+            "GET",
+            f"scenarios/{self.created_scenario_id}/action-plan",
+            200
+        )
+        
+        return success and 'immediate_actions' in response
+
+    def test_get_strategy_implementation(self):
+        """Test retrieving Strategy Implementation"""
+        if not self.created_scenario_id:
+            print("❌ No scenario ID available for Strategy Implementation retrieval")
+            return False
+            
+        success, response = self.run_test(
+            "Get Strategy Implementation",
+            "GET",
+            f"scenarios/{self.created_scenario_id}/strategy-implementation",
+            200
+        )
+        
+        return success and 'implementation_strategy' in response
+
 def main():
     print("🚀 Starting Polycrisis Simulator API Tests")
     print("=" * 50)
