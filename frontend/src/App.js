@@ -1007,6 +1007,11 @@ const ScenarioManagement = ({ onScenarioSelect }) => {
   const [implementationView, setImplementationView] = useState(null);
   const [implementationData, setImplementationData] = useState({});
   const [generatingImplementation, setGeneratingImplementation] = useState(false);
+  const [monitorAgents, setMonitorAgents] = useState({});
+  const [deployingMonitors, setDeployingMonitors] = useState(false);
+  const [systemMetrics, setSystemMetrics] = useState({});
+  const [complexSystems, setComplexSystems] = useState({});
+  const [learningInsights, setLearningInsights] = useState({});
 
   useEffect(() => {
     fetchScenarios();
