@@ -527,6 +527,220 @@ class PolycrisisAPITester:
             return True
         return False
 
+    # ========== INTELLIGENT MONITORING NETWORK TESTING ==========
+    
+    def test_suggest_monitoring_sources(self):
+        """Test Smart Monitoring Source Suggestions"""
+        if not self.created_scenario_id:
+            print("❌ No scenario ID available for monitoring source suggestions")
+            return False
+            
+        success, response = self.run_test(
+            "Smart Monitoring Source Suggestions",
+            "POST",
+            f"scenarios/{self.created_scenario_id}/suggest-monitoring-sources",
+            200
+        )
+        
+        if success and isinstance(response, list):
+            print(f"   Generated {len(response)} smart suggestions")
+            suggestion_types = [suggestion.get('suggestion_type') for suggestion in response]
+            print(f"   Suggestion types: {set(suggestion_types)}")
+            
+            # Check for expected suggestion types
+            expected_types = ['data_source', 'monitoring_keyword', 'analysis_focus']
+            for suggestion in response:
+                suggestion_type = suggestion.get('suggestion_type')
+                confidence = suggestion.get('confidence_score', 0)
+                content = suggestion.get('suggestion_content', '')[:100]
+                reasoning = suggestion.get('reasoning', '')[:100]
+                print(f"   - {suggestion_type}: {confidence:.2f} confidence")
+                print(f"     Content: {content}...")
+                print(f"     Reasoning: {reasoning}...")
+            return True
+        return False
+
+    def test_add_monitoring_source(self):
+        """Test Team Collaboration - Add Monitoring Source"""
+        if not self.created_scenario_id:
+            print("❌ No scenario ID available for adding monitoring source")
+            return False
+            
+        source_data = {
+            "source_type": "news_api",
+            "source_url": "https://newsapi.org/v2/everything?q=earthquake",
+            "source_name": "Earthquake News Monitor",
+            "monitoring_frequency": "hourly",
+            "data_keywords": ["earthquake", "seismic activity", "disaster response", "emergency"]
+        }
+        
+        success, response = self.run_test(
+            "Add Monitoring Source",
+            "POST",
+            f"scenarios/{self.created_scenario_id}/add-monitoring-source",
+            200,
+            data=source_data
+        )
+        
+        if success and 'id' in response:
+            self.monitoring_source_id = response['id']
+            print(f"   Created monitoring source ID: {self.monitoring_source_id}")
+            print(f"   Source type: {response.get('source_type', 'N/A')}")
+            print(f"   Source name: {response.get('source_name', 'N/A')}")
+            print(f"   Relevance score: {response.get('relevance_score', 'N/A')}")
+            print(f"   Status: {response.get('status', 'N/A')}")
+            print(f"   Monitoring frequency: {response.get('monitoring_frequency', 'N/A')}")
+            print(f"   Keywords: {response.get('data_keywords', [])}")
+            print(f"   Added by: {response.get('added_by_team_member', 'N/A')}")
+            return True
+        return False
+
+    def test_get_monitoring_sources(self):
+        """Test Get Monitoring Sources for Scenario"""
+        if not self.created_scenario_id:
+            print("❌ No scenario ID available for getting monitoring sources")
+            return False
+            
+        success, response = self.run_test(
+            "Get Monitoring Sources",
+            "GET",
+            f"scenarios/{self.created_scenario_id}/monitoring-sources",
+            200
+        )
+        
+        if success and isinstance(response, list):
+            print(f"   Found {len(response)} monitoring sources")
+            for source in response:
+                print(f"   - {source.get('source_name')}: {source.get('source_type')} ({source.get('status')})")
+                print(f"     Relevance: {source.get('relevance_score', 'N/A')}, Frequency: {source.get('monitoring_frequency', 'N/A')}")
+            return True
+        return False
+
+    def test_collect_monitoring_data(self):
+        """Test Automated Data Collection System"""
+        if not self.created_scenario_id:
+            print("❌ No scenario ID available for data collection")
+            return False
+            
+        success, response = self.run_test(
+            "Collect Monitoring Data",
+            "POST",
+            f"scenarios/{self.created_scenario_id}/collect-data",
+            200
+        )
+        
+        if success:
+            print(f"   Sources monitored: {response.get('sources_monitored', 'N/A')}")
+            print(f"   Data points collected: {response.get('data_points_collected', 'N/A')}")
+            print(f"   Collection status: {response.get('collection_status', 'N/A')}")
+            
+            # Check collected data details if available
+            collected_data = response.get('collected_data', [])
+            if collected_data:
+                print(f"   Sample collected data items: {len(collected_data)}")
+                for item in collected_data[:3]:  # Show first 3 items
+                    print(f"   - Title: {item.get('data_title', 'N/A')}")
+                    print(f"     Relevance: {item.get('relevance_score', 'N/A')}")
+                    print(f"     Sentiment: {item.get('sentiment_score', 'N/A')}")
+                    print(f"     Urgency: {item.get('urgency_level', 'N/A')}")
+                    print(f"     Keywords matched: {item.get('keywords_matched', [])}")
+            return True
+        return False
+
+    def test_monitoring_dashboard(self):
+        """Test Monitoring Dashboard & Analytics"""
+        if not self.created_scenario_id:
+            print("❌ No scenario ID available for monitoring dashboard")
+            return False
+            
+        success, response = self.run_test(
+            "Monitoring Dashboard",
+            "GET",
+            f"scenarios/{self.created_scenario_id}/monitoring-dashboard",
+            200
+        )
+        
+        if success:
+            print(f"   Active sources: {response.get('active_sources', 'N/A')}")
+            print(f"   Total data points: {response.get('total_data_points', 'N/A')}")
+            print(f"   Average relevance score: {response.get('average_relevance_score', 'N/A')}")
+            print(f"   Recent insights count: {response.get('recent_insights_count', 'N/A')}")
+            print(f"   Data collection status: {response.get('data_collection_status', 'N/A')}")
+            
+            # Check source status breakdown
+            source_status = response.get('source_status_breakdown', {})
+            if source_status:
+                print(f"   Source status breakdown:")
+                for status, count in source_status.items():
+                    print(f"     {status}: {count}")
+            
+            # Check urgency level distribution
+            urgency_distribution = response.get('urgency_level_distribution', {})
+            if urgency_distribution:
+                print(f"   Urgency level distribution:")
+                for level, count in urgency_distribution.items():
+                    print(f"     {level}: {count}")
+            
+            # Check recent insights
+            recent_insights = response.get('recent_insights', [])
+            if recent_insights:
+                print(f"   Recent insights (showing first 3):")
+                for insight in recent_insights[:3]:
+                    print(f"   - {insight.get('insight_summary', 'N/A')}")
+            
+            return True
+        return False
+
+    def test_team_collaboration_features(self):
+        """Test Team Collaboration Features"""
+        if not self.created_scenario_id:
+            print("❌ No scenario ID available for team collaboration testing")
+            return False
+        
+        # Test adding multiple sources from different team members
+        sources_data = [
+            {
+                "source_type": "social_media",
+                "source_url": "https://twitter.com/api/search?q=earthquake",
+                "source_name": "Twitter Earthquake Monitor",
+                "monitoring_frequency": "real_time",
+                "data_keywords": ["earthquake", "tremor", "seismic"]
+            },
+            {
+                "source_type": "government_data",
+                "source_url": "https://earthquake.usgs.gov/fdsnws/event/1/",
+                "source_name": "USGS Earthquake Data",
+                "monitoring_frequency": "hourly",
+                "data_keywords": ["magnitude", "epicenter", "aftershock"]
+            },
+            {
+                "source_type": "weather_api",
+                "source_url": "https://api.weather.gov/alerts",
+                "source_name": "Weather Service Alerts",
+                "monitoring_frequency": "daily",
+                "data_keywords": ["weather alert", "emergency", "warning"]
+            }
+        ]
+        
+        added_sources = 0
+        for i, source_data in enumerate(sources_data):
+            success, response = self.run_test(
+                f"Add Team Source {i+1}",
+                "POST",
+                f"scenarios/{self.created_scenario_id}/add-monitoring-source",
+                200,
+                data=source_data
+            )
+            
+            if success:
+                added_sources += 1
+                print(f"   ✅ Added {source_data['source_name']} (Relevance: {response.get('relevance_score', 'N/A')})")
+            else:
+                print(f"   ❌ Failed to add {source_data['source_name']}")
+        
+        print(f"   Successfully added {added_sources}/{len(sources_data)} team sources")
+        return added_sources > 0
+
 def main():
     print("🚀 Starting Polycrisis Simulator API Tests")
     print("=" * 50)
