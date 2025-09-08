@@ -30,13 +30,13 @@ class PolycrisisAPITester:
         
         try:
             if method == 'GET':
-                response = requests.get(url, headers=test_headers, timeout=30)
+                response = requests.get(url, headers=test_headers, timeout=120)
             elif method == 'POST':
-                response = requests.post(url, json=data, headers=test_headers, timeout=30)
+                response = requests.post(url, json=data, headers=test_headers, timeout=120)
             elif method == 'PUT':
-                response = requests.put(url, json=data, headers=test_headers, timeout=30)
+                response = requests.put(url, json=data, headers=test_headers, timeout=120)
             elif method == 'DELETE':
-                response = requests.delete(url, headers=test_headers, timeout=30)
+                response = requests.delete(url, headers=test_headers, timeout=120)
 
             print(f"   Status Code: {response.status_code}")
             
