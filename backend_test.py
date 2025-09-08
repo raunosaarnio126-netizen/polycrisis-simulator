@@ -372,6 +372,160 @@ class PolycrisisAPITester:
         
         return success and 'implementation_strategy' in response
 
+    # ========== ADVANCED FEATURES TESTING ==========
+    
+    def test_deploy_monitor_agents(self):
+        """Test deploying AI Monitor Agents"""
+        if not self.created_scenario_id:
+            print("❌ No scenario ID available for Monitor Agents deployment")
+            return False
+            
+        success, response = self.run_test(
+            "Deploy AI Monitor Agents",
+            "POST",
+            f"scenarios/{self.created_scenario_id}/deploy-monitors",
+            200
+        )
+        
+        if success and isinstance(response, list):
+            print(f"   Deployed {len(response)} monitor agents")
+            agent_types = [agent.get('agent_type') for agent in response]
+            print(f"   Agent types: {agent_types}")
+            
+            # Verify all 4 expected agent types are present
+            expected_types = ['risk_monitor', 'performance_tracker', 'anomaly_detector', 'trend_analyzer']
+            for expected_type in expected_types:
+                if expected_type in agent_types:
+                    print(f"   ✅ {expected_type} agent deployed")
+                else:
+                    print(f"   ❌ {expected_type} agent missing")
+                    return False
+            return True
+        return False
+
+    def test_get_monitor_agents(self):
+        """Test retrieving Monitor Agents"""
+        if not self.created_scenario_id:
+            print("❌ No scenario ID available for Monitor Agents retrieval")
+            return False
+            
+        success, response = self.run_test(
+            "Get Monitor Agents",
+            "GET",
+            f"scenarios/{self.created_scenario_id}/monitor-agents",
+            200
+        )
+        
+        if success and isinstance(response, list):
+            print(f"   Found {len(response)} monitor agents")
+            for agent in response:
+                print(f"   - {agent.get('agent_type')}: {agent.get('status')} (Risk: {agent.get('risk_level')})")
+            return True
+        return False
+
+    def test_complex_systems_analysis(self):
+        """Test Complex Adaptive Systems Analysis"""
+        if not self.created_scenario_id:
+            print("❌ No scenario ID available for Complex Systems Analysis")
+            return False
+            
+        success, response = self.run_test(
+            "Complex Adaptive Systems Analysis",
+            "POST",
+            f"scenarios/{self.created_scenario_id}/complex-systems-analysis",
+            200
+        )
+        
+        if success and 'system_components' in response:
+            print(f"   System components: {len(response.get('system_components', []))}")
+            print(f"   Interconnections: {len(response.get('interconnections', []))}")
+            print(f"   Feedback loops: {len(response.get('feedback_loops', []))}")
+            print(f"   Emergent behaviors: {len(response.get('emergent_behaviors', []))}")
+            print(f"   Adaptation mechanisms: {len(response.get('adaptation_mechanisms', []))}")
+            print(f"   Tipping points: {len(response.get('tipping_points', []))}")
+            print(f"   System dynamics length: {len(response.get('system_dynamics', ''))}")
+            return True
+        return False
+
+    def test_generate_system_metrics(self):
+        """Test System Metrics Generation"""
+        if not self.created_scenario_id:
+            print("❌ No scenario ID available for System Metrics generation")
+            return False
+            
+        success, response = self.run_test(
+            "Generate System Metrics",
+            "POST",
+            f"scenarios/{self.created_scenario_id}/generate-metrics",
+            200
+        )
+        
+        if success and 'resilience_score' in response:
+            print(f"   Resilience score: {response.get('resilience_score', 'N/A')}")
+            print(f"   Complexity index: {response.get('complexity_index', 'N/A')}")
+            print(f"   Cascading risk factor: {response.get('cascading_risk_factor', 'N/A')}")
+            print(f"   Intervention effectiveness: {response.get('intervention_effectiveness', 'N/A')}")
+            print(f"   System stability: {response.get('system_stability', 'N/A')}")
+            print(f"   Adaptive capacity: {response.get('adaptive_capacity', 'N/A')}")
+            print(f"   Interconnectedness level: {response.get('interconnectedness_level', 'N/A')}")
+            return True
+        return False
+
+    def test_generate_learning_insights(self):
+        """Test Adaptive Learning Insights Generation"""
+        if not self.created_scenario_id:
+            print("❌ No scenario ID available for Learning Insights generation")
+            return False
+            
+        success, response = self.run_test(
+            "Generate Learning Insights",
+            "POST",
+            f"scenarios/{self.created_scenario_id}/generate-learning-insights",
+            200
+        )
+        
+        if success and isinstance(response, list):
+            print(f"   Generated {len(response)} learning insights")
+            insight_types = [insight.get('insight_type') for insight in response]
+            print(f"   Insight types: {insight_types}")
+            
+            # Check for expected insight types
+            expected_types = ['pattern_recognition', 'outcome_prediction', 'optimization_suggestion']
+            for expected_type in expected_types:
+                if expected_type in insight_types:
+                    print(f"   ✅ {expected_type} insight generated")
+                else:
+                    print(f"   ❌ {expected_type} insight missing")
+            
+            # Show confidence scores
+            for insight in response:
+                print(f"   - {insight.get('insight_type')}: Confidence {insight.get('confidence_score', 'N/A')}")
+            return True
+        return False
+
+    def test_advanced_analytics_dashboard(self):
+        """Test Advanced Analytics Dashboard"""
+        success, response = self.run_test(
+            "Advanced Analytics Dashboard",
+            "GET",
+            "dashboard/advanced-analytics",
+            200
+        )
+        
+        if success:
+            print(f"   Total scenarios: {response.get('total_scenarios', 'N/A')}")
+            print(f"   Active scenarios: {response.get('active_scenarios', 'N/A')}")
+            print(f"   Total simulations: {response.get('total_simulations', 'N/A')}")
+            print(f"   Total monitor agents: {response.get('total_monitor_agents', 'N/A')}")
+            print(f"   Learning insights generated: {response.get('learning_insights_generated', 'N/A')}")
+            print(f"   Average resilience score: {response.get('average_resilience_score', 'N/A')}")
+            print(f"   System health score: {response.get('system_health_score', 'N/A')}")
+            print(f"   Adaptive learning active: {response.get('adaptive_learning_active', 'N/A')}")
+            print(f"   Complex systems analyzed: {response.get('complex_systems_analyzed', 'N/A')}")
+            print(f"   Monitoring coverage: {response.get('monitoring_coverage', 'N/A')}")
+            return True
+        return False
+
 def main():
     print("🚀 Starting Polycrisis Simulator API Tests")
     print("=" * 50)
