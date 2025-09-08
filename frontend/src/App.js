@@ -772,6 +772,53 @@ const ScenarioManagement = ({ onScenarioSelect }) => {
     }
   };
 
+  const handleGenerateImplementation = async (scenario, type) => {
+    try {
+      setGeneratingImplementation(true);
+      let endpoint = '';
+      
+      switch(type) {
+        case 'game-book':
+          endpoint = `scenarios/${scenario.id}/game-book`;
+          break;
+        case 'action-plan':
+          endpoint = `scenarios/${scenario.id}/action-plan`;
+          break;
+        case 'strategy-implementation':
+          endpoint = `scenarios/${scenario.id}/strategy-implementation`;
+          break;
+        default:
+          return;
+      }
+      
+      const response = await axios.post(`${API}/${endpoint}`);
+      setImplementationData({
+        ...implementationData,
+        [scenario.id]: {
+          ...implementationData[scenario.id],
+          [type]: response.data
+        }
+      });
+      
+      setImplementationView({ scenario, type, data: response.data });
+      
+      toast({ 
+        title: "Success", 
+        description: `${type.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())} generated successfully!`,
+        duration: 3000
+      });
+      
+    } catch (error) {
+      toast({ 
+        title: "Error", 
+        description: `Failed to generate ${type.replace('-', ' ')}`,
+        variant: "destructive"
+      });
+    } finally {
+      setGeneratingImplementation(false);
+    }
+  };
+
   const getCrisisTypeColor = (type) => {
     const colors = {
       'natural_disaster': 'bg-red-100 text-red-800',
