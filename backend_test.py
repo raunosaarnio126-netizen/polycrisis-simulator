@@ -404,6 +404,21 @@ def main():
     tester.test_ai_genie()
     tester.test_run_simulation()
 
+    print("\n📋 Testing Strategic Implementation Features...")
+    print("   Testing Game Book generation...")
+    tester.test_generate_game_book()
+    
+    print("   Testing Action Plan generation...")
+    tester.test_generate_action_plan()
+    
+    print("   Testing Strategy Implementation generation...")
+    tester.test_generate_strategy_implementation()
+    
+    print("   Testing retrieval of generated artifacts...")
+    tester.test_get_game_book()
+    tester.test_get_action_plan()
+    tester.test_get_strategy_implementation()
+
     print("\n📊 Testing Dashboard...")
     tester.test_dashboard_stats()
 
