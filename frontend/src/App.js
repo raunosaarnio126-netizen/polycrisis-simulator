@@ -1631,6 +1631,39 @@ const ScenarioManagement = ({ onScenarioSelect }) => {
                         AI Learning
                       </Button>
                     </div>
+                    
+                    <div className="flex gap-1">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleSuggestMonitoringSources(scenario)}
+                        disabled={generatingImplementation}
+                        className="flex-1 text-xs py-1 bg-yellow-50 hover:bg-yellow-100 text-yellow-700 border-yellow-200"
+                      >
+                        <Lightbulb className="w-3 h-3 mr-1" />
+                        Smart Sources
+                      </Button>
+                      
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleAddMonitoringSource(scenario)}
+                        className="flex-1 text-xs py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border-indigo-200"
+                      >
+                        <Link className="w-3 h-3 mr-1" />
+                        Add Sources
+                      </Button>
+                      
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleOpenMonitoringDashboard(scenario)}
+                        className="flex-1 text-xs py-1 bg-teal-50 hover:bg-teal-100 text-teal-700 border-teal-200"
+                      >
+                        <Cloud className="w-3 h-3 mr-1" />
+                        Dashboard
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </CardContent>
