@@ -1657,6 +1657,149 @@ const ScenarioManagement = ({ onScenarioSelect }) => {
             </DialogHeader>
             
             <div className="space-y-6">
+              {implementationView.type === 'complex-systems' && (
+                <div className="space-y-6">
+                  <div className="bg-purple-50 p-4 rounded-lg">
+                    <h4 className="font-semibold text-purple-900 mb-3 flex items-center gap-2">
+                      <Network className="w-4 h-4" />
+                      Complex Adaptive Systems Analysis
+                    </h4>
+                    <div className="text-sm text-purple-800 whitespace-pre-line max-h-60 overflow-y-auto">
+                      {implementationView.data.system_dynamics}
+                    </div>
+                  </div>
+                  
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <h5 className="font-semibold text-gray-900 mb-2">System Components</h5>
+                      <ul className="text-sm text-gray-700 space-y-1 max-h-32 overflow-y-auto">
+                        {implementationView.data.system_components.map((component, idx) => (
+                          <li key={idx} className="flex items-start gap-2">
+                            <Layers className="w-3 h-3 mt-0.5 text-blue-600" />
+                            {component}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <h5 className="font-semibold text-gray-900 mb-2">Interconnections</h5>
+                      <ul className="text-sm text-gray-700 space-y-1 max-h-32 overflow-y-auto">
+                        {implementationView.data.interconnections.map((connection, idx) => (
+                          <li key={idx} className="flex items-start gap-2">
+                            <Network className="w-3 h-3 mt-0.5 text-purple-600" />
+                            {connection}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                  
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <h5 className="font-semibold text-gray-900 mb-2">Feedback Loops</h5>
+                      <ul className="text-sm text-gray-700 space-y-1 max-h-32 overflow-y-auto">
+                        {implementationView.data.feedback_loops.map((loop, idx) => (
+                          <li key={idx} className="flex items-start gap-2">
+                            <TrendingUp className="w-3 h-3 mt-0.5 text-green-600" />
+                            {loop}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <h5 className="font-semibold text-gray-900 mb-2">Emergent Behaviors</h5>
+                      <ul className="text-sm text-gray-700 space-y-1 max-h-32 overflow-y-auto">
+                        {implementationView.data.emergent_behaviors.map((behavior, idx) => (
+                          <li key={idx} className="flex items-start gap-2">
+                            <Zap className="w-3 h-3 mt-0.5 text-yellow-600" />
+                            {behavior}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                  
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <h5 className="font-semibold text-gray-900 mb-2">Adaptation Mechanisms</h5>
+                      <ul className="text-sm text-gray-700 space-y-1 max-h-32 overflow-y-auto">
+                        {implementationView.data.adaptation_mechanisms.map((mechanism, idx) => (
+                          <li key={idx} className="flex items-start gap-2">
+                            <Cpu className="w-3 h-3 mt-0.5 text-blue-600" />
+                            {mechanism}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <h5 className="font-semibold text-gray-900 mb-2">Critical Tipping Points</h5>
+                      <ul className="text-sm text-gray-700 space-y-1 max-h-32 overflow-y-auto">
+                        {implementationView.data.tipping_points.map((point, idx) => (
+                          <li key={idx} className="flex items-start gap-2">
+                            <AlertTriangle className="w-3 h-3 mt-0.5 text-red-600" />
+                            {point}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {implementationView.type === 'learning-insights' && (
+                <div className="space-y-6">
+                  <div className="bg-green-50 p-4 rounded-lg">
+                    <h4 className="font-semibold text-green-900 mb-3 flex items-center gap-2">
+                      <Brain className="w-4 h-4" />
+                      Adaptive Learning Insights
+                    </h4>
+                    <p className="text-sm text-green-800">
+                      AI-powered insights generated from your scenario interactions and patterns.
+                    </p>
+                  </div>
+                  
+                  <div className="space-y-4">
+                    {implementationView.data.map((insight, idx) => (
+                      <div key={idx} className="border rounded-lg p-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <h5 className="font-semibold text-gray-900 flex items-center gap-2">
+                            {insight.insight_type === 'pattern_recognition' && <BarChart3 className="w-4 h-4 text-blue-600" />}
+                            {insight.insight_type === 'outcome_prediction' && <TrendingUp className="w-4 h-4 text-green-600" />}
+                            {insight.insight_type === 'optimization_suggestion' && <Target className="w-4 h-4 text-purple-600" />}
+                            {insight.insight_type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                          </h5>
+                          <Badge variant="outline" className="text-xs">
+                            {Math.round(insight.confidence_score * 100)}% confidence
+                          </Badge>
+                        </div>
+                        <p className="text-sm text-gray-700">{insight.insight_content}</p>
+                        <div className="mt-2 flex gap-2">
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            className="text-xs"
+                            onClick={() => {
+                              // Mark insight as applied
+                              toast({ title: "Insight Applied", description: "This insight has been marked as applied to your strategy." });
+                            }}
+                          >
+                            Apply Insight
+                          </Button>
+                          {!insight.applied && (
+                            <Badge variant="secondary" className="text-xs">
+                              New
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {implementationView.type === 'game-book' && (
                 <div className="space-y-6">
                   <div className="bg-blue-50 p-4 rounded-lg">
