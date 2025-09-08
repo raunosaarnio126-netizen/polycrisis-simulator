@@ -295,7 +295,7 @@ const Dashboard = () => {
               <Brain className="w-10 h-10 text-purple-500" />
             </div>
           </CardContent>
-        </div>
+        </Card>
         
         <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200">
           <CardContent className="p-6">
