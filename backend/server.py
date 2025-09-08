@@ -179,6 +179,63 @@ class LearningInsight(BaseModel):
     effectiveness_rating: Optional[float] = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
+class MonitoringSource(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    scenario_id: str
+    user_id: str
+    source_type: str  # "news_api", "social_media", "government_data", "weather_api", "financial_market", "custom_url"
+    source_url: str
+    source_name: str
+    monitoring_frequency: str  # "real_time", "hourly", "daily", "weekly"
+    data_keywords: List[str]  # Keywords to filter relevant information
+    status: str = "active"  # "active", "paused", "error", "inactive"
+    last_check: Optional[datetime] = None
+    total_data_points: int = 0
+    relevance_score: float = 0.0  # AI-calculated relevance to scenario
+    added_by_team_member: str
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class MonitoringSourceCreate(BaseModel):
+    source_type: str
+    source_url: str
+    source_name: str
+    monitoring_frequency: str
+    data_keywords: List[str]
+
+class CollectedData(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    source_id: str
+    scenario_id: str
+    data_content: str
+    data_title: str
+    data_url: Optional[str] = None
+    relevance_score: float  # AI-calculated relevance
+    sentiment_score: float  # -1.0 to 1.0 (negative to positive)
+    urgency_level: str  # "low", "medium", "high", "critical"
+    keywords_matched: List[str]
+    ai_summary: str
+    collected_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class TeamCollaboration(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    scenario_id: str
+    team_members: List[str]  # Email addresses of team members
+    shared_sources: List[str]  # Source IDs
+    collaboration_notes: List[str]
+    access_level: str = "team"  # "team", "organization", "public"
+    created_by: str
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class SmartSuggestion(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    scenario_id: str
+    suggestion_type: str  # "data_source", "monitoring_keyword", "analysis_focus"
+    suggestion_content: str
+    reasoning: str
+    confidence_score: float
+    implemented: bool = False
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
 # Helper functions
 def verify_password(plain_password, hashed_password):
     return pwd_context.verify(plain_password, hashed_password)
