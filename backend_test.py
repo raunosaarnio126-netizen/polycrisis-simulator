@@ -65,12 +65,14 @@ class PolycrisisAPITester:
             return False, {}
 
     def test_user_registration(self):
-        """Test user registration"""
+        """Test enhanced user registration with enterprise fields"""
         test_user_data = {
             "email": f"test_user_{datetime.now().strftime('%H%M%S')}@example.com",
             "username": f"testuser_{datetime.now().strftime('%H%M%S')}",
             "password": "TestPass123!",
-            "organization": "Test Organization"
+            "organization": "Test Organization",
+            "job_title": "Crisis Management Director",
+            "department": "Risk Management"
         }
         
         success, response = self.run_test(
