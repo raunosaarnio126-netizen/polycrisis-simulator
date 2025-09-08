@@ -2134,6 +2134,94 @@ const ScenarioManagement = ({ onScenarioSelect }) => {
             </DialogHeader>
             
             <div className="space-y-6">
+              {implementationView.type === 'monitoring-suggestions' && (
+                <div className="space-y-6">
+                  <div className="bg-yellow-50 p-4 rounded-lg">
+                    <h4 className="font-semibold text-yellow-900 mb-3 flex items-center gap-2">
+                      <Lightbulb className="w-4 h-4" />
+                      Smart Monitoring Source Suggestions
+                    </h4>
+                    <p className="text-sm text-yellow-800">
+                      AI-generated suggestions for optimal data sources and monitoring strategies based on your scenario.
+                    </p>
+                  </div>
+                  
+                  <div className="space-y-4">
+                    {implementationView.data.map((suggestion, idx) => (
+                      <div key={idx} className="border rounded-lg p-4 hover:bg-gray-50">
+                        <div className="flex items-center justify-between mb-2">
+                          <h5 className="font-semibold text-gray-900 flex items-center gap-2">
+                            {suggestion.suggestion_type === 'data_source' && <Database className="w-4 h-4 text-blue-600" />}
+                            {suggestion.suggestion_type === 'monitoring_keyword' && <Rss className="w-4 h-4 text-green-600" />}
+                            {suggestion.suggestion_type === 'analysis_focus' && <Target className="w-4 h-4 text-purple-600" />}
+                            {suggestion.suggestion_type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                          </h5>
+                          <div className="flex items-center gap-2">
+                            <Badge variant="outline" className="text-xs">
+                              {Math.round(suggestion.confidence_score * 100)}% confidence
+                            </Badge>
+                            {suggestion.suggestion_content.includes('http') && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => window.open(suggestion.suggestion_content.match(/https?:\/\/[^\s]+/)?.[0], '_blank')}
+                              >
+                                <ExternalLink className="w-3 h-3" />
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                        <p className="text-sm text-gray-700 mb-2">{suggestion.suggestion_content}</p>
+                        <p className="text-xs text-gray-600 mb-3">{suggestion.reasoning}</p>
+                        <div className="flex gap-2">
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            className="text-xs"
+                            onClick={() => {
+                              // Auto-fill add source dialog with suggestion data
+                              if (suggestion.suggestion_type === 'data_source') {
+                                const urlMatch = suggestion.suggestion_content.match(/https?:\/\/[^\s]+/);
+                                if (urlMatch) {
+                                  setNewSourceData({
+                                    source_type: 'custom_url',
+                                    source_url: urlMatch[0],
+                                    source_name: suggestion.suggestion_content.split(' - ')[0] || 'Suggested Source',
+                                    monitoring_frequency: 'daily',
+                                    data_keywords: implementationView.scenario.key_variables.slice(0, 3)
+                                  });
+                                  setShowAddSourceDialog(implementationView.scenario);
+                                  setImplementationView(null);
+                                }
+                              }
+                              toast({ title: "Suggestion Applied", description: "Source suggestion has been prepared for addition." });
+                            }}
+                          >
+                            <Plus className="w-3 h-3 mr-1" />
+                            Use This Suggestion
+                          </Button>
+                          {!suggestion.implemented && (
+                            <Badge variant="secondary" className="text-xs">
+                              New
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  
+                  <div className="bg-blue-50 p-4 rounded-lg">
+                    <h5 className="font-semibold text-blue-900 mb-2">Next Steps</h5>
+                    <ul className="text-sm text-blue-800 space-y-1">
+                      <li>• Click "Use This Suggestion" to quickly add recommended sources</li>
+                      <li>• Customize monitoring frequency based on your needs</li>
+                      <li>• Add team members to collaborate on monitoring sources</li>
+                      <li>• Set up automated data collection for continuous insights</li>
+                    </ul>
+                  </div>
+                </div>
+              )}
+
               {implementationView.type === 'complex-systems' && (
                 <div className="space-y-6">
                   <div className="bg-purple-50 p-4 rounded-lg">
