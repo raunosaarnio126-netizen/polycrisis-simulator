@@ -55,6 +55,9 @@ class UserCreate(BaseModel):
     username: str
     password: str
     organization: str
+    job_title: Optional[str] = None
+    department: Optional[str] = None
+    phone: Optional[str] = None
 
 class UserLogin(BaseModel):
     email: str
