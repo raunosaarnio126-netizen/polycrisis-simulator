@@ -2145,6 +2145,416 @@ async def create_company_scenario(company_id: str, scenario_data: ScenarioCreate
     await db.scenarios.insert_one(scenario.dict())
     return scenario
 
+# Admin Authentication and Management
+async def get_admin_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    """Verify admin credentials"""
+    try:
+        payload = jwt.decode(credentials.credentials, SECRET_KEY, algorithms=[ALGORITHM])
+        user_id: str = payload.get("sub")
+        if user_id is None:
+            raise HTTPException(status_code=401, detail="Invalid token")
+        
+        user = await db.users.find_one({"id": user_id})
+        if user is None:
+            raise HTTPException(status_code=401, detail="User not found")
+        
+        # Check if user is admin
+        admin_creds = await db.admin_credentials.find_one({"admin_email": user["email"]})
+        if not admin_creds:
+            raise HTTPException(status_code=403, detail="Admin access required")
+        
+        return User(**user)
+    except jwt.PyJWTError:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
+@api_router.post("/admin/initialize")
+async def initialize_admin():
+    """Initialize admin credentials for rauno.saarnio@xr-presence.com"""
+    admin_email = "rauno.saarnio@xr-presence.com"
+    
+    # Check if admin already exists
+    existing_admin = await db.admin_credentials.find_one({"admin_email": admin_email})
+    if existing_admin:
+        return {"message": "Admin already initialized", "admin_email": admin_email}
+    
+    # Create admin credentials
+    admin_creds = AdminCredentials(
+        admin_email=admin_email,
+        admin_level="super_admin",
+        permissions=["all", "client_management", "licensing", "billing", "support", "avatar_management"]
+    )
+    
+    await db.admin_credentials.insert_one(admin_creds.dict())
+    
+    # Initialize license tiers
+    license_tiers = [
+        LicenseTier(
+            tier_name="Single User",
+            max_users=1,
+            monthly_price=99.0,
+            annual_price=990.0,  # 2 months free
+            features=[
+                "Basic crisis simulation",
+                "AI Avatar Genie",
+                "Standard scenarios",
+                "Email support"
+            ]
+        ),
+        LicenseTier(
+            tier_name="Small Team",
+            max_users=2,
+            monthly_price=179.0,
+            annual_price=1790.0,  # 2 months free
+            features=[
+                "All Single User features",
+                "Team collaboration",
+                "Advanced scenarios",
+                "Priority support"
+            ]
+        ),
+        LicenseTier(
+            tier_name="Medium Team",
+            max_users=5,
+            monthly_price=399.0,
+            annual_price=3990.0,  # 2 months free
+            features=[
+                "All Small Team features",
+                "Document intelligence",
+                "Company analysis",
+                "Advanced AI monitors",
+                "Custom competences"
+            ]
+        ),
+        LicenseTier(
+            tier_name="Large Team",
+            max_users=10,
+            monthly_price=699.0,
+            annual_price=6990.0,  # 2 months free
+            features=[
+                "All Medium Team features",
+                "Unlimited scenarios",
+                "Advanced analytics",
+                "White-label options",
+                "Dedicated support"
+            ]
+        )
+    ]
+    
+    for tier in license_tiers:
+        await db.license_tiers.insert_one(tier.dict())
+    
+    # Initialize AI Avatars
+    ai_avatars = [
+        AIAvatar(
+            avatar_name="Risk Monitor Alpha",
+            avatar_type="risk_monitor",
+            description="Advanced risk assessment and monitoring system",
+            base_competences=[
+                "Real-time risk assessment",
+                "Threat detection and analysis",
+                "Risk level calculation",
+                "Early warning systems",
+                "Compliance monitoring"
+            ],
+            status="active"
+        ),
+        AIAvatar(
+            avatar_name="Performance Tracker Pro",
+            avatar_type="performance_tracker",
+            description="Performance monitoring and optimization system",
+            base_competences=[
+                "Performance metrics tracking",
+                "KPI monitoring",
+                "Efficiency analysis",
+                "Resource optimization",
+                "Benchmark comparisons"
+            ],
+            status="active"
+        ),
+        AIAvatar(
+            avatar_name="Anomaly Detector Advanced",
+            avatar_type="anomaly_detector",
+            description="Advanced anomaly detection and pattern recognition",
+            base_competences=[
+                "Pattern recognition",
+                "Statistical anomaly detection",
+                "Behavioral analysis",
+                "Predictive modeling",
+                "Alert prioritization"
+            ],
+            status="monitoring"
+        ),
+        AIAvatar(
+            avatar_name="Trend Analyzer Elite",
+            avatar_type="trend_analyzer",
+            description="Trend analysis and predictive insights system",
+            base_competences=[
+                "Trend identification",
+                "Predictive analytics",
+                "Market analysis",
+                "Forecasting models",
+                "Strategic insights"
+            ],
+            status="learning"
+        )
+    ]
+    
+    for avatar in ai_avatars:
+        await db.ai_avatars.insert_one(avatar.dict())
+    
+    return {
+        "message": "Admin system initialized successfully",
+        "admin_email": admin_email,
+        "license_tiers": len(license_tiers),
+        "ai_avatars": len(ai_avatars)
+    }
+
+# License Tier Management
+@api_router.get("/admin/license-tiers", response_model=List[LicenseTier])
+async def get_license_tiers(admin_user: User = Depends(get_admin_user)):
+    tiers = await db.license_tiers.find().to_list(1000)
+    return [LicenseTier(**tier) for tier in tiers]
+
+@api_router.put("/admin/license-tiers/{tier_id}", response_model=LicenseTier)
+async def update_license_tier(tier_id: str, tier_data: dict, admin_user: User = Depends(get_admin_user)):
+    await db.license_tiers.update_one({"id": tier_id}, {"$set": tier_data})
+    updated_tier = await db.license_tiers.find_one({"id": tier_id})
+    return LicenseTier(**updated_tier)
+
+# Client Management
+@api_router.post("/admin/clients", response_model=Client)
+async def create_client(client_data: ClientCreate, admin_user: User = Depends(get_admin_user)):
+    # Calculate trial end date (14 days from now)
+    trial_end = datetime.now(timezone.utc) + timedelta(days=14)
+    
+    client = Client(
+        client_name=client_data.client_name,
+        client_email=client_data.client_email,
+        license_tier_id=client_data.license_tier_id,
+        license_count=client_data.license_count,
+        trial_end_date=trial_end,
+        created_by_admin=admin_user.id
+    )
+    
+    await db.clients.insert_one(client.dict())
+    return client
+
+@api_router.get("/admin/clients", response_model=List[Client])
+async def get_all_clients(admin_user: User = Depends(get_admin_user)):
+    clients = await db.clients.find().sort("created_at", -1).to_list(1000)
+    return [Client(**client) for client in clients]
+
+@api_router.get("/admin/clients/{client_id}", response_model=Client)
+async def get_client(client_id: str, admin_user: User = Depends(get_admin_user)):
+    client = await db.clients.find_one({"id": client_id})
+    if not client:
+        raise HTTPException(status_code=404, detail="Client not found")
+    return Client(**client)
+
+@api_router.put("/admin/clients/{client_id}/upgrade")
+async def upgrade_client_license(client_id: str, new_tier_id: str, new_license_count: int, admin_user: User = Depends(get_admin_user)):
+    client = await db.clients.find_one({"id": client_id})
+    if not client:
+        raise HTTPException(status_code=404, detail="Client not found")
+    
+    # Update client license
+    await db.clients.update_one(
+        {"id": client_id},
+        {
+            "$set": {
+                "license_tier_id": new_tier_id,
+                "license_count": new_license_count,
+                "last_activity": datetime.now(timezone.utc)
+            }
+        }
+    )
+    
+    return {"message": "Client license upgraded successfully"}
+
+# AI Avatar Management
+@api_router.get("/admin/ai-avatars", response_model=List[AIAvatar])
+async def get_ai_avatars(admin_user: User = Depends(get_admin_user)):
+    avatars = await db.ai_avatars.find().to_list(1000)
+    return [AIAvatar(**avatar) for avatar in avatars]
+
+@api_router.put("/admin/ai-avatars/{avatar_id}/status")
+async def update_avatar_status(avatar_id: str, new_status: str, admin_user: User = Depends(get_admin_user)):
+    valid_statuses = ["active", "inactive", "learning", "monitoring"]
+    if new_status not in valid_statuses:
+        raise HTTPException(status_code=400, detail="Invalid status")
+    
+    await db.ai_avatars.update_one(
+        {"id": avatar_id},
+        {"$set": {"status": new_status}}
+    )
+    
+    return {"message": f"Avatar status updated to {new_status}"}
+
+# Client Avatar Competence Management
+@api_router.post("/avatars/{avatar_id}/competences", response_model=AvatarCompetence)
+async def add_avatar_competence(avatar_id: str, competence_data: AvatarCompetenceCreate, current_user: User = Depends(get_current_user)):
+    # Verify avatar exists
+    avatar = await db.ai_avatars.find_one({"id": avatar_id})
+    if not avatar:
+        raise HTTPException(status_code=404, detail="Avatar not found")
+    
+    competence = AvatarCompetence(
+        avatar_id=avatar_id,
+        competence_name=competence_data.competence_name,
+        competence_description=competence_data.competence_description,
+        competence_type=competence_data.competence_type,
+        proficiency_level=competence_data.proficiency_level,
+        added_by_client=current_user.id
+    )
+    
+    await db.avatar_competences.insert_one(competence.dict())
+    
+    # Update avatar with new competence
+    await db.ai_avatars.update_one(
+        {"id": avatar_id},
+        {
+            "$push": {
+                "client_custom_competences": competence_data.competence_name
+            }
+        }
+    )
+    
+    return competence
+
+@api_router.get("/avatars/{avatar_id}/competences", response_model=List[AvatarCompetence])
+async def get_avatar_competences(avatar_id: str, current_user: User = Depends(get_current_user)):
+    competences = await db.avatar_competences.find({"avatar_id": avatar_id}).to_list(1000)
+    return [AvatarCompetence(**comp) for comp in competences]
+
+# Stripe Integration Endpoints
+@api_router.post("/admin/stripe/create-payment-intent")
+async def create_payment_intent(client_id: str, tier_id: str, billing_period: str, admin_user: User = Depends(get_admin_user)):
+    """Create Stripe payment intent for client subscription"""
+    try:
+        import stripe
+        stripe.api_key = os.environ.get('STRIPE_SECRET_KEY', 'sk_test_fake_key_for_demo')
+        
+        # Get client and tier info
+        client = await db.clients.find_one({"id": client_id})
+        tier = await db.license_tiers.find_one({"id": tier_id})
+        
+        if not client or not tier:
+            raise HTTPException(status_code=404, detail="Client or tier not found")
+        
+        # Calculate amount
+        amount = int((tier['monthly_price'] if billing_period == 'monthly' else tier['annual_price']) * 100)  # Convert to cents
+        
+        # Create payment intent
+        payment_intent = stripe.PaymentIntent.create(
+            amount=amount,
+            currency='usd',
+            customer_email=client['client_email'],
+            metadata={
+                'client_id': client_id,
+                'tier_id': tier_id,
+                'billing_period': billing_period
+            }
+        )
+        
+        # Record payment
+        payment_record = PaymentRecord(
+            client_id=client_id,
+            stripe_payment_intent_id=payment_intent.id,
+            amount=amount / 100,
+            payment_status="pending",
+            license_tier_id=tier_id,
+            license_count=client['license_count'],
+            billing_period=billing_period
+        )
+        
+        await db.payment_records.insert_one(payment_record.dict())
+        
+        return {
+            "client_secret": payment_intent.client_secret,
+            "payment_intent_id": payment_intent.id,
+            "amount": amount / 100
+        }
+        
+    except Exception as e:
+        # For demo purposes, return mock data if Stripe is not configured
+        return {
+            "client_secret": "pi_demo_client_secret",
+            "payment_intent_id": "pi_demo_payment_intent",
+            "amount": tier['monthly_price'] if billing_period == 'monthly' else tier['annual_price'],
+            "demo_mode": True
+        }
+
+@api_router.post("/admin/stripe/webhook")
+async def stripe_webhook(request: dict):
+    """Handle Stripe webhooks for payment confirmations"""
+    # In production, verify webhook signature
+    event_type = request.get('type')
+    
+    if event_type == 'payment_intent.succeeded':
+        payment_intent = request.get('data', {}).get('object', {})
+        
+        # Update payment record
+        await db.payment_records.update_one(
+            {"stripe_payment_intent_id": payment_intent.get('id')},
+            {"$set": {"payment_status": "succeeded"}}
+        )
+        
+        # Update client subscription status
+        metadata = payment_intent.get('metadata', {})
+        client_id = metadata.get('client_id')
+        
+        if client_id:
+            await db.clients.update_one(
+                {"id": client_id},
+                {
+                    "$set": {
+                        "subscription_status": "active",
+                        "subscription_start_date": datetime.now(timezone.utc)
+                    }
+                }
+            )
+    
+    return {"status": "success"}
+
+# Admin Dashboard Stats
+@api_router.get("/admin/dashboard/stats")
+async def get_admin_dashboard_stats(admin_user: User = Depends(get_admin_user)):
+    total_clients = await db.clients.count_documents({})
+    active_clients = await db.clients.count_documents({"subscription_status": "active"})
+    trial_clients = await db.clients.count_documents({"subscription_status": "trial"})
+    total_revenue = await db.payment_records.aggregate([
+        {"$match": {"payment_status": "succeeded"}},
+        {"$group": {"_id": None, "total": {"$sum": "$amount"}}}
+    ]).to_list(1)
+    
+    revenue = total_revenue[0]['total'] if total_revenue else 0
+    
+    # License distribution
+    license_distribution = await db.clients.aggregate([
+        {"$lookup": {
+            "from": "license_tiers",
+            "localField": "license_tier_id", 
+            "foreignField": "id",
+            "as": "tier"
+        }},
+        {"$unwind": "$tier"},
+        {"$group": {
+            "_id": "$tier.tier_name",
+            "count": {"$sum": 1}
+        }}
+    ]).to_list(10)
+    
+    return {
+        "total_clients": total_clients,
+        "active_clients": active_clients,
+        "trial_clients": trial_clients,
+        "total_revenue": revenue,
+        "license_distribution": license_distribution,
+        "ai_avatars_active": await db.ai_avatars.count_documents({"status": "active"}),
+        "total_scenarios": await db.scenarios.count_documents({}),
+        "total_simulations": await db.simulation_results.count_documents({})
+    }
+
 @api_router.get("/dashboard/stats")
 async def get_dashboard_stats(current_user: User = Depends(get_current_user)):
     total_scenarios = await db.scenarios.count_documents({"user_id": current_user.id})
