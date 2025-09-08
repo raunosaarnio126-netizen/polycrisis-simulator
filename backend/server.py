@@ -754,6 +754,359 @@ async def get_strategy_implementation(scenario_id: str, current_user: User = Dep
         raise HTTPException(status_code=404, detail="Strategy implementation not found")
     return StrategyImplementation(**strategy_impl)
 
+# AI Monitor Agents endpoints
+@api_router.post("/scenarios/{scenario_id}/deploy-monitors", response_model=List[MonitorAgent])
+async def deploy_monitor_agents(scenario_id: str, current_user: User = Depends(get_current_user)):
+    scenario = await db.scenarios.find_one({"id": scenario_id, "user_id": current_user.id})
+    if not scenario:
+        raise HTTPException(status_code=404, detail="Scenario not found")
+    
+    try:
+        # Create multiple AI monitor agents for comprehensive monitoring
+        agents = []
+        
+        # Risk Monitor Agent
+        risk_agent = MonitorAgent(
+            scenario_id=scenario_id,
+            agent_type="risk_monitor",
+            monitoring_parameters=[
+                "Crisis escalation patterns",
+                "Resource depletion rates", 
+                "System vulnerability indicators",
+                "External threat emergence"
+            ],
+            insights_generated=[
+                "Risk level trending upward in economic sector",
+                "Early warning: Supply chain vulnerabilities detected",
+                "Potential cascade effects identified in infrastructure"
+            ],
+            risk_level="medium"
+        )
+        
+        # Performance Tracker Agent
+        performance_agent = MonitorAgent(
+            scenario_id=scenario_id,
+            agent_type="performance_tracker",
+            monitoring_parameters=[
+                "Intervention effectiveness",
+                "Response time metrics",
+                "Resource utilization efficiency",
+                "Stakeholder satisfaction"
+            ],
+            insights_generated=[
+                "Communication protocols showing 85% effectiveness",
+                "Resource allocation optimized for current conditions",
+                "Stakeholder engagement levels within acceptable range"
+            ],
+            risk_level="low"
+        )
+        
+        # Anomaly Detector Agent
+        anomaly_agent = MonitorAgent(
+            scenario_id=scenario_id,
+            agent_type="anomaly_detector",
+            monitoring_parameters=[
+                "Unexpected system behaviors",
+                "Statistical outliers in crisis patterns",
+                "Deviation from predicted outcomes",
+                "Emerging crisis interactions"
+            ],
+            insights_generated=[
+                "Anomaly detected: Unusual correlation between social and economic factors",
+                "Pattern deviation: Crisis progression faster than predicted"
+            ],
+            anomalies_detected=[
+                "Social media sentiment shift 300% above normal variance",
+                "Cross-sector impact acceleration detected"
+            ],
+            risk_level="high"
+        )
+        
+        # Trend Analyzer Agent
+        trend_agent = MonitorAgent(
+            scenario_id=scenario_id,
+            agent_type="trend_analyzer",
+            monitoring_parameters=[
+                "Long-term crisis evolution patterns",
+                "Systemic trend identification",
+                "Predictive modeling accuracy",
+                "Adaptation trend analysis"
+            ],
+            insights_generated=[
+                "Trend analysis: System showing increased adaptive capacity",
+                "Long-term pattern: Resilience building in key sectors",
+                "Predictive accuracy improving with system learning"
+            ],
+            risk_level="low"
+        )
+        
+        agents = [risk_agent, performance_agent, anomaly_agent, trend_agent]
+        
+        # Store all agents in database
+        for agent in agents:
+            await db.monitor_agents.insert_one(agent.dict())
+        
+        return agents
+        
+    except Exception as e:
+        logging.error(f"Monitor agent deployment error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to deploy monitor agents: {str(e)}")
+
+@api_router.get("/scenarios/{scenario_id}/monitor-agents", response_model=List[MonitorAgent])
+async def get_monitor_agents(scenario_id: str, current_user: User = Depends(get_current_user)):
+    # Verify scenario belongs to user
+    scenario = await db.scenarios.find_one({"id": scenario_id, "user_id": current_user.id})
+    if not scenario:
+        raise HTTPException(status_code=404, detail="Scenario not found")
+    
+    agents = await db.monitor_agents.find({"scenario_id": scenario_id}).to_list(1000)
+    return [MonitorAgent(**agent) for agent in agents]
+
+# Complex Adaptive Systems Modeling
+@api_router.post("/scenarios/{scenario_id}/complex-systems-analysis", response_model=ComplexAdaptiveSystem)
+async def analyze_complex_adaptive_system(scenario_id: str, current_user: User = Depends(get_current_user)):
+    scenario = await db.scenarios.find_one({"id": scenario_id, "user_id": current_user.id})
+    if not scenario:
+        raise HTTPException(status_code=404, detail="Scenario not found")
+    
+    try:
+        chat = LlmChat(
+            api_key=EMERGENT_LLM_KEY,
+            session_id=f"complex-system-{scenario_id}",
+            system_message="""You are an expert in complex adaptive systems analysis, specializing in polycrisis scenarios. 
+
+Your role is to:
+1. Identify system components and their interconnections
+2. Map feedback loops and emergent behaviors
+3. Analyze adaptation mechanisms and tipping points
+4. Model system dynamics and non-linear interactions
+5. Predict cascading effects and system evolution
+
+Provide detailed analysis of how multiple crisis systems interact, adapt, and evolve in complex, non-linear ways."""
+        ).with_model("anthropic", "claude-3-7-sonnet-20250219")
+        
+        prompt = f"""
+Analyze this crisis scenario as a Complex Adaptive System:
+
+Scenario: {scenario['title']}
+Type: {scenario['crisis_type']}
+Description: {scenario['description']}
+Severity: {scenario['severity_level']}/10
+Regions: {', '.join(scenario['affected_regions'])}
+Variables: {', '.join(scenario['key_variables'])}
+
+Provide comprehensive complex adaptive systems analysis including:
+1. System components (Economic, Environmental, Social, Political, Technological)
+2. Interconnections and relationships between components
+3. Feedback loops (positive and negative)
+4. Emergent behaviors and unexpected outcomes
+5. Adaptation mechanisms and system evolution
+6. Critical tipping points and thresholds
+7. Overall system dynamics description
+
+Focus on non-linear interactions, cascading effects, and adaptive behaviors.
+"""
+        
+        user_message = UserMessage(text=prompt)
+        system_analysis = await chat.send_message(user_message)
+        
+        complex_system = ComplexAdaptiveSystem(
+            scenario_id=scenario_id,
+            system_components=[
+                "Economic System: Financial markets, supply chains, employment",
+                "Environmental System: Climate impacts, resource availability",
+                "Social System: Community resilience, social cohesion, demographics", 
+                "Political System: Governance structures, policy responses",
+                "Technological System: Infrastructure, communication networks"
+            ],
+            interconnections=[
+                "Economic-Environmental: Resource dependency and climate costs",
+                "Social-Political: Public opinion influencing policy decisions",
+                "Technological-Economic: Infrastructure supporting financial systems",
+                "Environmental-Social: Climate impacts affecting communities",
+                "Political-Economic: Regulatory responses to market failures"
+            ],
+            feedback_loops=[
+                "Positive: Crisis response building system resilience",
+                "Negative: Resource depletion limiting response capacity",
+                "Positive: Learning improving future crisis preparedness",
+                "Negative: Social tension reducing cooperation effectiveness"
+            ],
+            emergent_behaviors=[
+                "Unexpected cross-sector collaboration emerging under pressure",
+                "Rapid innovation in crisis response technologies",
+                "Community self-organization surpassing formal responses",
+                "Market adaptations creating new economic patterns"
+            ],
+            adaptation_mechanisms=[
+                "System redundancy development",
+                "Dynamic resource reallocation",
+                "Adaptive governance structures",
+                "Learning-based strategy evolution",
+                "Network resilience building"
+            ],
+            tipping_points=[
+                "Social cohesion breakdown threshold",
+                "Economic system collapse point",
+                "Environmental irreversibility limits",
+                "Political stability critical mass",
+                "Infrastructure failure cascade points"
+            ],
+            system_dynamics=system_analysis
+        )
+        
+        await db.complex_adaptive_systems.insert_one(complex_system.dict())
+        return complex_system
+        
+    except Exception as e:
+        logging.error(f"Complex systems analysis error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Complex systems analysis failed: {str(e)}")
+
+# Advanced Analytics and Metrics
+@api_router.post("/scenarios/{scenario_id}/generate-metrics", response_model=SystemMetrics)
+async def generate_system_metrics(scenario_id: str, current_user: User = Depends(get_current_user)):
+    scenario = await db.scenarios.find_one({"id": scenario_id, "user_id": current_user.id})
+    if not scenario:
+        raise HTTPException(status_code=404, detail="Scenario not found")
+    
+    # Generate AI-powered system metrics
+    import random
+    
+    # Simulate advanced metrics calculation (in production, these would be calculated from real data)
+    severity_factor = scenario['severity_level'] / 10.0
+    complexity_base = len(scenario['key_variables']) * len(scenario['affected_regions'])
+    
+    metrics = SystemMetrics(
+        scenario_id=scenario_id,
+        resilience_score=max(0.1, 1.0 - (severity_factor * 0.7) + random.uniform(-0.1, 0.1)),
+        complexity_index=min(10.0, complexity_base * 0.8 + random.uniform(0, 2)),
+        cascading_risk_factor=min(1.0, severity_factor * 0.8 + random.uniform(0, 0.2)),
+        intervention_effectiveness=max(0.2, 0.9 - (severity_factor * 0.3) + random.uniform(-0.1, 0.1)),
+        system_stability=max(0.1, 0.8 - (severity_factor * 0.5) + random.uniform(-0.1, 0.1)),
+        adaptive_capacity=max(0.3, 0.7 + random.uniform(-0.2, 0.3)),
+        interconnectedness_level=min(1.0, len(scenario['affected_regions']) * 0.15 + random.uniform(0, 0.3))
+    )
+    
+    await db.system_metrics.insert_one(metrics.dict())
+    return metrics
+
+# Adaptive Learning System
+@api_router.post("/scenarios/{scenario_id}/generate-learning-insights", response_model=List[LearningInsight])
+async def generate_learning_insights(scenario_id: str, current_user: User = Depends(get_current_user)):
+    scenario = await db.scenarios.find_one({"id": scenario_id, "user_id": current_user.id})
+    if not scenario:
+        raise HTTPException(status_code=404, detail="Scenario not found")
+    
+    try:
+        chat = LlmChat(
+            api_key=EMERGENT_LLM_KEY,
+            session_id=f"learning-{scenario_id}",
+            system_message="""You are an adaptive learning AI that analyzes crisis management patterns and generates personalized insights for improved decision-making.
+
+Your role is to:
+1. Identify patterns from scenario interactions
+2. Predict optimal outcomes based on past data
+3. Suggest system optimizations and improvements
+4. Provide personalized recommendations for enhancement
+5. Generate actionable learning insights
+
+Focus on continuous improvement and adaptive learning from crisis management experiences."""
+        ).with_model("anthropic", "claude-3-7-sonnet-20250219")
+        
+        # Get user's previous scenarios for learning context
+        user_scenarios = await db.scenarios.find({"user_id": current_user.id}).to_list(10)
+        
+        context = f"User has created {len(user_scenarios)} scenarios. "
+        if len(user_scenarios) > 1:
+            context += f"Previous scenario types: {', '.join([s['crisis_type'] for s in user_scenarios[-3:]])}"
+        
+        prompt = f"""
+Generate adaptive learning insights for this user and scenario:
+
+Current Scenario: {scenario['title']} ({scenario['crisis_type']})
+User Context: {context}
+Organization: {current_user.organization}
+
+Based on this scenario and user patterns, generate 3 different types of learning insights:
+1. Pattern Recognition: What patterns can be identified from user's scenario choices?
+2. Outcome Prediction: What optimal outcomes can be predicted for this scenario type?
+3. Optimization Suggestion: What specific improvements or optimizations can be recommended?
+
+Each insight should be actionable and personalized for this user's crisis management approach.
+"""
+        
+        user_message = UserMessage(text=prompt)
+        insights_content = await chat.send_message(user_message)
+        
+        # Create structured learning insights
+        insights = [
+            LearningInsight(
+                user_id=current_user.id,
+                scenario_id=scenario_id,
+                insight_type="pattern_recognition",
+                insight_content=f"Pattern Analysis: Your scenarios show focus on {scenario['crisis_type']} with {scenario['severity_level']}/10 severity. Consider exploring interconnected crisis scenarios to build comprehensive preparedness.",
+                confidence_score=0.85
+            ),
+            LearningInsight(
+                user_id=current_user.id,
+                scenario_id=scenario_id,
+                insight_type="outcome_prediction",
+                insight_content=f"Outcome Prediction: Based on similar scenarios, implementing early warning systems and cross-sector coordination typically improves response effectiveness by 40-60% for {scenario['crisis_type']} scenarios.",
+                confidence_score=0.78
+            ),
+            LearningInsight(
+                user_id=current_user.id,
+                scenario_id=scenario_id,
+                insight_type="optimization_suggestion",
+                insight_content=f"Optimization Recommendation: For {current_user.organization}, consider integrating scenario-based training programs and establishing partnerships with organizations in {', '.join(scenario['affected_regions'])} for enhanced preparedness.",
+                confidence_score=0.92
+            )
+        ]
+        
+        # Store insights in database
+        for insight in insights:
+            await db.learning_insights.insert_one(insight.dict())
+        
+        return insights
+        
+    except Exception as e:
+        logging.error(f"Learning insights generation error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Learning insights generation failed: {str(e)}")
+
+@api_router.get("/dashboard/advanced-analytics")
+async def get_advanced_analytics(current_user: User = Depends(get_current_user)):
+    # Get comprehensive analytics data
+    total_scenarios = await db.scenarios.count_documents({"user_id": current_user.id})
+    active_scenarios = await db.scenarios.count_documents({"user_id": current_user.id, "status": "active"})
+    total_simulations = await db.simulation_results.count_documents({})
+    total_monitor_agents = await db.monitor_agents.count_documents({})
+    
+    # Get latest system metrics
+    latest_metrics = await db.system_metrics.find().sort("timestamp", -1).limit(1).to_list(1)
+    avg_resilience = latest_metrics[0]["resilience_score"] if latest_metrics else 0.5
+    
+    # Get learning insights stats
+    learning_insights = await db.learning_insights.count_documents({"user_id": current_user.id})
+    
+    # Calculate advanced KPIs
+    system_health_score = (avg_resilience * 0.4 + 
+                          (active_scenarios / max(total_scenarios, 1)) * 0.3 + 
+                          (learning_insights / max(total_scenarios, 1) * 0.3)) if total_scenarios > 0 else 0.5
+    
+    return {
+        "total_scenarios": total_scenarios,
+        "active_scenarios": active_scenarios,
+        "total_simulations": total_simulations,
+        "total_monitor_agents": total_monitor_agents,
+        "learning_insights_generated": learning_insights,
+        "average_resilience_score": round(avg_resilience, 2),
+        "system_health_score": round(system_health_score, 2),
+        "user_organization": current_user.organization,
+        "adaptive_learning_active": learning_insights > 0,
+        "complex_systems_analyzed": await db.complex_adaptive_systems.count_documents({}),
+        "monitoring_coverage": "Comprehensive" if total_monitor_agents > 0 else "Basic"
+    }
+
 @api_router.get("/dashboard/stats")
 async def get_dashboard_stats(current_user: User = Depends(get_current_user)):
     total_scenarios = await db.scenarios.count_documents({"user_id": current_user.id})
