@@ -989,39 +989,76 @@ const ScenarioManagement = ({ onScenarioSelect }) => {
                   </div>
                 </div>
 
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setSelectedScenario(scenario)}
-                    className="flex-1"
-                  >
-                    <Eye className="w-3 h-3 mr-1" />
-                    View
-                  </Button>
+                <div className="space-y-2">
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setSelectedScenario(scenario)}
+                      className="flex-1"
+                    >
+                      <Eye className="w-3 h-3 mr-1" />
+                      View
+                    </Button>
+                    
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleRunSimulation(scenario)}
+                      disabled={loading}
+                      className="flex-1"
+                    >
+                      <Play className="w-3 h-3 mr-1" />
+                      Simulate
+                    </Button>
+                    
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setScenarioToDelete(scenario);
+                        setShowDeleteDialog(true);
+                      }}
+                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                    >
+                      <AlertTriangle className="w-3 h-3" />
+                    </Button>
+                  </div>
                   
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleRunSimulation(scenario)}
-                    disabled={loading}
-                    className="flex-1"
-                  >
-                    <Play className="w-3 h-3 mr-1" />
-                    Simulate
-                  </Button>
-                  
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      setScenarioToDelete(scenario);
-                      setShowDeleteDialog(true);
-                    }}
-                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                  >
-                    <AlertTriangle className="w-3 h-3" />
-                  </Button>
+                  <div className="flex gap-1">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleGenerateImplementation(scenario, 'game-book')}
+                      disabled={generatingImplementation}
+                      className="flex-1 text-xs py-1"
+                    >
+                      <BookOpen className="w-3 h-3 mr-1" />
+                      Game Book
+                    </Button>
+                    
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleGenerateImplementation(scenario, 'action-plan')}
+                      disabled={generatingImplementation}
+                      className="flex-1 text-xs py-1"
+                    >
+                      <CheckSquare className="w-3 h-3 mr-1" />
+                      Actions
+                    </Button>
+                    
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleGenerateImplementation(scenario, 'strategy-implementation')}
+                      disabled={generatingImplementation}
+                      className="flex-1 text-xs py-1"
+                    >
+                      <Target className="w-3 h-3 mr-1" />
+                      Strategy
+                    </Button>
+                  </div>
                 </div>
               </CardContent>
             </Card>
