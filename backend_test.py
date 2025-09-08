@@ -573,8 +573,31 @@ def main():
     tester.test_get_action_plan()
     tester.test_get_strategy_implementation()
 
+    print("\n🤖 Testing Advanced AI Monitor Agents...")
+    print("   Deploying AI Monitor Agents...")
+    tester.test_deploy_monitor_agents()
+    
+    print("   Retrieving Monitor Agents...")
+    tester.test_get_monitor_agents()
+
+    print("\n🔬 Testing Complex Adaptive Systems...")
+    print("   Running Complex Systems Analysis...")
+    tester.test_complex_systems_analysis()
+
+    print("\n📈 Testing System Metrics...")
+    print("   Generating System Metrics...")
+    tester.test_generate_system_metrics()
+
+    print("\n🧠 Testing Adaptive Learning...")
+    print("   Generating Learning Insights...")
+    tester.test_generate_learning_insights()
+
     print("\n📊 Testing Dashboard...")
+    print("   Basic Dashboard Stats...")
     tester.test_dashboard_stats()
+    
+    print("   Advanced Analytics Dashboard...")
+    tester.test_advanced_analytics_dashboard()
 
     print("\n🗑️ Testing Scenario Deletion...")
     tester.test_delete_scenario()
