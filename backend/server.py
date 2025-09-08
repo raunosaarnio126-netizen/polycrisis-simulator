@@ -236,6 +236,82 @@ class SmartSuggestion(BaseModel):
     implemented: bool = False
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
+class Company(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    company_name: str
+    industry: str
+    company_size: str  # "startup", "small", "medium", "large", "enterprise"
+    website_url: Optional[str] = None
+    description: str
+    location: str
+    website_analysis: Optional[str] = None
+    business_model: Optional[str] = None
+    key_assets: List[str] = []
+    vulnerabilities: List[str] = []
+    stakeholders: List[str] = []
+    competitive_landscape: Optional[str] = None
+    created_by: str
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class CompanyCreate(BaseModel):
+    company_name: str
+    industry: str
+    company_size: str
+    website_url: Optional[str] = None
+    description: str
+    location: str
+
+class BusinessDocument(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    company_id: str
+    document_name: str
+    document_type: str  # "business_plan", "market_strategy", "financial_report", "operational_plan", "other"
+    document_content: str
+    ai_analysis: Optional[str] = None
+    key_insights: List[str] = []
+    risk_factors: List[str] = []
+    strategic_priorities: List[str] = []
+    uploaded_by: str
+    file_size: Optional[int] = None
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class BusinessDocumentCreate(BaseModel):
+    document_name: str
+    document_type: str
+    document_content: str
+
+class Team(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    company_id: str
+    team_name: str
+    team_description: str
+    team_lead: str  # User ID
+    team_members: List[str]  # List of user IDs
+    access_level: str = "standard"  # "standard", "admin", "view_only"
+    team_roles: List[str] = []  # "crisis_manager", "analyst", "coordinator", "observer"
+    active_scenarios: List[str] = []  # Scenario IDs this team is working on
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class TeamCreate(BaseModel):
+    team_name: str
+    team_description: str
+    team_members: List[str]  # Email addresses
+    team_roles: List[str] = []
+
+class RapidAnalysis(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    company_id: str
+    analysis_type: str  # "vulnerability_assessment", "business_impact", "scenario_recommendation", "competitive_analysis"
+    analysis_title: str
+    analysis_content: str
+    key_findings: List[str]
+    recommendations: List[str]
+    priority_level: str  # "low", "medium", "high", "critical"
+    confidence_score: float
+    generated_by: str  # User ID
+    created_at: datetime = Field(default_factory=lambda: DateTime.now(timezone.utc))
+
 # Helper functions
 def verify_password(plain_password, hashed_password):
     return pwd_context.verify(plain_password, hashed_password)
