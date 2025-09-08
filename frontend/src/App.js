@@ -3258,6 +3258,14 @@ const AppContent = () => {
             <AdvancedDashboard />
           </TabsContent>
           
+          <TabsContent value="company">
+            <CompanyManagement />
+          </TabsContent>
+          
+          <TabsContent value="documents">
+            <DocumentManagement />  
+          </TabsContent>
+          
           <TabsContent value="create">
             <ScenarioCreator onScenarioCreated={handleScenarioCreated} />
           </TabsContent>
