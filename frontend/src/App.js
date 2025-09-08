@@ -2644,6 +2644,544 @@ const ScenarioManagement = ({ onScenarioSelect }) => {
   );
 };
 
+// Company Management Component
+const CompanyManagement = () => {
+  const [company, setCompany] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [showCreateCompany, setShowCreateCompany] = useState(false);
+  const [companyData, setCompanyData] = useState({
+    company_name: '',
+    industry: '',
+    company_size: 'medium',
+    website_url: '',
+    description: '',
+    location: ''
+  });
+
+  useEffect(() => {
+    fetchCompanyData();
+  }, []);
+
+  const fetchCompanyData = async () => {
+    try {
+      // Try to get user's company if they have one
+      const userResponse = await axios.get(`${API}/me`);
+      if (userResponse.data.company_id) {
+        const companyResponse = await axios.get(`${API}/companies/${userResponse.data.company_id}`);
+        setCompany(companyResponse.data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch company data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCreateCompany = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      const response = await axios.post(`${API}/companies`, companyData);
+      setCompany(response.data);
+      setShowCreateCompany(false);
+      toast({ title: "Success", description: "Company created successfully!" });
+    } catch (error) {
+      toast({ 
+        title: "Error", 
+        description: error.response?.data?.detail || "Failed to create company",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="text-center">
+          <Building2 className="w-12 h-12 animate-pulse text-blue-500 mx-auto mb-4" />
+          <p className="text-gray-600">Loading company information...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!company) {
+    return (
+      <div className="max-w-4xl mx-auto">
+        <Card>
+          <CardHeader className="text-center">
+            <CardTitle className="flex items-center justify-center gap-2 text-2xl">
+              <Building2 className="w-8 h-8 text-blue-600" />
+              Enterprise Setup
+            </CardTitle>
+            <CardDescription>
+              Set up your company profile to unlock advanced crisis management features
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {!showCreateCompany ? (
+              <div className="text-center py-8">
+                <Building2 className="w-16 h-16 mx-auto mb-4 text-gray-400" />
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">No Company Profile</h3>
+                <p className="text-gray-600 mb-6">
+                  Create your company profile to access advanced features like document analysis, 
+                  team collaboration, and company-specific crisis scenarios.
+                </p>
+                <Button onClick={() => setShowCreateCompany(true)} className="bg-blue-600 hover:bg-blue-700">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Create Company Profile
+                </Button>
+              </div>
+            ) : (
+              <form onSubmit={handleCreateCompany} className="space-y-6">
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="company_name">Company Name</Label>
+                    <Input
+                      id="company_name"
+                      value={companyData.company_name}
+                      onChange={(e) => setCompanyData({...companyData, company_name: e.target.value})}
+                      placeholder="Your company name"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="industry">Industry</Label>
+                    <Select value={companyData.industry} onValueChange={(value) => setCompanyData({...companyData, industry: value})}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select industry" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="technology">Technology</SelectItem>
+                        <SelectItem value="healthcare">Healthcare</SelectItem>
+                        <SelectItem value="finance">Finance</SelectItem>
+                        <SelectItem value="manufacturing">Manufacturing</SelectItem>
+                        <SelectItem value="retail">Retail</SelectItem>
+                        <SelectItem value="energy">Energy</SelectItem>
+                        <SelectItem value="transportation">Transportation</SelectItem>
+                        <SelectItem value="government">Government</SelectItem>
+                        <SelectItem value="education">Education</SelectItem>
+                        <SelectItem value="other">Other</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="company_size">Company Size</Label>
+                    <Select value={companyData.company_size} onValueChange={(value) => setCompanyData({...companyData, company_size: value})}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="startup">Startup (1-10 employees)</SelectItem>
+                        <SelectItem value="small">Small (11-50 employees)</SelectItem>
+                        <SelectItem value="medium">Medium (51-200 employees)</SelectItem>
+                        <SelectItem value="large">Large (201-1000 employees)</SelectItem>
+                        <SelectItem value="enterprise">Enterprise (1000+ employees)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label htmlFor="location">Location</Label>
+                    <Input
+                      id="location"
+                      value={companyData.location}
+                      onChange={(e) => setCompanyData({...companyData, location: e.target.value})}
+                      placeholder="City, Country"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <Label htmlFor="website_url">Company Website (optional)</Label>
+                  <Input
+                    id="website_url"
+                    type="url"
+                    value={companyData.website_url}
+                    onChange={(e) => setCompanyData({...companyData, website_url: e.target.value})}
+                    placeholder="https://yourcompany.com"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    We'll analyze your website to suggest relevant crisis scenarios
+                  </p>
+                </div>
+
+                <div>
+                  <Label htmlFor="description">Company Description</Label>
+                  <Textarea
+                    id="description"
+                    value={companyData.description}
+                    onChange={(e) => setCompanyData({...companyData, description: e.target.value})}
+                    placeholder="Brief description of your company's business..."
+                    rows={4}
+                    required
+                  />
+                </div>
+
+                <div className="flex gap-3">
+                  <Button type="submit" disabled={loading} className="bg-blue-600 hover:bg-blue-700 flex-1">
+                    {loading ? 'Creating...' : 'Create Company Profile'}
+                  </Button>
+                  <Button type="button" variant="outline" onClick={() => setShowCreateCompany(false)}>
+                    Cancel
+                  </Button>
+                </div>
+              </form>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Company Overview */}
+      <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Building2 className="w-6 h-6 text-blue-600" />
+            {company.company_name}
+          </CardTitle>
+          <CardDescription>
+            {company.industry} • {company.company_size} • {company.location}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <p className="text-gray-700 mb-4">{company.description}</p>
+          {company.website_url && (
+            <div className="flex items-center gap-2">
+              <ExternalLink className="w-4 h-4 text-blue-600" />
+              <a href={company.website_url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                {company.website_url}
+              </a>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Website Analysis */}
+      {company.website_analysis && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Brain className="w-5 h-5 text-purple-600" />
+              AI Website Analysis
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="bg-purple-50 p-4 rounded-lg">
+              <p className="text-sm text-purple-800 whitespace-pre-line">
+                {company.website_analysis.substring(0, 500)}...
+              </p>
+            </div>
+            
+            <div className="grid md:grid-cols-3 gap-4 mt-4">
+              <div className="bg-gray-50 p-3 rounded-lg">
+                <h4 className="font-semibold text-gray-900 mb-2">Key Assets</h4>
+                <ul className="text-sm text-gray-700 space-y-1">
+                  {company.key_assets.slice(0, 3).map((asset, idx) => (
+                    <li key={idx} className="flex items-start gap-2">
+                      <Shield className="w-3 h-3 mt-0.5 text-green-600" />
+                      {asset}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              
+              <div className="bg-gray-50 p-3 rounded-lg">
+                <h4 className="font-semibold text-gray-900 mb-2">Vulnerabilities</h4>
+                <ul className="text-sm text-gray-700 space-y-1">
+                  {company.vulnerabilities.slice(0, 3).map((vuln, idx) => (
+                    <li key={idx} className="flex items-start gap-2">
+                      <AlertTriangle className="w-3 h-3 mt-0.5 text-red-600" />
+                      {vuln}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              
+              <div className="bg-gray-50 p-3 rounded-lg">
+                <h4 className="font-semibold text-gray-900 mb-2">Stakeholders</h4>
+                <ul className="text-sm text-gray-700 space-y-1">
+                  {company.stakeholders.slice(0, 3).map((stakeholder, idx) => (
+                    <li key={idx} className="flex items-start gap-2">
+                      <Users className="w-3 h-3 mt-0.5 text-blue-600" />
+                      {stakeholder}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Quick Actions */}
+      <div className="grid md:grid-cols-4 gap-4">
+        <Card className="cursor-pointer hover:shadow-lg transition-shadow">
+          <CardContent className="p-6 text-center">
+            <Upload className="w-8 h-8 text-blue-600 mx-auto mb-2" />
+            <h3 className="font-semibold text-gray-900">Upload Documents</h3>
+            <p className="text-sm text-gray-600">Business plans & strategy docs</p>
+          </CardContent>
+        </Card>
+        
+        <Card className="cursor-pointer hover:shadow-lg transition-shadow">
+          <CardContent className="p-6 text-center">
+            <Users2 className="w-8 h-8 text-green-600 mx-auto mb-2" />
+            <h3 className="font-semibold text-gray-900">Manage Teams</h3>
+            <p className="text-sm text-gray-600">Create crisis response teams</p>
+          </CardContent>
+        </Card>
+        
+        <Card className="cursor-pointer hover:shadow-lg transition-shadow">
+          <CardContent className="p-6 text-center">
+            <Zap className="w-8 h-8 text-purple-600 mx-auto mb-2" />
+            <h3 className="font-semibold text-gray-900">Rapid Analysis</h3>
+            <p className="text-sm text-gray-600">AI-powered business insights</p>
+          </CardContent>
+        </Card>
+        
+        <Card className="cursor-pointer hover:shadow-lg transition-shadow">
+          <CardContent className="p-6 text-center">
+            <BarChart className="w-8 h-8 text-orange-600 mx-auto mb-2" />
+            <h3 className="font-semibold text-gray-900">Company Scenarios</h3>
+            <p className="text-sm text-gray-600">Tailored crisis scenarios</p>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+};
+
+// Document Management Component
+const DocumentManagement = () => {
+  const [documents, setDocuments] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showUploadDialog, setShowUploadDialog] = useState(false);
+  const [uploadData, setUploadData] = useState({
+    document_name: '',
+    document_type: 'business_plan',
+    document_content: ''
+  });
+
+  useEffect(() => {
+    fetchDocuments();
+  }, []);
+
+  const fetchDocuments = async () => {
+    try {
+      const userResponse = await axios.get(`${API}/me`);
+      if (userResponse.data.company_id) {
+        const response = await axios.get(`${API}/companies/${userResponse.data.company_id}/documents`);
+        setDocuments(response.data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch documents:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUploadDocument = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      const userResponse = await axios.get(`${API}/me`);
+      const response = await axios.post(`${API}/companies/${userResponse.data.company_id}/documents`, uploadData);
+      setDocuments([...documents, response.data]);
+      setShowUploadDialog(false);
+      setUploadData({ document_name: '', document_type: 'business_plan', document_content: '' });
+      toast({ title: "Success", description: "Document uploaded and analyzed successfully!" });
+    } catch (error) {
+      toast({ 
+        title: "Error", 
+        description: error.response?.data?.detail || "Failed to upload document",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900">Document Intelligence</h2>
+          <p className="text-gray-600">Upload and analyze business documents with AI insights</p>
+        </div>
+        <Button onClick={() => setShowUploadDialog(true)} className="bg-blue-600 hover:bg-blue-700">
+          <Upload className="w-4 h-4 mr-2" />
+          Upload Document
+        </Button>
+      </div>
+
+      {/* Document Grid */}
+      <div className="grid gap-6">
+        {documents.length === 0 ? (
+          <div className="text-center py-12">
+            <FileText className="w-16 h-16 mx-auto mb-4 text-gray-400" />
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">No Documents Uploaded</h3>
+            <p className="text-gray-600 mb-4">
+              Upload business plans, market strategies, and operational documents for AI analysis
+            </p>
+            <Button onClick={() => setShowUploadDialog(true)} className="bg-blue-600 hover:bg-blue-700">
+              <Upload className="w-4 h-4 mr-2" />
+              Upload First Document
+            </Button>
+          </div>
+        ) : (
+          documents.map((doc) => (
+            <Card key={doc.id} className="hover:shadow-lg transition-shadow">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="w-5 h-5 text-blue-600" />
+                  {doc.document_name}
+                </CardTitle>
+                <CardDescription>
+                  <Badge variant="outline" className="mr-2">
+                    {doc.document_type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                  </Badge>
+                  <span className="text-sm text-gray-500">
+                    Uploaded {new Date(doc.created_at).toLocaleDateString()}
+                  </span>
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {doc.ai_analysis && (
+                  <div className="bg-blue-50 p-4 rounded-lg mb-4">
+                    <h4 className="font-semibold text-blue-900 mb-2">AI Analysis</h4>
+                    <p className="text-sm text-blue-800">
+                      {doc.ai_analysis.substring(0, 300)}...
+                    </p>
+                  </div>
+                )}
+                
+                <div className="grid md:grid-cols-3 gap-4">
+                  <div className="bg-gray-50 p-3 rounded-lg">
+                    <h5 className="font-semibold text-gray-900 mb-2">Key Insights</h5>
+                    <ul className="text-sm text-gray-700 space-y-1">
+                      {doc.key_insights.slice(0, 2).map((insight, idx) => (
+                        <li key={idx} className="flex items-start gap-2">
+                          <Lightbulb className="w-3 h-3 mt-0.5 text-yellow-600" />
+                          {insight.substring(0, 50)}...
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  
+                  <div className="bg-gray-50 p-3 rounded-lg">
+                    <h5 className="font-semibold text-gray-900 mb-2">Risk Factors</h5>
+                    <ul className="text-sm text-gray-700 space-y-1">
+                      {doc.risk_factors.slice(0, 2).map((risk, idx) => (
+                        <li key={idx} className="flex items-start gap-2">
+                          <AlertTriangle className="w-3 h-3 mt-0.5 text-red-600" />
+                          {risk.substring(0, 50)}...
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  
+                  <div className="bg-gray-50 p-3 rounded-lg">
+                    <h5 className="font-semibold text-gray-900 mb-2">Strategic Priorities</h5>
+                    <ul className="text-sm text-gray-700 space-y-1">
+                      {doc.strategic_priorities.slice(0, 2).map((priority, idx) => (
+                        <li key={idx} className="flex items-start gap-2">
+                          <Target className="w-3 h-3 mt-0.5 text-purple-600" />
+                          {priority.substring(0, 50)}...
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))
+        )}
+      </div>
+
+      {/* Upload Dialog */}
+      {showUploadDialog && (
+        <Dialog open={showUploadDialog} onOpenChange={setShowUploadDialog}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Upload className="w-5 h-5 text-blue-600" />
+                Upload Business Document
+              </DialogTitle>
+              <DialogDescription>
+                Upload business plans, strategies, or operational documents for AI analysis
+              </DialogDescription>
+            </DialogHeader>
+            
+            <form onSubmit={handleUploadDocument} className="space-y-4">
+              <div>
+                <Label htmlFor="document_name">Document Name</Label>
+                <Input
+                  id="document_name"
+                  value={uploadData.document_name}
+                  onChange={(e) => setUploadData({...uploadData, document_name: e.target.value})}
+                  placeholder="e.g., Business Plan 2024"
+                  required
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="document_type">Document Type</Label>
+                <Select value={uploadData.document_type} onValueChange={(value) => setUploadData({...uploadData, document_type: value})}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="business_plan">Business Plan</SelectItem>
+                    <SelectItem value="market_strategy">Market Strategy</SelectItem>
+                    <SelectItem value="financial_report">Financial Report</SelectItem>
+                    <SelectItem value="operational_plan">Operational Plan</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="document_content">Document Content</Label>
+                <Textarea
+                  id="document_content"
+                  value={uploadData.document_content}
+                  onChange={(e) => setUploadData({...uploadData, document_content: e.target.value})}
+                  placeholder="Paste your document content here..."
+                  rows={10}
+                  required
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Paste the text content of your document for AI analysis
+                </p>
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <Button type="submit" disabled={loading} className="flex-1">
+                  {loading ? 'Analyzing...' : 'Upload & Analyze Document'}
+                </Button>
+                <Button type="button" variant="outline" onClick={() => setShowUploadDialog(false)}>
+                  Cancel
+                </Button>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
+      )}
+    </div>
+  );
+};
+
 // Main App Component
 const AppContent = () => {
   const { user, logout } = useAuth();
