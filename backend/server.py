@@ -100,6 +100,38 @@ class SimulationResult(BaseModel):
     confidence_score: float
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
+class GameBook(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    scenario_id: str
+    game_book_content: str
+    decision_points: List[str]
+    resource_requirements: List[str]
+    timeline_phases: List[str]
+    success_metrics: List[str]
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class ActionPlan(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    scenario_id: str
+    immediate_actions: List[str]
+    short_term_actions: List[str]
+    long_term_actions: List[str]
+    responsible_parties: List[str]
+    resource_allocation: List[str]
+    priority_level: str
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class StrategyImplementation(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    scenario_id: str
+    implementation_strategy: str
+    organizational_changes: List[str]
+    policy_recommendations: List[str]
+    training_requirements: List[str]
+    budget_considerations: List[str]
+    stakeholder_engagement: List[str]
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
 # Helper functions
 def verify_password(plain_password, hashed_password):
     return pwd_context.verify(plain_password, hashed_password)
