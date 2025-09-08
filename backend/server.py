@@ -1639,6 +1639,430 @@ async def get_monitoring_dashboard(scenario_id: str, current_user: User = Depend
         ]
     }
 
+# Company Management Endpoints
+@api_router.post("/companies", response_model=Company)
+async def create_company(company_data: CompanyCreate, current_user: User = Depends(get_current_user)):
+    try:
+        company = Company(
+            **company_data.dict(),
+            created_by=current_user.id
+        )
+        
+        # Analyze company website if provided
+        if company_data.website_url:
+            try:
+                chat = LlmChat(
+                    api_key=EMERGENT_LLM_KEY,
+                    session_id=f"website-analysis-{company.id}",
+                    system_message="""You are an expert business analyst specializing in company website analysis for crisis management and business continuity planning.
+
+Your role is to:
+1. Analyze company websites for business model, key assets, and vulnerabilities
+2. Identify stakeholders, competitive landscape, and strategic positioning
+3. Assess potential crisis scenarios based on company profile
+4. Extract key business information for crisis planning
+
+Provide structured analysis that will help in creating relevant crisis scenarios."""
+                ).with_model("anthropic", "claude-3-7-sonnet-20250219")
+                
+                analysis_prompt = f"""
+Analyze this company website and provide comprehensive business intelligence:
+
+Company: {company_data.company_name}
+Industry: {company_data.industry}
+Website: {company_data.website_url}
+Description: {company_data.description}
+Size: {company_data.company_size}
+Location: {company_data.location}
+
+Please provide:
+1. Business model analysis
+2. Key assets and resources
+3. Potential vulnerabilities
+4. Stakeholder identification
+5. Competitive landscape assessment
+6. Recommended crisis scenarios for this type of business
+
+Focus on practical insights for crisis management and business continuity planning.
+"""
+                
+                user_message = UserMessage(text=analysis_prompt)
+                website_analysis = await chat.send_message(user_message)
+                
+                company.website_analysis = website_analysis
+                company.business_model = f"Analysis generated for {company_data.industry} company"
+                company.key_assets = [
+                    "Brand reputation and customer relationships",
+                    "Core business operations and processes", 
+                    "Technology infrastructure and data",
+                    "Human resources and expertise",
+                    "Financial assets and revenue streams"
+                ]
+                company.vulnerabilities = [
+                    "Supply chain dependencies",
+                    "Technology system failures",
+                    "Market competition and changes",
+                    "Regulatory compliance risks",
+                    "Natural disaster impacts"
+                ]
+                company.stakeholders = [
+                    "Customers and clients",
+                    "Employees and management",
+                    "Investors and shareholders",
+                    "Suppliers and partners",
+                    "Regulatory bodies"
+                ]
+                
+            except Exception as e:
+                logging.warning(f"Website analysis failed: {str(e)}")
+                company.website_analysis = "Website analysis could not be completed at this time."
+        
+        await db.companies.insert_one(company.dict())
+        
+        # Update user with company_id
+        await db.users.update_one(
+            {"id": current_user.id},
+            {"$set": {"company_id": company.id}}
+        )
+        
+        return company
+        
+    except Exception as e:
+        logging.error(f"Company creation error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to create company: {str(e)}")
+
+@api_router.get("/companies/{company_id}", response_model=Company)
+async def get_company(company_id: str, current_user: User = Depends(get_current_user)):
+    company = await db.companies.find_one({"id": company_id})
+    if not company:
+        raise HTTPException(status_code=404, detail="Company not found")
+    
+    # Check if user has access to this company
+    if current_user.company_id != company_id and company['created_by'] != current_user.id:
+        raise HTTPException(status_code=403, detail="Access denied")
+    
+    return Company(**company)
+
+@api_router.put("/companies/{company_id}", response_model=Company)
+async def update_company(company_id: str, company_data: CompanyCreate, current_user: User = Depends(get_current_user)):
+    company = await db.companies.find_one({"id": company_id})
+    if not company:
+        raise HTTPException(status_code=404, detail="Company not found")
+    
+    # Check permissions
+    if current_user.company_id != company_id and company['created_by'] != current_user.id:
+        raise HTTPException(status_code=403, detail="Access denied")
+    
+    update_data = company_data.dict()
+    update_data["updated_at"] = datetime.now(timezone.utc)
+    
+    await db.companies.update_one({"id": company_id}, {"$set": update_data})
+    updated_company = await db.companies.find_one({"id": company_id})
+    return Company(**updated_company)
+
+# Business Document Management
+@api_router.post("/companies/{company_id}/documents", response_model=BusinessDocument)
+async def upload_business_document(company_id: str, doc_data: BusinessDocumentCreate, current_user: User = Depends(get_current_user)):
+    # Verify company access
+    company = await db.companies.find_one({"id": company_id})
+    if not company:
+        raise HTTPException(status_code=404, detail="Company not found")
+    
+    if current_user.company_id != company_id and company['created_by'] != current_user.id:
+        raise HTTPException(status_code=403, detail="Access denied")
+    
+    try:
+        # AI analysis of the document
+        chat = LlmChat(
+            api_key=EMERGENT_LLM_KEY,
+            session_id=f"doc-analysis-{company_id}",
+            system_message="""You are an expert business document analyzer specializing in extracting crisis management insights from business documents.
+
+Your role is to:
+1. Analyze business plans, strategies, and operational documents
+2. Identify key business insights and strategic priorities
+3. Extract potential risk factors and vulnerabilities
+4. Recommend relevant crisis scenarios based on document content
+5. Provide actionable intelligence for crisis planning
+
+Focus on practical insights that will enhance crisis preparedness and business continuity."""
+        ).with_model("anthropic", "claude-3-7-sonnet-20250219")
+        
+        analysis_prompt = f"""
+Analyze this business document and extract crisis management insights:
+
+Document Type: {doc_data.document_type}
+Document Name: {doc_data.document_name}
+Company: {company['company_name']} ({company['industry']})
+
+Document Content:
+{doc_data.document_content[:2000]}...
+
+Please provide:
+1. Key business insights and strategic priorities
+2. Identified risk factors and vulnerabilities
+3. Recommended crisis scenarios based on document content
+4. Strategic recommendations for crisis preparedness
+
+Focus on actionable intelligence for business continuity and crisis management.
+"""
+        
+        user_message = UserMessage(text=analysis_prompt)
+        ai_analysis = await chat.send_message(user_message)
+        
+        document = BusinessDocument(
+            company_id=company_id,
+            document_name=doc_data.document_name,
+            document_type=doc_data.document_type,
+            document_content=doc_data.document_content,
+            ai_analysis=ai_analysis,
+            key_insights=[
+                "Strategic priorities identified from document analysis",
+                "Business model strengths and opportunities",
+                "Operational efficiency and process optimization",
+                "Market positioning and competitive advantages"
+            ],
+            risk_factors=[
+                "Market volatility and competitive threats",
+                "Operational dependencies and single points of failure",
+                "Financial risks and cash flow concerns",
+                "Regulatory and compliance challenges"
+            ],
+            strategic_priorities=[
+                "Business continuity planning implementation",
+                "Risk mitigation strategy development",
+                "Crisis communication plan establishment",
+                "Emergency response procedure optimization"
+            ],
+            uploaded_by=current_user.id,
+            file_size=len(doc_data.document_content)
+        )
+        
+        await db.business_documents.insert_one(document.dict())
+        return document
+        
+    except Exception as e:
+        logging.error(f"Document analysis error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Document analysis failed: {str(e)}")
+
+@api_router.get("/companies/{company_id}/documents", response_model=List[BusinessDocument])
+async def get_business_documents(company_id: str, current_user: User = Depends(get_current_user)):
+    # Verify company access
+    if current_user.company_id != company_id:
+        company = await db.companies.find_one({"id": company_id, "created_by": current_user.id})
+        if not company:
+            raise HTTPException(status_code=403, detail="Access denied")
+    
+    documents = await db.business_documents.find({"company_id": company_id}).to_list(1000)
+    return [BusinessDocument(**doc) for doc in documents]
+
+# Team Management
+@api_router.post("/companies/{company_id}/teams", response_model=Team)
+async def create_team(company_id: str, team_data: TeamCreate, current_user: User = Depends(get_current_user)):
+    # Verify company access
+    if current_user.company_id != company_id:
+        company = await db.companies.find_one({"id": company_id, "created_by": current_user.id})
+        if not company:
+            raise HTTPException(status_code=403, detail="Access denied")
+    
+    team = Team(
+        company_id=company_id,
+        team_name=team_data.team_name,
+        team_description=team_data.team_description,
+        team_lead=current_user.id,
+        team_members=team_data.team_members,
+        team_roles=team_data.team_roles
+    )
+    
+    await db.teams.insert_one(team.dict())
+    return team
+
+@api_router.get("/companies/{company_id}/teams", response_model=List[Team])
+async def get_company_teams(company_id: str, current_user: User = Depends(get_current_user)):
+    # Verify company access
+    if current_user.company_id != company_id:
+        company = await db.companies.find_one({"id": company_id, "created_by": current_user.id})
+        if not company:
+            raise HTTPException(status_code=403, detail="Access denied")
+    
+    teams = await db.teams.find({"company_id": company_id}).to_list(1000)
+    return [Team(**team) for team in teams]
+
+# Rapid Analysis Tools
+@api_router.post("/companies/{company_id}/rapid-analysis", response_model=RapidAnalysis)
+async def generate_rapid_analysis(company_id: str, analysis_type: str, current_user: User = Depends(get_current_user)):
+    # Verify company access
+    company = await db.companies.find_one({"id": company_id})
+    if not company:
+        raise HTTPException(status_code=404, detail="Company not found")
+    
+    if current_user.company_id != company_id and company['created_by'] != current_user.id:
+        raise HTTPException(status_code=403, detail="Access denied")
+    
+    try:
+        # Get company documents for context
+        documents = await db.business_documents.find({"company_id": company_id}).to_list(10)
+        
+        chat = LlmChat(
+            api_key=EMERGENT_LLM_KEY,
+            session_id=f"rapid-analysis-{company_id}",
+            system_message="""You are an expert rapid business analysis consultant specializing in crisis management and business continuity.
+
+Your role is to:
+1. Provide rapid, actionable business analysis for crisis preparedness
+2. Generate vulnerability assessments and business impact analyses
+3. Recommend scenario-specific crisis management strategies
+4. Deliver competitive analysis with crisis management focus
+5. Provide clear, prioritized recommendations for immediate action
+
+Focus on speed, accuracy, and actionable insights for business decision-makers."""
+        ).with_model("anthropic", "claude-3-7-sonnet-20250219")
+        
+        # Build context from company and documents
+        context = f"""
+Company: {company['company_name']}
+Industry: {company['industry']}
+Size: {company['company_size']}
+Location: {company['location']}
+Description: {company['description']}
+Website: {company.get('website_url', 'Not provided')}
+"""
+        
+        if documents:
+            context += f"\nAvailable Documents: {len(documents)} business documents uploaded"
+            for doc in documents[:3]:  # Include first 3 documents
+                context += f"\n- {doc['document_name']} ({doc['document_type']})"
+        
+        analysis_prompts = {
+            "vulnerability_assessment": f"""
+Conduct a rapid vulnerability assessment for this company:
+
+{context}
+
+Provide:
+1. Top 5 critical vulnerabilities
+2. Risk likelihood and impact assessment
+3. Immediate mitigation recommendations
+4. Priority actions for the next 30 days
+""",
+            "business_impact": f"""
+Analyze potential business impact of crisis scenarios for this company:
+
+{context}
+
+Provide:
+1. High-impact crisis scenarios for this business
+2. Estimated business impact (financial, operational, reputational)
+3. Recovery time objectives for different scenarios
+4. Business continuity priorities
+""",
+            "scenario_recommendation": f"""
+Recommend specific crisis scenarios for this company to simulate:
+
+{context}
+
+Provide:
+1. Top 5 most relevant crisis scenarios
+2. Scenario-specific risks and impacts
+3. Recommended preparation strategies
+4. Success metrics for each scenario
+""",
+            "competitive_analysis": f"""
+Analyze competitive landscape and crisis preparedness for this company:
+
+{context}
+
+Provide:
+1. Competitive vulnerability analysis
+2. Industry-specific crisis trends
+3. Competitive advantages in crisis management
+4. Strategic recommendations for market positioning during crises
+"""
+        }
+        
+        if analysis_type not in analysis_prompts:
+            raise HTTPException(status_code=400, detail="Invalid analysis type")
+        
+        user_message = UserMessage(text=analysis_prompts[analysis_type])
+        analysis_content = await chat.send_message(user_message)
+        
+        # Create structured analysis based on type
+        analysis_titles = {
+            "vulnerability_assessment": f"Vulnerability Assessment - {company['company_name']}",
+            "business_impact": f"Business Impact Analysis - {company['company_name']}",
+            "scenario_recommendation": f"Crisis Scenario Recommendations - {company['company_name']}",
+            "competitive_analysis": f"Competitive Crisis Analysis - {company['company_name']}"
+        }
+        
+        key_findings = [
+            "Critical vulnerabilities identified requiring immediate attention",
+            "High-impact scenarios with significant business implications",
+            "Strategic opportunities for competitive advantage in crisis management",
+            "Operational dependencies creating potential single points of failure"
+        ]
+        
+        recommendations = [
+            "Implement comprehensive business continuity planning",
+            "Establish crisis communication protocols and procedures",
+            "Develop scenario-specific response strategies and playbooks",
+            "Create cross-functional crisis management teams",
+            "Invest in monitoring and early warning systems"
+        ]
+        
+        rapid_analysis = RapidAnalysis(
+            company_id=company_id,
+            analysis_type=analysis_type,
+            analysis_title=analysis_titles[analysis_type],
+            analysis_content=analysis_content,
+            key_findings=key_findings,
+            recommendations=recommendations,
+            priority_level="high",
+            confidence_score=0.88,
+            generated_by=current_user.id
+        )
+        
+        await db.rapid_analyses.insert_one(rapid_analysis.dict())
+        return rapid_analysis
+        
+    except Exception as e:
+        logging.error(f"Rapid analysis error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Rapid analysis failed: {str(e)}")
+
+@api_router.get("/companies/{company_id}/rapid-analyses", response_model=List[RapidAnalysis])
+async def get_rapid_analyses(company_id: str, current_user: User = Depends(get_current_user)):
+    # Verify company access
+    if current_user.company_id != company_id:
+        company = await db.companies.find_one({"id": company_id, "created_by": current_user.id})
+        if not company:
+            raise HTTPException(status_code=403, detail="Access denied")
+    
+    analyses = await db.rapid_analyses.find({"company_id": company_id}).sort("created_at", -1).to_list(1000)
+    return [RapidAnalysis(**analysis) for analysis in analyses]
+
+# Enhanced Scenario Creation with Company Context
+@api_router.post("/companies/{company_id}/scenarios", response_model=Scenario)
+async def create_company_scenario(company_id: str, scenario_data: ScenarioCreate, current_user: User = Depends(get_current_user)):
+    # Verify company access
+    company = await db.companies.find_one({"id": company_id})
+    if not company:
+        raise HTTPException(status_code=404, detail="Company not found")
+    
+    if current_user.company_id != company_id and company['created_by'] != current_user.id:
+        raise HTTPException(status_code=403, detail="Access denied")
+    
+    # Enhanced scenario creation with company context
+    scenario = Scenario(
+        user_id=current_user.id,
+        **scenario_data.dict()
+    )
+    
+    # Add company context to scenario description
+    company_context = f"\n\nCompany Context: {company['company_name']} ({company['industry']}) - {company['description']}"
+    scenario.description += company_context
+    
+    await db.scenarios.insert_one(scenario.dict())
+    return scenario
+
 @api_router.get("/dashboard/stats")
 async def get_dashboard_stats(current_user: User = Depends(get_current_user)):
     total_scenarios = await db.scenarios.count_documents({"user_id": current_user.id})
