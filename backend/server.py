@@ -844,6 +844,9 @@ async def deploy_monitor_agents(scenario_id: str, current_user: User = Depends(g
                 "Long-term pattern: Resilience building in key sectors",
                 "Predictive accuracy improving with system learning"
             ],
+            anomalies_detected=[
+                "Unexpected trend reversal in adaptation patterns"
+            ],
             risk_level="low"
         )
         
