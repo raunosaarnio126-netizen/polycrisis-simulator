@@ -295,6 +295,9 @@ def main():
     print("\n📊 Testing Dashboard...")
     tester.test_dashboard_stats()
 
+    print("\n🗑️ Testing Scenario Deletion...")
+    tester.test_delete_scenario()
+
     # Print final results
     print("\n" + "=" * 50)
     print(f"📊 Final Results: {tester.tests_passed}/{tester.tests_run} tests passed")
