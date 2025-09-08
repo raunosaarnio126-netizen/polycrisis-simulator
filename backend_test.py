@@ -218,6 +218,31 @@ class PolycrisisAPITester:
             return True
         return False
 
+    def test_delete_scenario(self):
+        """Test deleting a scenario"""
+        if not self.created_scenario_id:
+            print("❌ No scenario ID available for deletion")
+            return False
+            
+        success, response = self.run_test(
+            "Delete Scenario",
+            "DELETE",
+            f"scenarios/{self.created_scenario_id}",
+            200
+        )
+        
+        if success:
+            print(f"   Scenario deleted successfully")
+            # Verify scenario is actually deleted by trying to get it
+            verify_success, verify_response = self.run_test(
+                "Verify Scenario Deletion",
+                "GET",
+                f"scenarios/{self.created_scenario_id}",
+                404
+            )
+            return verify_success
+        return False
+
     def test_dashboard_stats(self):
         """Test dashboard statistics"""
         success, response = self.run_test(
