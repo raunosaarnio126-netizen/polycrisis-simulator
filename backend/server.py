@@ -1174,6 +1174,387 @@ async def get_advanced_analytics(current_user: User = Depends(get_current_user))
         "monitoring_coverage": "Comprehensive" if total_monitor_agents > 0 else "Basic"
     }
 
+# Smart Monitoring Source Suggestions
+@api_router.post("/scenarios/{scenario_id}/suggest-monitoring-sources", response_model=List[SmartSuggestion])
+async def suggest_monitoring_sources(scenario_id: str, current_user: User = Depends(get_current_user)):
+    scenario = await db.scenarios.find_one({"id": scenario_id, "user_id": current_user.id})
+    if not scenario:
+        raise HTTPException(status_code=404, detail="Scenario not found")
+    
+    try:
+        chat = LlmChat(
+            api_key=EMERGENT_LLM_KEY,
+            session_id=f"monitoring-suggestions-{scenario_id}",
+            system_message="""You are an expert monitoring and intelligence gathering system. Based on crisis scenarios, suggest the most relevant data sources, APIs, and monitoring targets.
+
+Your role is to:
+1. Analyze crisis scenarios and identify critical information sources
+2. Suggest specific APIs, websites, and data feeds to monitor
+3. Recommend keywords and search terms for effective monitoring
+4. Prioritize sources based on relevance and reliability
+5. Consider real-time vs periodic monitoring needs
+
+Provide practical, actionable monitoring suggestions that teams can implement immediately."""
+        ).with_model("anthropic", "claude-3-7-sonnet-20250219")
+        
+        prompt = f"""
+Analyze this crisis scenario and suggest intelligent monitoring sources:
+
+Scenario: {scenario['title']}
+Type: {scenario['crisis_type']}
+Description: {scenario['description']}
+Severity: {scenario['severity_level']}/10
+Regions: {', '.join(scenario['affected_regions'])}
+Variables: {', '.join(scenario['key_variables'])}
+
+Generate specific monitoring source suggestions including:
+1. Data sources (APIs, news feeds, social media, government data)
+2. Keywords for effective monitoring
+3. Analysis focus areas for maximum insight
+
+Provide 5 high-value monitoring suggestions with detailed reasoning.
+"""
+        
+        user_message = UserMessage(text=prompt)
+        suggestions_content = await chat.send_message(user_message)
+        
+        # Create smart suggestions based on scenario type and content
+        suggestions = []
+        
+        # Data source suggestions based on crisis type
+        if scenario['crisis_type'] == 'natural_disaster':
+            suggestions.extend([
+                SmartSuggestion(
+                    scenario_id=scenario_id,
+                    suggestion_type="data_source",
+                    suggestion_content="USGS Earthquake API - https://earthquake.usgs.gov/fdsnws/event/1/",
+                    reasoning="Real-time earthquake data essential for natural disaster monitoring and impact assessment",
+                    confidence_score=0.95
+                ),
+                SmartSuggestion(
+                    scenario_id=scenario_id,
+                    suggestion_type="data_source", 
+                    suggestion_content="National Weather Service API - https://api.weather.gov/",
+                    reasoning="Weather conditions directly impact disaster evolution and emergency response capabilities",
+                    confidence_score=0.90
+                )
+            ])
+        elif scenario['crisis_type'] == 'economic_crisis':
+            suggestions.extend([
+                SmartSuggestion(
+                    scenario_id=scenario_id,
+                    suggestion_type="data_source",
+                    suggestion_content="Federal Reserve Economic Data (FRED) API - https://fred.stlouisfed.org/docs/api/",
+                    reasoning="Economic indicators crucial for tracking financial crisis development and recovery",
+                    confidence_score=0.92
+                ),
+                SmartSuggestion(
+                    scenario_id=scenario_id,
+                    suggestion_type="data_source",
+                    suggestion_content="Yahoo Finance API - https://finance.yahoo.com/",
+                    reasoning="Real-time market data provides early indicators of economic instability",
+                    confidence_score=0.88
+                )
+            ])
+        elif scenario['crisis_type'] == 'pandemic':
+            suggestions.extend([
+                SmartSuggestion(
+                    scenario_id=scenario_id,
+                    suggestion_type="data_source",
+                    suggestion_content="WHO Disease Outbreak News - https://www.who.int/emergencies/disease-outbreak-news",
+                    reasoning="Official health organization data critical for pandemic tracking and response planning",
+                    confidence_score=0.94
+                ),
+                SmartSuggestion(
+                    scenario_id=scenario_id,
+                    suggestion_type="data_source",
+                    suggestion_content="CDC API - https://data.cdc.gov/",
+                    reasoning="Government health data provides authoritative information on disease progression",
+                    confidence_score=0.91
+                )
+            ])
+        
+        # Add monitoring keyword suggestions
+        keywords = scenario['key_variables'] + [scenario['crisis_type'].replace('_', ' ')]
+        suggestions.append(
+            SmartSuggestion(
+                scenario_id=scenario_id,
+                suggestion_type="monitoring_keyword",
+                suggestion_content=f"Monitor keywords: {', '.join(keywords[:5])}",
+                reasoning="These keywords are directly related to your scenario variables and will capture relevant information",
+                confidence_score=0.87
+            )
+        )
+        
+        # Add analysis focus suggestion
+        suggestions.append(
+            SmartSuggestion(
+                scenario_id=scenario_id,
+                suggestion_type="analysis_focus",
+                suggestion_content="Focus on early warning indicators and cascading effect patterns",
+                reasoning="Early detection and cascade analysis provide maximum strategic value for crisis management",
+                confidence_score=0.89
+            )
+        )
+        
+        # Store suggestions in database
+        for suggestion in suggestions:
+            await db.smart_suggestions.insert_one(suggestion.dict())
+        
+        return suggestions
+        
+    except Exception as e:
+        logging.error(f"Monitoring suggestions error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to generate monitoring suggestions: {str(e)}")
+
+# Team Collaboration and Source Management
+@api_router.post("/scenarios/{scenario_id}/add-monitoring-source", response_model=MonitoringSource)
+async def add_monitoring_source(scenario_id: str, source_data: MonitoringSourceCreate, current_user: User = Depends(get_current_user)):
+    scenario = await db.scenarios.find_one({"id": scenario_id, "user_id": current_user.id})
+    if not scenario:
+        raise HTTPException(status_code=404, detail="Scenario not found")
+    
+    # Create monitoring source
+    monitoring_source = MonitoringSource(
+        scenario_id=scenario_id,
+        user_id=current_user.id,
+        source_type=source_data.source_type,
+        source_url=source_data.source_url,
+        source_name=source_data.source_name,
+        monitoring_frequency=source_data.monitoring_frequency,
+        data_keywords=source_data.data_keywords,
+        added_by_team_member=current_user.username
+    )
+    
+    # Calculate relevance score using AI
+    try:
+        chat = LlmChat(
+            api_key=EMERGENT_LLM_KEY,
+            session_id=f"relevance-{scenario_id}",
+            system_message="You are an AI that evaluates the relevance of monitoring sources to crisis scenarios. Provide a relevance score from 0.0 to 1.0."
+        ).with_model("anthropic", "claude-3-7-sonnet-20250219")
+        
+        relevance_prompt = f"""
+Evaluate the relevance of this monitoring source to the crisis scenario:
+
+Scenario: {scenario['title']} ({scenario['crisis_type']})
+Source: {source_data.source_name} - {source_data.source_url}
+Keywords: {', '.join(source_data.data_keywords)}
+
+Provide a relevance score from 0.0 (not relevant) to 1.0 (highly relevant).
+Just respond with the numerical score.
+"""
+        
+        user_message = UserMessage(text=relevance_prompt)
+        relevance_response = await chat.send_message(user_message)
+        
+        try:
+            relevance_score = float(relevance_response.strip())
+            monitoring_source.relevance_score = max(0.0, min(1.0, relevance_score))
+        except:
+            monitoring_source.relevance_score = 0.5  # Default if AI response can't be parsed
+            
+    except Exception as e:
+        logging.warning(f"Could not calculate relevance score: {str(e)}")
+        monitoring_source.relevance_score = 0.5
+    
+    await db.monitoring_sources.insert_one(monitoring_source.dict())
+    return monitoring_source
+
+@api_router.get("/scenarios/{scenario_id}/monitoring-sources", response_model=List[MonitoringSource])
+async def get_monitoring_sources(scenario_id: str, current_user: User = Depends(get_current_user)):
+    # Verify scenario access
+    scenario = await db.scenarios.find_one({"id": scenario_id, "user_id": current_user.id})
+    if not scenario:
+        raise HTTPException(status_code=404, detail="Scenario not found")
+    
+    sources = await db.monitoring_sources.find({"scenario_id": scenario_id}).to_list(1000)
+    return [MonitoringSource(**source) for source in sources]
+
+# Automated Data Collection Simulation
+@api_router.post("/scenarios/{scenario_id}/collect-data")
+async def collect_monitoring_data(scenario_id: str, current_user: User = Depends(get_current_user)):
+    scenario = await db.scenarios.find_one({"id": scenario_id, "user_id": current_user.id})
+    if not scenario:
+        raise HTTPException(status_code=404, detail="Scenario not found")
+    
+    # Get monitoring sources for this scenario
+    sources = await db.monitoring_sources.find({"scenario_id": scenario_id, "status": "active"}).to_list(1000)
+    
+    if not sources:
+        raise HTTPException(status_code=404, detail="No active monitoring sources found")
+    
+    collected_data_items = []
+    
+    try:
+        chat = LlmChat(
+            api_key=EMERGENT_LLM_KEY,
+            session_id=f"data-collection-{scenario_id}",
+            system_message="""You are an AI data collector and analyzer. Simulate realistic data collection from various sources and provide intelligent analysis.
+
+Your role is to:
+1. Simulate realistic data from monitoring sources
+2. Analyze data relevance and sentiment
+3. Determine urgency levels
+4. Provide concise, actionable summaries
+5. Identify keyword matches and patterns
+
+Generate realistic, scenario-appropriate data that would be collected from the specified monitoring sources."""
+        ).with_model("anthropic", "claude-3-7-sonnet-20250219")
+        
+        for source in sources:
+            # Simulate data collection for each source
+            collection_prompt = f"""
+Simulate realistic data collection from this monitoring source:
+
+Source: {source['source_name']} ({source['source_type']})
+URL: {source['source_url']}
+Keywords: {', '.join(source['data_keywords'])}
+Scenario: {scenario['title']} - {scenario['crisis_type']}
+
+Generate 2-3 realistic data items that would be collected from this source, including:
+1. Data title and content
+2. Relevance to the scenario (0.0-1.0)
+3. Sentiment score (-1.0 to 1.0)
+4. Urgency level (low/medium/high/critical)
+5. Brief AI summary
+
+Make the data realistic and relevant to the crisis scenario.
+"""
+            
+            user_message = UserMessage(text=collection_prompt)
+            collection_response = await chat.send_message(user_message)
+            
+            # Create simulated collected data items
+            import random
+            
+            # Generate 2-3 data items per source
+            for i in range(random.randint(2, 3)):
+                collected_item = CollectedData(
+                    source_id=source['id'],
+                    scenario_id=scenario_id,
+                    data_title=f"Data Update #{i+1} from {source['source_name']}",
+                    data_content=f"Simulated data collection: {collection_response[:200]}...",
+                    data_url=source['source_url'],
+                    relevance_score=min(1.0, source['relevance_score'] + random.uniform(-0.1, 0.1)),
+                    sentiment_score=random.uniform(-0.5, 0.5),
+                    urgency_level=random.choice(["low", "medium", "high"]),
+                    keywords_matched=[kw for kw in source['data_keywords'] if random.random() > 0.3],
+                    ai_summary=f"AI Analysis: Key information relevant to {scenario['crisis_type']} scenario with {source['source_name']} data indicating {random.choice(['normal conditions', 'elevated concerns', 'monitoring required'])}"
+                )
+                
+                await db.collected_data.insert_one(collected_item.dict())
+                collected_data_items.append(collected_item)
+            
+            # Update source last_check and total_data_points
+            await db.monitoring_sources.update_one(
+                {"id": source['id']},
+                {
+                    "$set": {"last_check": datetime.now(timezone.utc)},
+                    "$inc": {"total_data_points": len(collected_data_items)}
+                }
+            )
+        
+        return {
+            "message": f"Successfully collected {len(collected_data_items)} data items from {len(sources)} sources",
+            "data_items_collected": len(collected_data_items),
+            "sources_monitored": len(sources),
+            "collection_timestamp": datetime.now(timezone.utc)
+        }
+        
+    except Exception as e:
+        logging.error(f"Data collection error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Data collection failed: {str(e)}")
+
+@api_router.get("/scenarios/{scenario_id}/collected-data", response_model=List[CollectedData])
+async def get_collected_data(scenario_id: str, limit: int = 50, current_user: User = Depends(get_current_user)):
+    # Verify scenario access
+    scenario = await db.scenarios.find_one({"id": scenario_id, "user_id": current_user.id})
+    if not scenario:
+        raise HTTPException(status_code=404, detail="Scenario not found")
+    
+    data_items = await db.collected_data.find({"scenario_id": scenario_id}).sort("collected_at", -1).limit(limit).to_list(limit)
+    return [CollectedData(**item) for item in data_items]
+
+# Team Collaboration
+@api_router.post("/scenarios/{scenario_id}/create-team-collaboration", response_model=TeamCollaboration)
+async def create_team_collaboration(scenario_id: str, team_emails: List[str], current_user: User = Depends(get_current_user)):
+    scenario = await db.scenarios.find_one({"id": scenario_id, "user_id": current_user.id})
+    if not scenario:
+        raise HTTPException(status_code=404, detail="Scenario not found")
+    
+    collaboration = TeamCollaboration(
+        scenario_id=scenario_id,
+        team_members=team_emails,
+        shared_sources=[],
+        collaboration_notes=[f"Team collaboration created by {current_user.username}"],
+        created_by=current_user.id
+    )
+    
+    await db.team_collaborations.insert_one(collaboration.dict())
+    return collaboration
+
+@api_router.get("/scenarios/{scenario_id}/monitoring-dashboard")
+async def get_monitoring_dashboard(scenario_id: str, current_user: User = Depends(get_current_user)):
+    # Verify scenario access
+    scenario = await db.scenarios.find_one({"id": scenario_id, "user_id": current_user.id})
+    if not scenario:
+        raise HTTPException(status_code=404, detail="Scenario not found")
+    
+    # Get monitoring sources
+    sources = await db.monitoring_sources.find({"scenario_id": scenario_id}).to_list(1000)
+    
+    # Get recent collected data
+    recent_data = await db.collected_data.find({"scenario_id": scenario_id}).sort("collected_at", -1).limit(10).to_list(10)
+    
+    # Get smart suggestions
+    suggestions = await db.smart_suggestions.find({"scenario_id": scenario_id}).to_list(1000)
+    
+    # Calculate dashboard metrics
+    total_sources = len(sources)
+    active_sources = len([s for s in sources if s['status'] == 'active'])
+    total_data_points = sum(s.get('total_data_points', 0) for s in sources)
+    avg_relevance = sum(s.get('relevance_score', 0) for s in sources) / max(total_sources, 1)
+    
+    # Get urgency distribution
+    urgency_counts = {}
+    for item in recent_data:
+        urgency = item.get('urgency_level', 'low')
+        urgency_counts[urgency] = urgency_counts.get(urgency, 0) + 1
+    
+    return {
+        "scenario_title": scenario['title'],
+        "monitoring_summary": {
+            "total_sources": total_sources,
+            "active_sources": active_sources,
+            "total_data_points": total_data_points,
+            "average_relevance_score": round(avg_relevance, 2),
+            "last_collection": recent_data[0]['collected_at'] if recent_data else None
+        },
+        "urgency_distribution": urgency_counts,
+        "recent_data_items": len(recent_data),
+        "smart_suggestions_count": len(suggestions),
+        "monitoring_sources": [
+            {
+                "name": s['source_name'],
+                "type": s['source_type'],
+                "status": s['status'],
+                "relevance_score": s.get('relevance_score', 0),
+                "last_check": s.get('last_check'),
+                "data_points": s.get('total_data_points', 0)
+            } for s in sources
+        ],
+        "recent_insights": [
+            {
+                "title": item['data_title'],
+                "summary": item['ai_summary'][:100] + "..." if len(item['ai_summary']) > 100 else item['ai_summary'],
+                "urgency": item['urgency_level'],
+                "relevance": item['relevance_score'],
+                "collected_at": item['collected_at']
+            } for item in recent_data[:5]
+        ]
+    }
+
 @api_router.get("/dashboard/stats")
 async def get_dashboard_stats(current_user: User = Depends(get_current_user)):
     total_scenarios = await db.scenarios.count_documents({"user_id": current_user.id})
