@@ -193,6 +193,26 @@ const AuthPage = () => {
                   />
                 </div>
                 <div>
+                  <Label htmlFor="job_title" className="text-white">Job Title</Label>
+                  <Input
+                    id="job_title"
+                    value={formData.job_title || ''}
+                    onChange={(e) => setFormData({...formData, job_title: e.target.value})}
+                    className="bg-white/10 border-white/20 text-white placeholder:text-gray-400"
+                    placeholder="Your job title (optional)"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="department" className="text-white">Department</Label>
+                  <Input
+                    id="department"
+                    value={formData.department || ''}
+                    onChange={(e) => setFormData({...formData, department: e.target.value})}
+                    className="bg-white/10 border-white/20 text-white placeholder:text-gray-400"
+                    placeholder="Your department (optional)"
+                  />
+                </div>
+                <div>
                   <Label htmlFor="password" className="text-white">Password</Label>
                   <Input
                     id="password"
