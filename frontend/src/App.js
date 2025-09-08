@@ -3182,6 +3182,653 @@ const DocumentManagement = () => {
   );
 };
 
+// Admin Dashboard Component
+const AdminDashboard = () => {
+  const [adminStats, setAdminStats] = useState({});
+  const [clients, setClients] = useState([]);
+  const [licenseTiers, setLicenseTiers] = useState([]);
+  const [aiAvatars, setAiAvatars] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showCreateClient, setShowCreateClient] = useState(false);
+  const [showAvatarManager, setShowAvatarManager] = useState(false);
+  const [newClientData, setNewClientData] = useState({
+    client_name: '',
+    client_email: '',
+    license_tier_id: '',
+    license_count: 1
+  });
+
+  useEffect(() => {
+    initializeAdminSystem();
+  }, []);
+
+  const initializeAdminSystem = async () => {
+    try {
+      // Initialize admin system
+      await axios.post(`${API}/admin/initialize`);
+      
+      // Fetch admin data
+      const [statsRes, clientsRes, tiersRes, avatarsRes] = await Promise.all([
+        axios.get(`${API}/admin/dashboard/stats`).catch(() => ({ data: {} })),
+        axios.get(`${API}/admin/clients`).catch(() => ({ data: [] })),
+        axios.get(`${API}/admin/license-tiers`).catch(() => ({ data: [] })),
+        axios.get(`${API}/admin/ai-avatars`).catch(() => ({ data: [] }))
+      ]);
+
+      setAdminStats(statsRes.data);
+      setClients(clientsRes.data);
+      setLicenseTiers(tiersRes.data);
+      setAiAvatars(avatarsRes.data);
+    } catch (error) {
+      console.error('Failed to initialize admin system:', error);
+      toast({ 
+        title: "Info", 
+        description: "Admin system ready. Please log in with admin credentials.",
+        variant: "default"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCreateClient = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      const response = await axios.post(`${API}/admin/clients`, newClientData);
+      setClients([response.data, ...clients]);
+      setShowCreateClient(false);
+      setNewClientData({ client_name: '', client_email: '', license_tier_id: '', license_count: 1 });
+      toast({ title: "Success", description: "Client created successfully!" });
+    } catch (error) {
+      toast({ 
+        title: "Error", 
+        description: error.response?.data?.detail || "Failed to create client",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAvatarStatusUpdate = async (avatarId, newStatus) => {
+    try {
+      await axios.put(`${API}/admin/ai-avatars/${avatarId}/status?new_status=${newStatus}`);
+      
+      setAiAvatars(aiAvatars.map(avatar => 
+        avatar.id === avatarId ? { ...avatar, status: newStatus } : avatar
+      ));
+      
+      toast({ title: "Success", description: `Avatar status updated to ${newStatus}` });
+    } catch (error) {
+      toast({ 
+        title: "Error", 
+        description: "Failed to update avatar status",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const getStatusColor = (status) => {
+    switch(status) {
+      case 'active': return 'bg-green-100 text-green-800 border-green-200';
+      case 'monitoring': return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'learning': return 'bg-purple-100 text-purple-800 border-purple-200';
+      case 'inactive': return 'bg-gray-100 text-gray-800 border-gray-200';
+      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
+  };
+
+  const getStatusIcon = (status) => {
+    switch(status) {
+      case 'active': return <Power className="w-3 h-3" />;
+      case 'monitoring': return <Monitor className="w-3 h-3" />;
+      case 'learning': return <Brain className="w-3 h-3" />;
+      case 'inactive': return <PowerOff className="w-3 h-3" />;
+      default: return <Settings className="w-3 h-3" />;
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="text-center">
+          <Crown className="w-12 h-12 animate-pulse text-yellow-500 mx-auto mb-4" />
+          <p className="text-gray-600">Loading Admin Dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Admin Header */}
+      <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-200 rounded-lg p-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+              <Crown className="w-6 h-6 text-yellow-600" />
+              SaaS Admin Dashboard
+            </h1>
+            <p className="text-gray-600">Comprehensive client and licensing management for Polycrisis Platform</p>
+          </div>
+          <div className="text-right">
+            <div className="text-sm text-gray-600">Admin: rauno.saarnio@xr-presence.com</div>
+            <Badge className="bg-yellow-100 text-yellow-800">Super Admin</Badge>
+          </div>
+        </div>
+      </div>
+
+      {/* Admin Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-blue-600 font-medium">Total Clients</p>
+                <p className="text-3xl font-bold text-blue-900">{adminStats.total_clients || 0}</p>
+                <p className="text-xs text-blue-700">{adminStats.active_clients || 0} active</p>
+              </div>
+              <Users className="w-10 h-10 text-blue-500" />
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-green-600 font-medium">Revenue</p>
+                <p className="text-3xl font-bold text-green-900">${adminStats.total_revenue || 0}</p>
+                <p className="text-xs text-green-700">Total earned</p>
+              </div>
+              <DollarSign className="w-10 h-10 text-green-500" />
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-purple-600 font-medium">AI Avatars</p>
+                <p className="text-3xl font-bold text-purple-900">{aiAvatars.length}</p>
+                <p className="text-xs text-purple-700">{adminStats.ai_avatars_active || 0} active</p>
+              </div>
+              <Brain className="w-10 h-10 text-purple-500" />
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-orange-600 font-medium">Trial Clients</p>
+                <p className="text-3xl font-bold text-orange-900">{adminStats.trial_clients || 0}</p>
+                <p className="text-xs text-orange-700">Need attention</p>
+              </div>
+              <Timer className="w-10 h-10 text-orange-500" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* AI Avatar Status Management */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <Brain className="w-5 h-5 text-purple-600" />
+              AI Monitor Agents Status
+            </CardTitle>
+            <Button variant="outline" onClick={() => setShowAvatarManager(!showAvatarManager)}>
+              <Settings className="w-4 h-4 mr-2" />
+              Manage Avatars
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="grid md:grid-cols-2 gap-4">
+            {aiAvatars.map(avatar => (
+              <div key={avatar.id} className="flex items-center justify-between p-4 border rounded-lg">
+                <div className="flex items-center gap-3">
+                  {getStatusIcon(avatar.status)}
+                  <div>
+                    <h4 className="font-semibold text-gray-900">{avatar.avatar_name}</h4>
+                    <p className="text-sm text-gray-600">{avatar.description}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Badge className={getStatusColor(avatar.status)}>
+                    {avatar.status}
+                  </Badge>
+                  <div className="flex gap-1">
+                    {['active', 'monitoring', 'learning', 'inactive'].map(status => (
+                      <Button
+                        key={status}
+                        variant="outline"
+                        size="sm"
+                        className="text-xs py-1 px-2"
+                        onClick={() => handleAvatarStatusUpdate(avatar.id, status)}
+                        disabled={avatar.status === status}
+                      >
+                        {status}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* License Tiers */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Package className="w-5 h-5 text-blue-600" />
+            License Tiers & Pricing
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {licenseTiers.map(tier => (
+              <div key={tier.id} className="border rounded-lg p-4 hover:shadow-lg transition-shadow">
+                <div className="text-center mb-4">
+                  <h3 className="font-bold text-lg text-gray-900">{tier.tier_name}</h3>
+                  <p className="text-sm text-gray-600">Up to {tier.max_users} users</p>
+                </div>
+                
+                <div className="text-center mb-4">
+                  <div className="text-3xl font-bold text-blue-900">${tier.monthly_price}</div>
+                  <div className="text-sm text-gray-600">per month</div>
+                  <div className="text-xs text-green-600">${tier.annual_price}/year (save 2 months)</div>
+                </div>
+                
+                <div className="space-y-2">
+                  {tier.features.slice(0, 3).map((feature, idx) => (
+                    <div key={idx} className="flex items-center gap-2 text-sm">
+                      <CheckSquare className="w-3 h-3 text-green-600" />
+                      <span className="text-gray-700">{feature}</span>
+                    </div>
+                  ))}
+                  {tier.features.length > 3 && (
+                    <div className="text-xs text-gray-500">+{tier.features.length - 3} more features</div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Client Management */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <Users className="w-5 h-5 text-green-600" />
+              Client Management
+            </CardTitle>
+            <Button onClick={() => setShowCreateClient(true)} className="bg-green-600 hover:bg-green-700">
+              <Plus className="w-4 h-4 mr-2" />
+              Add Client
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {clients.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">
+              <Users className="w-12 h-12 mx-auto mb-4 opacity-50" />
+              <p>No clients added yet. Create your first client to get started.</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {clients.slice(0, 10).map(client => (
+                <div key={client.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50">
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-gray-900">{client.client_name}</h3>
+                    <p className="text-sm text-gray-600">{client.client_email}</p>
+                    <div className="flex items-center gap-2 mt-2">
+                      <Badge variant={client.subscription_status === 'active' ? 'default' : 'secondary'}>
+                        {client.subscription_status}
+                      </Badge>
+                      <Badge variant="outline">{client.license_count} licenses</Badge>
+                      <Badge variant="outline">{client.users_active}/{client.license_count} users</Badge>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm">
+                      <Settings className="w-4 h-4" />
+                    </Button>
+                    <Button variant="outline" size="sm">
+                      <CreditCard className="w-4 h-4" />
+                    </Button>
+                    <Button variant="outline" size="sm">
+                      <TrendingUp className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Create Client Dialog */}
+      {showCreateClient && (
+        <Dialog open={showCreateClient} onOpenChange={setShowCreateClient}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Users className="w-5 h-5 text-green-600" />
+                Add New Client
+              </DialogTitle>
+              <DialogDescription>
+                Create a new client account with licensing and trial access
+              </DialogDescription>
+            </DialogHeader>
+            
+            <form onSubmit={handleCreateClient} className="space-y-4">
+              <div>
+                <Label htmlFor="client_name">Client Name</Label>
+                <Input
+                  id="client_name"
+                  value={newClientData.client_name}
+                  onChange={(e) => setNewClientData({...newClientData, client_name: e.target.value})}
+                  placeholder="Company or Organization Name"
+                  required
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="client_email">Client Email</Label>
+                <Input
+                  id="client_email"
+                  type="email"
+                  value={newClientData.client_email}
+                  onChange={(e) => setNewClientData({...newClientData, client_email: e.target.value})}
+                  placeholder="client@company.com"
+                  required
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="license_tier">License Tier</Label>
+                <Select value={newClientData.license_tier_id} onValueChange={(value) => setNewClientData({...newClientData, license_tier_id: value})}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select license tier" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {licenseTiers.map(tier => (
+                      <SelectItem key={tier.id} value={tier.id}>
+                        {tier.tier_name} - ${tier.monthly_price}/month ({tier.max_users} users)
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="license_count">Number of Licenses</Label>
+                <Input
+                  id="license_count"
+                  type="number"
+                  min="1"
+                  max="100"
+                  value={newClientData.license_count}
+                  onChange={(e) => setNewClientData({...newClientData, license_count: parseInt(e.target.value)})}
+                  required
+                />
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <Button type="submit" disabled={loading} className="flex-1">
+                  {loading ? 'Creating...' : 'Create Client'}
+                </Button>
+                <Button type="button" variant="outline" onClick={() => setShowCreateClient(false)}>
+                  Cancel
+                </Button>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
+      )}
+    </div>
+  );
+};
+
+// Client Avatar Competence Manager
+const AvatarCompetenceManager = () => {
+  const [aiAvatars, setAiAvatars] = useState([]);
+  const [selectedAvatar, setSelectedAvatar] = useState(null);
+  const [competences, setCompetences] = useState([]);
+  const [showAddCompetence, setShowAddCompetence] = useState(false);
+  const [newCompetence, setNewCompetence] = useState({
+    competence_name: '',
+    competence_description: '',
+    competence_type: 'skill',
+    proficiency_level: 1
+  });
+
+  useEffect(() => {
+    fetchAvatars();
+  }, []);
+
+  const fetchAvatars = async () => {
+    try {
+      const response = await axios.get(`${API}/admin/ai-avatars`);
+      setAiAvatars(response.data);
+    } catch (error) {
+      console.error('Failed to fetch avatars:', error);
+    }
+  };
+
+  const fetchCompetences = async (avatarId) => {
+    try {
+      const response = await axios.get(`${API}/avatars/${avatarId}/competences`);
+      setCompetences(response.data);
+    } catch (error) {
+      console.error('Failed to fetch competences:', error);
+    }
+  };
+
+  const handleAddCompetence = async (e) => {
+    e.preventDefault();
+    if (!selectedAvatar) return;
+
+    try {
+      const response = await axios.post(`${API}/avatars/${selectedAvatar.id}/competences`, newCompetence);
+      setCompetences([...competences, response.data]);
+      setShowAddCompetence(false);
+      setNewCompetence({ competence_name: '', competence_description: '', competence_type: 'skill', proficiency_level: 1 });
+      toast({ title: "Success", description: "Competence added successfully!" });
+    } catch (error) {
+      toast({ 
+        title: "Error", 
+        description: "Failed to add competence",
+        variant: "destructive"
+      });
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-2xl font-bold text-gray-900">AI Avatar Competence Management</h2>
+        <p className="text-gray-600">Add custom competences to enhance AI avatar capabilities</p>
+      </div>
+
+      {/* Avatar Selection */}
+      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {aiAvatars.map(avatar => (
+          <Card 
+            key={avatar.id} 
+            className={`cursor-pointer transition-all ${selectedAvatar?.id === avatar.id ? 'ring-2 ring-blue-500 bg-blue-50' : 'hover:shadow-lg'}`}
+            onClick={() => {
+              setSelectedAvatar(avatar);
+              fetchCompetences(avatar.id);
+            }}
+          >
+            <CardContent className="p-4 text-center">
+              <Brain className="w-8 h-8 text-purple-600 mx-auto mb-2" />
+              <h3 className="font-semibold text-gray-900">{avatar.avatar_name}</h3>
+              <p className="text-sm text-gray-600">{avatar.avatar_type.replace('_', ' ')}</p>
+              <Badge className="mt-2" variant={avatar.status === 'active' ? 'default' : 'secondary'}>
+                {avatar.status}
+              </Badge>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {/* Competence Management */}
+      {selectedAvatar && (
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2">
+                <Settings className="w-5 h-5" />
+                {selectedAvatar.avatar_name} Competences
+              </CardTitle>
+              <Button onClick={() => setShowAddCompetence(true)} className="bg-purple-600 hover:bg-purple-700">
+                <Plus className="w-4 h-4 mr-2" />
+                Add Competence
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {/* Base Competences */}
+            <div className="mb-6">
+              <h4 className="font-semibold text-gray-900 mb-3">Base Competences</h4>
+              <div className="grid md:grid-cols-2 gap-3">
+                {selectedAvatar.base_competences.map((competence, idx) => (
+                  <div key={idx} className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
+                    <Shield className="w-4 h-4 text-blue-600" />
+                    <span className="text-sm text-gray-700">{competence}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Custom Competences */}
+            <div>
+              <h4 className="font-semibold text-gray-900 mb-3">Custom Competences</h4>
+              {competences.length === 0 ? (
+                <div className="text-center py-6 text-gray-500">
+                  <Brain className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                  <p>No custom competences added yet.</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {competences.map(competence => (
+                    <div key={competence.id} className="p-3 border rounded-lg">
+                      <div className="flex items-center justify-between mb-2">
+                        <h5 className="font-semibold text-gray-900">{competence.competence_name}</h5>
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline">{competence.competence_type}</Badge>
+                          <div className="flex items-center gap-1">
+                            <span className="text-xs text-gray-500">Level:</span>
+                            <span className="text-sm font-medium">{competence.proficiency_level}/10</span>
+                          </div>
+                        </div>
+                      </div>
+                      <p className="text-sm text-gray-600">{competence.competence_description}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Add Competence Dialog */}
+      {showAddCompetence && selectedAvatar && (
+        <Dialog open={showAddCompetence} onOpenChange={setShowAddCompetence}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Plus className="w-5 h-5 text-purple-600" />
+                Add Competence to {selectedAvatar.avatar_name}
+              </DialogTitle>
+              <DialogDescription>
+                Define a new competence to enhance this AI avatar's capabilities
+              </DialogDescription>
+            </DialogHeader>
+            
+            <form onSubmit={handleAddCompetence} className="space-y-4">
+              <div>
+                <Label htmlFor="competence_name">Competence Name</Label>
+                <Input
+                  id="competence_name"
+                  value={newCompetence.competence_name}
+                  onChange={(e) => setNewCompetence({...newCompetence, competence_name: e.target.value})}
+                  placeholder="e.g., Advanced Pattern Recognition"
+                  required
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="competence_description">Description</Label>
+                <Textarea
+                  id="competence_description"
+                  value={newCompetence.competence_description}
+                  onChange={(e) => setNewCompetence({...newCompetence, competence_description: e.target.value})}
+                  placeholder="Describe what this competence enables the avatar to do..."
+                  rows={3}
+                  required
+                />
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="competence_type">Competence Type</Label>
+                  <Select value={newCompetence.competence_type} onValueChange={(value) => setNewCompetence({...newCompetence, competence_type: value})}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="skill">Skill</SelectItem>
+                      <SelectItem value="knowledge">Knowledge</SelectItem>
+                      <SelectItem value="capability">Capability</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label htmlFor="proficiency_level">Proficiency Level (1-10)</Label>
+                  <Input
+                    id="proficiency_level"
+                    type="number"
+                    min="1"
+                    max="10"
+                    value={newCompetence.proficiency_level}
+                    onChange={(e) => setNewCompetence({...newCompetence, proficiency_level: parseInt(e.target.value)})}
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <Button type="submit" className="flex-1">
+                  Add Competence
+                </Button>
+                <Button type="button" variant="outline" onClick={() => setShowAddCompetence(false)}>
+                  Cancel
+                </Button>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
+      )}
+    </div>
+  );
+};
+
 // Main App Component
 const AppContent = () => {
   const { user, logout } = useAuth();
