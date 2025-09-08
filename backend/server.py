@@ -132,6 +132,53 @@ class StrategyImplementation(BaseModel):
     stakeholder_engagement: List[str]
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
+class MonitorAgent(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    scenario_id: str
+    agent_type: str  # "risk_monitor", "performance_tracker", "anomaly_detector", "trend_analyzer"
+    status: str = "active"  # "active", "paused", "completed"
+    monitoring_parameters: List[str]
+    insights_generated: List[str]
+    anomalies_detected: List[str] 
+    risk_level: str = "low"  # "low", "medium", "high", "critical"
+    last_analysis: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class SystemMetrics(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    scenario_id: str
+    resilience_score: float  # 0.0 - 1.0
+    complexity_index: float  # 0.0 - 10.0
+    cascading_risk_factor: float  # 0.0 - 1.0
+    intervention_effectiveness: float  # 0.0 - 1.0
+    system_stability: float  # 0.0 - 1.0
+    adaptive_capacity: float  # 0.0 - 1.0
+    interconnectedness_level: float  # 0.0 - 1.0
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class ComplexAdaptiveSystem(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    scenario_id: str
+    system_components: List[str]  # Economic, Environmental, Social, Political, Technological
+    interconnections: List[str]  # Relationships between components
+    feedback_loops: List[str]  # Positive and negative feedback mechanisms
+    emergent_behaviors: List[str]  # Unexpected system behaviors
+    adaptation_mechanisms: List[str]  # How system adapts to changes
+    tipping_points: List[str]  # Critical thresholds
+    system_dynamics: str  # AI-generated description of system behavior
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class LearningInsight(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    scenario_id: str
+    insight_type: str  # "pattern_recognition", "outcome_prediction", "optimization_suggestion"
+    insight_content: str
+    confidence_score: float  # 0.0 - 1.0
+    applied: bool = False
+    effectiveness_rating: Optional[float] = None
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
 # Helper functions
 def verify_password(plain_password, hashed_password):
     return pwd_context.verify(plain_password, hashed_password)
