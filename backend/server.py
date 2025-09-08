@@ -310,7 +310,7 @@ class RapidAnalysis(BaseModel):
     priority_level: str  # "low", "medium", "high", "critical"
     confidence_score: float
     generated_by: str  # User ID
-    created_at: datetime = Field(default_factory=lambda: DateTime.now(timezone.utc))
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 # Helper functions
 def verify_password(plain_password, hashed_password):
