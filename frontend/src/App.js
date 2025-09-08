@@ -1437,39 +1437,76 @@ const ScenarioManagement = ({ onScenarioSelect }) => {
                     </Button>
                   </div>
                   
-                  <div className="flex gap-1">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleGenerateImplementation(scenario, 'game-book')}
-                      disabled={generatingImplementation}
-                      className="flex-1 text-xs py-1"
-                    >
-                      <BookOpen className="w-3 h-3 mr-1" />
-                      Game Book
-                    </Button>
+                  <div className="space-y-1">
+                    <div className="flex gap-1">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleGenerateImplementation(scenario, 'game-book')}
+                        disabled={generatingImplementation}
+                        className="flex-1 text-xs py-1"
+                      >
+                        <BookOpen className="w-3 h-3 mr-1" />
+                        Game Book
+                      </Button>
+                      
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleGenerateImplementation(scenario, 'action-plan')}
+                        disabled={generatingImplementation}
+                        className="flex-1 text-xs py-1"
+                      >
+                        <CheckSquare className="w-3 h-3 mr-1" />
+                        Actions
+                      </Button>
+                      
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleGenerateImplementation(scenario, 'strategy-implementation')}
+                        disabled={generatingImplementation}
+                        className="flex-1 text-xs py-1"
+                      >
+                        <Target className="w-3 h-3 mr-1" />
+                        Strategy
+                      </Button>
+                    </div>
                     
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleGenerateImplementation(scenario, 'action-plan')}
-                      disabled={generatingImplementation}
-                      className="flex-1 text-xs py-1"
-                    >
-                      <CheckSquare className="w-3 h-3 mr-1" />
-                      Actions
-                    </Button>
-                    
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleGenerateImplementation(scenario, 'strategy-implementation')}
-                      disabled={generatingImplementation}
-                      className="flex-1 text-xs py-1"
-                    >
-                      <Target className="w-3 h-3 mr-1" />
-                      Strategy
-                    </Button>
+                    <div className="flex gap-1">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleDeployMonitors(scenario)}
+                        disabled={deployingMonitors}
+                        className="flex-1 text-xs py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200"
+                      >
+                        <Monitor className="w-3 h-3 mr-1" />
+                        AI Monitors
+                      </Button>
+                      
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleComplexSystemsAnalysis(scenario)}
+                        disabled={generatingImplementation}
+                        className="flex-1 text-xs py-1 bg-purple-50 hover:bg-purple-100 text-purple-700 border-purple-200"
+                      >
+                        <Network className="w-3 h-3 mr-1" />
+                        Complex Systems
+                      </Button>
+                      
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleGenerateLearningInsights(scenario)}
+                        disabled={generatingImplementation}
+                        className="flex-1 text-xs py-1 bg-green-50 hover:bg-green-100 text-green-700 border-green-200"
+                      >
+                        <Brain className="w-3 h-3 mr-1" />
+                        AI Learning
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </CardContent>
