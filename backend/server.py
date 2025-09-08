@@ -204,6 +204,20 @@ async def update_scenario(scenario_id: str, scenario_data: ScenarioCreate, curre
     updated_scenario = await db.scenarios.find_one({"id": scenario_id})
     return Scenario(**updated_scenario)
 
+@api_router.delete("/scenarios/{scenario_id}")
+async def delete_scenario(scenario_id: str, current_user: User = Depends(get_current_user)):
+    scenario = await db.scenarios.find_one({"id": scenario_id, "user_id": current_user.id})
+    if not scenario:
+        raise HTTPException(status_code=404, detail="Scenario not found")
+    
+    # Delete the scenario
+    await db.scenarios.delete_one({"id": scenario_id, "user_id": current_user.id})
+    
+    # Also delete any associated simulation results
+    await db.simulation_results.delete_many({"scenario_id": scenario_id})
+    
+    return {"message": "Scenario deleted successfully"}
+
 # AI Avatar Genie endpoints
 @api_router.post("/ai-genie", response_model=AIGenieResponse)
 async def chat_with_ai_genie(request: AIGenieRequest, current_user: User = Depends(get_current_user)):
