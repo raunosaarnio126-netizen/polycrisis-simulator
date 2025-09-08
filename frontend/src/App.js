@@ -19,7 +19,7 @@ import { toast } from './hooks/use-toast';
 import { Toaster } from './components/ui/toaster';
 
 // Icons
-import { AlertTriangle, Brain, Globe, Shield, TrendingUp, Users, Plus, Play, Eye, MessageSquare, BookOpen, CheckSquare, Target, FileText, Download, Activity, Zap, BarChart3, Network, Layers, Cpu, Monitor, TrendingDown, Link, Cloud, Lightbulb, Rss, Database, Timer, Share2, ExternalLink } from 'lucide-react';
+import { AlertTriangle, Brain, Globe, Shield, TrendingUp, Users, Plus, Play, Eye, MessageSquare, BookOpen, CheckSquare, Target, FileText, Download, Activity, Zap, BarChart3, Network, Layers, Cpu, Monitor, TrendingDown, Link, Cloud, Lightbulb, Rss, Database, Timer, Share2, ExternalLink, Building2, Upload, Users2, Settings, BarChart, TrendingUp as TrendingUpIcon, Briefcase } from 'lucide-react';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
