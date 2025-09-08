@@ -1797,6 +1797,326 @@ const ScenarioManagement = ({ onScenarioSelect }) => {
         </Dialog>
       )}
 
+      {/* Monitoring Dashboard Dialog */}
+      {showMonitoringDialog && monitoringDashboard[showMonitoringDialog.id] && (
+        <Dialog open={!!showMonitoringDialog} onOpenChange={() => setShowMonitoringDialog(null)}>
+          <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Cloud className="w-5 h-5 text-teal-600" />
+                Intelligent Monitoring Network - {showMonitoringDialog.title}
+              </DialogTitle>
+              <DialogDescription>
+                Real-time data collection and AI-powered analysis from collaborative team sources
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-6">
+              {/* Monitoring Summary */}
+              <div className="grid md:grid-cols-4 gap-4">
+                <Card className="bg-blue-50 border-blue-200">
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-blue-600 font-medium">Active Sources</p>
+                        <p className="text-2xl font-bold text-blue-900">
+                          {monitoringDashboard[showMonitoringDialog.id].monitoring_summary.active_sources}
+                        </p>
+                      </div>
+                      <Database className="w-8 h-8 text-blue-500" />
+                    </div>
+                  </CardContent>
+                </Card>
+                
+                <Card className="bg-green-50 border-green-200">
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-green-600 font-medium">Data Points</p>
+                        <p className="text-2xl font-bold text-green-900">
+                          {monitoringDashboard[showMonitoringDialog.id].monitoring_summary.total_data_points}
+                        </p>
+                      </div>
+                      <BarChart3 className="w-8 h-8 text-green-500" />
+                    </div>
+                  </CardContent>
+                </Card>
+                
+                <Card className="bg-purple-50 border-purple-200">
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-purple-600 font-medium">Avg Relevance</p>
+                        <p className="text-2xl font-bold text-purple-900">
+                          {Math.round(monitoringDashboard[showMonitoringDialog.id].monitoring_summary.average_relevance_score * 100)}%
+                        </p>
+                      </div>
+                      <Target className="w-8 h-8 text-purple-500" />
+                    </div>
+                  </CardContent>
+                </Card>
+                
+                <Card className="bg-orange-50 border-orange-200">
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-orange-600 font-medium">Suggestions</p>
+                        <p className="text-2xl font-bold text-orange-900">
+                          {monitoringDashboard[showMonitoringDialog.id].smart_suggestions_count}
+                        </p>
+                      </div>
+                      <Lightbulb className="w-8 h-8 text-orange-500" />
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Monitoring Sources */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Link className="w-5 h-5" />
+                    Team Monitoring Sources
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {monitoringDashboard[showMonitoringDialog.id].monitoring_sources.length === 0 ? (
+                      <div className="text-center py-6 text-gray-500">
+                        <Link className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                        <p>No monitoring sources added yet.</p>
+                        <Button 
+                          onClick={() => handleAddMonitoringSource(showMonitoringDialog)}
+                          className="mt-3"
+                          size="sm"
+                        >
+                          <Plus className="w-4 h-4 mr-2" />
+                          Add First Source
+                        </Button>
+                      </div>
+                    ) : (
+                      monitoringDashboard[showMonitoringDialog.id].monitoring_sources.map((source, idx) => (
+                        <div key={idx} className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50">
+                          <div className="flex items-center gap-3">
+                            <div className={`w-3 h-3 rounded-full ${
+                              source.status === 'active' ? 'bg-green-500' : 
+                              source.status === 'error' ? 'bg-red-500' : 'bg-gray-400'
+                            }`}></div>
+                            <div>
+                              <p className="font-medium text-gray-900">{source.name}</p>
+                              <p className="text-sm text-gray-600">{source.type.replace('_', ' ')}</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-4">
+                            <div className="text-right">
+                              <p className="text-sm font-medium">{Math.round(source.relevance_score * 100)}% relevance</p>
+                              <p className="text-xs text-gray-500">{source.data_points} data points</p>
+                            </div>
+                            <Badge variant={source.status === 'active' ? 'default' : 'secondary'}>
+                              {source.status}
+                            </Badge>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Recent Insights */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Rss className="w-5 h-5" />
+                    Recent AI Insights
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {monitoringDashboard[showMonitoringDialog.id].recent_insights.length === 0 ? (
+                      <div className="text-center py-6 text-gray-500">
+                        <Rss className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                        <p>No data collected yet.</p>
+                        <Button 
+                          onClick={() => handleCollectData(showMonitoringDialog)}
+                          className="mt-3"
+                          size="sm"
+                        >
+                          <Activity className="w-4 h-4 mr-2" />
+                          Start Data Collection
+                        </Button>
+                      </div>
+                    ) : (
+                      monitoringDashboard[showMonitoringDialog.id].recent_insights.map((insight, idx) => (
+                        <div key={idx} className="p-3 border rounded-lg">
+                          <div className="flex items-start justify-between mb-2">
+                            <h4 className="font-medium text-gray-900">{insight.title}</h4>
+                            <div className="flex items-center gap-2">
+                              <Badge variant={
+                                insight.urgency === 'critical' ? 'destructive' :
+                                insight.urgency === 'high' ? 'default' :
+                                insight.urgency === 'medium' ? 'secondary' : 'outline'
+                              }>
+                                {insight.urgency}
+                              </Badge>
+                              <span className="text-xs text-gray-500">
+                                {Math.round(insight.relevance * 100)}% relevant
+                              </span>
+                            </div>
+                          </div>
+                          <p className="text-sm text-gray-700">{insight.summary}</p>
+                          <p className="text-xs text-gray-500 mt-2">
+                            {new Date(insight.collected_at).toLocaleString()}
+                          </p>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+
+              <div className="flex gap-3 pt-4">
+                <Button onClick={() => handleCollectData(showMonitoringDialog)} className="flex-1">
+                  <Activity className="w-4 h-4 mr-2" />
+                  Collect New Data
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={() => handleAddMonitoringSource(showMonitoringDialog)}
+                  className="flex-1"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Monitoring Source
+                </Button>
+                <Button variant="outline" onClick={() => setShowMonitoringDialog(null)}>
+                  Close
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* Add Monitoring Source Dialog */}
+      {showAddSourceDialog && (
+        <Dialog open={!!showAddSourceDialog} onOpenChange={() => setShowAddSourceDialog(null)}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Link className="w-5 h-5 text-indigo-600" />
+                Add Monitoring Source - {showAddSourceDialog.title}
+              </DialogTitle>
+              <DialogDescription>
+                Add a new data source for AI monitors to track and analyze
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="source_type">Source Type</Label>
+                <Select value={newSourceData.source_type} onValueChange={(value) => setNewSourceData({...newSourceData, source_type: value})}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select source type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="news_api">News API</SelectItem>
+                    <SelectItem value="social_media">Social Media</SelectItem>
+                    <SelectItem value="government_data">Government Data</SelectItem>
+                    <SelectItem value="weather_api">Weather API</SelectItem>
+                    <SelectItem value="financial_market">Financial Market</SelectItem>
+                    <SelectItem value="custom_url">Custom URL</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="source_name">Source Name</Label>
+                <Input
+                  id="source_name"
+                  value={newSourceData.source_name}
+                  onChange={(e) => setNewSourceData({...newSourceData, source_name: e.target.value})}
+                  placeholder="e.g., USGS Earthquake Feed"
+                  required
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="source_url">Source URL</Label>
+                <Input
+                  id="source_url"
+                  type="url"
+                  value={newSourceData.source_url}
+                  onChange={(e) => setNewSourceData({...newSourceData, source_url: e.target.value})}
+                  placeholder="https://example.com/api/data"
+                  required
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="monitoring_frequency">Monitoring Frequency</Label>
+                <Select value={newSourceData.monitoring_frequency} onValueChange={(value) => setNewSourceData({...newSourceData, monitoring_frequency: value})}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="real_time">Real-time</SelectItem>
+                    <SelectItem value="hourly">Hourly</SelectItem>
+                    <SelectItem value="daily">Daily</SelectItem>
+                    <SelectItem value="weekly">Weekly</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label>Monitoring Keywords</Label>
+                <div className="flex gap-2 mb-2">
+                  <Input
+                    placeholder="Add keyword (e.g., emergency, crisis)"
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter' && e.target.value.trim()) {
+                        setNewSourceData({
+                          ...newSourceData,
+                          data_keywords: [...newSourceData.data_keywords, e.target.value.trim()]
+                        });
+                        e.target.value = '';
+                      }
+                    }}
+                  />
+                  <Button type="button" size="sm" variant="outline">
+                    Add
+                  </Button>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {newSourceData.data_keywords.map((keyword, idx) => (
+                    <Badge 
+                      key={idx} 
+                      variant="secondary" 
+                      className="cursor-pointer"
+                      onClick={() => setNewSourceData({
+                        ...newSourceData,
+                        data_keywords: newSourceData.data_keywords.filter((_, i) => i !== idx)
+                      })}
+                    >
+                      {keyword} ×
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <Button onClick={submitMonitoringSource} className="flex-1">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Monitoring Source
+                </Button>
+                <Button variant="outline" onClick={() => setShowAddSourceDialog(null)}>
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+
       {/* Implementation View Dialog */}
       {implementationView && (
         <Dialog open={!!implementationView} onOpenChange={() => setImplementationView(null)}>
