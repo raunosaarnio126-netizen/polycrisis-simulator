@@ -764,10 +764,7 @@ const AppContent = () => {
           </TabsContent>
           
           <TabsContent value="scenarios">
-            <div className="text-center py-8 text-gray-500">
-              <Globe className="w-12 h-12 mx-auto mb-4 opacity-50" />
-              <p>Scenario management interface coming soon...</p>
-            </div>
+            <ScenarioManagement onScenarioSelect={setSelectedScenario} />
           </TabsContent>
           
           <TabsContent value="ai-genie">
