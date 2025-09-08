@@ -408,6 +408,305 @@ async def get_simulation_results(scenario_id: str, current_user: User = Depends(
     return [SimulationResult(**result) for result in results]
 
 # Dashboard endpoints
+# Game Book generation endpoint
+@api_router.post("/scenarios/{scenario_id}/game-book", response_model=GameBook)
+async def generate_game_book(scenario_id: str, current_user: User = Depends(get_current_user)):
+    scenario = await db.scenarios.find_one({"id": scenario_id, "user_id": current_user.id})
+    if not scenario:
+        raise HTTPException(status_code=404, detail="Scenario not found")
+    
+    try:
+        chat = LlmChat(
+            api_key=EMERGENT_LLM_KEY,
+            session_id=f"gamebook-{scenario_id}",
+            system_message="""You are an expert crisis management game book creator. Create comprehensive crisis simulation game books that help organizations practice and prepare for crisis scenarios.
+
+Your role is to:
+1. Create detailed game book content with realistic crisis progression
+2. Identify critical decision points during the crisis
+3. Specify resource requirements and constraints
+4. Define timeline phases with clear milestones
+5. Establish success metrics and evaluation criteria
+
+Provide structured, actionable game book content that can be used for tabletop exercises and crisis simulations."""
+        ).with_model("anthropic", "claude-3-7-sonnet-20250219")
+        
+        prompt = f"""
+Create a comprehensive Crisis Game Book for this scenario:
+
+Scenario: {scenario['title']}
+Type: {scenario['crisis_type']}
+Description: {scenario['description']}
+Severity: {scenario['severity_level']}/10
+Regions: {', '.join(scenario['affected_regions'])}
+Variables: {', '.join(scenario['key_variables'])}
+
+Generate a detailed game book that includes:
+1. Crisis progression phases with realistic timeline
+2. Critical decision points that teams must address
+3. Required resources, personnel, and infrastructure
+4. Success metrics and evaluation criteria
+5. Realistic constraints and challenges
+
+Format as a practical tabletop exercise guide.
+"""
+        
+        user_message = UserMessage(text=prompt)
+        game_content = await chat.send_message(user_message)
+        
+        game_book = GameBook(
+            scenario_id=scenario_id,
+            game_book_content=game_content,
+            decision_points=[
+                "Initial crisis detection and assessment",
+                "Resource allocation and deployment decisions",
+                "Communication strategy activation",
+                "Escalation and response coordination",
+                "Recovery and business continuity planning"
+            ],
+            resource_requirements=[
+                "Emergency response team personnel",
+                "Communication infrastructure",
+                "Emergency supplies and equipment",
+                "Backup facilities and locations",
+                "External partner coordination"
+            ],
+            timeline_phases=[
+                "Phase 1: Crisis Detection (0-1 hours)",
+                "Phase 2: Initial Response (1-6 hours)",
+                "Phase 3: Full Activation (6-24 hours)",
+                "Phase 4: Sustained Operations (1-7 days)",
+                "Phase 5: Recovery Planning (1-4 weeks)"
+            ],
+            success_metrics=[
+                "Response time to initial crisis detection",
+                "Effectiveness of communication protocols",
+                "Resource utilization efficiency",
+                "Stakeholder satisfaction scores",
+                "Recovery timeline adherence"
+            ]
+        )
+        
+        await db.game_books.insert_one(game_book.dict())
+        return game_book
+        
+    except Exception as e:
+        logging.error(f"Game book generation error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Game book generation failed: {str(e)}")
+
+# Action Plan generation endpoint
+@api_router.post("/scenarios/{scenario_id}/action-plan", response_model=ActionPlan)
+async def generate_action_plan(scenario_id: str, current_user: User = Depends(get_current_user)):
+    scenario = await db.scenarios.find_one({"id": scenario_id, "user_id": current_user.id})
+    if not scenario:
+        raise HTTPException(status_code=404, detail="Scenario not found")
+    
+    try:
+        chat = LlmChat(
+            api_key=EMERGENT_LLM_KEY,
+            session_id=f"actionplan-{scenario_id}",
+            system_message="""You are an expert crisis management action plan developer. Create detailed, actionable plans that organizations can implement to prepare for and respond to crisis scenarios.
+
+Your role is to:
+1. Define immediate actions (0-24 hours)
+2. Outline short-term actions (1-30 days)  
+3. Plan long-term actions (1-12 months)
+4. Identify responsible parties and roles
+5. Specify resource allocation requirements
+6. Assign priority levels based on impact and urgency
+
+Provide practical, implementable action items with clear ownership and timelines."""
+        ).with_model("anthropic", "claude-3-7-sonnet-20250219")
+        
+        prompt = f"""
+Create a comprehensive Action Plan for this crisis scenario:
+
+Scenario: {scenario['title']}
+Type: {scenario['crisis_type']}
+Description: {scenario['description']}
+Severity: {scenario['severity_level']}/10
+Regions: {', '.join(scenario['affected_regions'])}
+Variables: {', '.join(scenario['key_variables'])}
+
+Generate specific, actionable steps organized by timeline:
+1. Immediate Actions (0-24 hours) - Critical first responses
+2. Short-term Actions (1-30 days) - Stabilization and control measures
+3. Long-term Actions (1-12 months) - Recovery and improvement initiatives
+4. Responsible parties for each action category
+5. Resource allocation requirements
+6. Overall priority assessment
+
+Make all actions specific, measurable, and implementable.
+"""
+        
+        user_message = UserMessage(text=prompt)
+        action_content = await chat.send_message(user_message)
+        
+        action_plan = ActionPlan(
+            scenario_id=scenario_id,
+            immediate_actions=[
+                "Activate crisis management team within 30 minutes",
+                "Establish secure communication channels",
+                "Conduct initial situation assessment",
+                "Alert key stakeholders and authorities",
+                "Implement immediate safety protocols"
+            ],
+            short_term_actions=[
+                "Deploy emergency response resources",
+                "Establish coordination with external agencies",
+                "Begin damage assessment procedures",
+                "Activate business continuity plans",
+                "Implement public communication strategy"
+            ],
+            long_term_actions=[
+                "Conduct comprehensive lessons learned review",
+                "Update crisis management procedures",
+                "Invest in infrastructure improvements",
+                "Enhance training and preparedness programs",
+                "Develop strategic partnerships"
+            ],
+            responsible_parties=[
+                "Crisis Management Team Leader",
+                "Emergency Response Coordinator",
+                "Communications Director",
+                "Operations Manager",
+                "External Relations Manager"
+            ],
+            resource_allocation=[
+                "Emergency response personnel (24/7 coverage)",
+                "Communication systems and backup power",
+                "Emergency supplies and equipment inventory",
+                "Financial reserves for crisis response",
+                "External contractor and vendor agreements"
+            ],
+            priority_level="HIGH"
+        )
+        
+        await db.action_plans.insert_one(action_plan.dict())
+        return action_plan
+        
+    except Exception as e:
+        logging.error(f"Action plan generation error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Action plan generation failed: {str(e)}")
+
+# Strategy Implementation endpoint
+@api_router.post("/scenarios/{scenario_id}/strategy-implementation", response_model=StrategyImplementation)
+async def generate_strategy_implementation(scenario_id: str, current_user: User = Depends(get_current_user)):
+    scenario = await db.scenarios.find_one({"id": scenario_id, "user_id": current_user.id})
+    if not scenario:
+        raise HTTPException(status_code=404, detail="Scenario not found")
+    
+    try:
+        chat = LlmChat(
+            api_key=EMERGENT_LLM_KEY,
+            session_id=f"strategy-{scenario_id}",
+            system_message="""You are an expert strategic crisis management consultant. Create comprehensive implementation strategies that help organizations integrate crisis scenarios into their overall business strategy and operations.
+
+Your role is to:
+1. Develop strategic implementation frameworks
+2. Recommend organizational changes and improvements
+3. Propose policy updates and new procedures
+4. Define training and capability development needs
+5. Estimate budget and resource requirements
+6. Plan stakeholder engagement strategies
+
+Provide strategic guidance that transforms crisis scenarios into organizational resilience capabilities."""
+        ).with_model("anthropic", "claude-3-7-sonnet-20250219")
+        
+        prompt = f"""
+Create a Strategic Implementation Plan for integrating this crisis scenario into organizational strategy:
+
+Scenario: {scenario['title']}
+Type: {scenario['crisis_type']}
+Description: {scenario['description']}
+Severity: {scenario['severity_level']}/10
+Organization: {current_user.organization}
+Regions: {', '.join(scenario['affected_regions'])}
+Variables: {', '.join(scenario['key_variables'])}
+
+Develop a comprehensive strategy covering:
+1. Overall implementation approach and methodology
+2. Required organizational changes and restructuring
+3. Policy recommendations and procedure updates  
+4. Training requirements and capability development
+5. Budget considerations and investment priorities
+6. Stakeholder engagement and communication strategies
+
+Focus on building long-term organizational resilience and crisis preparedness capabilities.
+"""
+        
+        user_message = UserMessage(text=prompt)
+        strategy_content = await chat.send_message(user_message)
+        
+        strategy_impl = StrategyImplementation(
+            scenario_id=scenario_id,
+            implementation_strategy=strategy_content,
+            organizational_changes=[
+                "Establish dedicated crisis management office",
+                "Create cross-functional rapid response teams",
+                "Implement crisis communication protocols",
+                "Develop supplier and vendor backup systems",
+                "Enhance decision-making authority structures"
+            ],
+            policy_recommendations=[
+                "Update crisis management policy framework",
+                "Establish clear escalation procedures",
+                "Define roles and responsibilities matrix",
+                "Create resource allocation guidelines",
+                "Implement regular scenario testing requirements"
+            ],
+            training_requirements=[
+                "Executive crisis leadership training",
+                "Tabletop exercise facilitation skills",
+                "Crisis communication and media training",
+                "Business continuity planning workshops",
+                "Inter-agency coordination training"
+            ],
+            budget_considerations=[
+                "Crisis management system infrastructure",
+                "Emergency supplies and equipment reserves",
+                "Training and development programs",
+                "External consultant and vendor contracts",
+                "Insurance coverage optimization"
+            ],
+            stakeholder_engagement=[
+                "Board and executive leadership briefings",
+                "Employee awareness and training programs",
+                "Customer and client communication strategies",
+                "Regulatory and government liaison activities",
+                "Community and public relations initiatives"
+            ]
+        )
+        
+        await db.strategy_implementations.insert_one(strategy_impl.dict())
+        return strategy_impl
+        
+    except Exception as e:
+        logging.error(f"Strategy implementation generation error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Strategy implementation failed: {str(e)}")
+
+# Get implementation artifacts
+@api_router.get("/scenarios/{scenario_id}/game-book")
+async def get_game_book(scenario_id: str, current_user: User = Depends(get_current_user)):
+    game_book = await db.game_books.find_one({"scenario_id": scenario_id})
+    if not game_book:
+        raise HTTPException(status_code=404, detail="Game book not found")
+    return GameBook(**game_book)
+
+@api_router.get("/scenarios/{scenario_id}/action-plan")
+async def get_action_plan(scenario_id: str, current_user: User = Depends(get_current_user)):
+    action_plan = await db.action_plans.find_one({"scenario_id": scenario_id})
+    if not action_plan:
+        raise HTTPException(status_code=404, detail="Action plan not found")
+    return ActionPlan(**action_plan)
+
+@api_router.get("/scenarios/{scenario_id}/strategy-implementation")
+async def get_strategy_implementation(scenario_id: str, current_user: User = Depends(get_current_user)):
+    strategy_impl = await db.strategy_implementations.find_one({"scenario_id": scenario_id})
+    if not strategy_impl:
+        raise HTTPException(status_code=404, detail="Strategy implementation not found")
+    return StrategyImplementation(**strategy_impl)
+
 @api_router.get("/dashboard/stats")
 async def get_dashboard_stats(current_user: User = Depends(get_current_user)):
     total_scenarios = await db.scenarios.count_documents({"user_id": current_user.id})
