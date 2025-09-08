@@ -691,6 +691,422 @@ const AIGenie = ({ selectedScenario }) => {
   );
 };
 
+// Scenario Management Component
+const ScenarioManagement = ({ onScenarioSelect }) => {
+  const [scenarios, setScenarios] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedScenario, setSelectedScenario] = useState(null);
+  const [filterStatus, setFilterStatus] = useState('all');
+  const [filterType, setFilterType] = useState('all');
+  const [sortBy, setSortBy] = useState('created_at');
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [scenarioToDelete, setScenarioToDelete] = useState(null);
+  const [editingScenario, setEditingScenario] = useState(null);
+
+  useEffect(() => {
+    fetchScenarios();
+  }, []);
+
+  const fetchScenarios = async () => {
+    try {
+      const response = await axios.get(`${API}/scenarios`);
+      setScenarios(response.data);
+    } catch (error) {
+      toast({ 
+        title: "Error", 
+        description: "Failed to fetch scenarios",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteScenario = async (scenarioId) => {
+    try {
+      await axios.delete(`${API}/scenarios/${scenarioId}`);
+      setScenarios(scenarios.filter(s => s.id !== scenarioId));
+      setShowDeleteDialog(false);
+      setScenarioToDelete(null);
+      toast({ title: "Success", description: "Scenario deleted successfully" });
+    } catch (error) {
+      toast({ 
+        title: "Error", 
+        description: "Failed to delete scenario",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleRunSimulation = async (scenario) => {
+    try {
+      setLoading(true);
+      const response = await axios.post(`${API}/scenarios/${scenario.id}/simulate`);
+      
+      // Update scenario status to active
+      const updatedScenarios = scenarios.map(s => 
+        s.id === scenario.id ? { ...s, status: 'active' } : s
+      );
+      setScenarios(updatedScenarios);
+      
+      toast({ 
+        title: "Success", 
+        description: "Simulation completed successfully!",
+        duration: 5000
+      });
+      
+      // Show results in a dialog or navigate to results view
+      setSelectedScenario({ ...scenario, simulation_result: response.data });
+      
+    } catch (error) {
+      toast({ 
+        title: "Error", 
+        description: "Failed to run simulation",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getCrisisTypeColor = (type) => {
+    const colors = {
+      'natural_disaster': 'bg-red-100 text-red-800',
+      'economic_crisis': 'bg-yellow-100 text-yellow-800',
+      'social_unrest': 'bg-purple-100 text-purple-800',
+      'pandemic': 'bg-pink-100 text-pink-800',
+      'cyber_attack': 'bg-blue-100 text-blue-800',
+      'supply_chain_disruption': 'bg-orange-100 text-orange-800',
+      'climate_change': 'bg-green-100 text-green-800',
+      'political_instability': 'bg-gray-100 text-gray-800'
+    };
+    return colors[type] || 'bg-gray-100 text-gray-800';
+  };
+
+  const getStatusColor = (status) => {
+    const colors = {
+      'draft': 'bg-gray-100 text-gray-800',
+      'active': 'bg-green-100 text-green-800',
+      'completed': 'bg-blue-100 text-blue-800'
+    };
+    return colors[status] || 'bg-gray-100 text-gray-800';
+  };
+
+  const filteredAndSortedScenarios = scenarios
+    .filter(scenario => {
+      if (filterStatus !== 'all' && scenario.status !== filterStatus) return false;
+      if (filterType !== 'all' && scenario.crisis_type !== filterType) return false;
+      return true;
+    })
+    .sort((a, b) => {
+      if (sortBy === 'created_at') return new Date(b.created_at) - new Date(a.created_at);
+      if (sortBy === 'severity_level') return b.severity_level - a.severity_level;
+      if (sortBy === 'title') return a.title.localeCompare(b.title);
+      return 0;
+    });
+
+  const crisisTypes = [
+    'natural_disaster',
+    'economic_crisis', 
+    'social_unrest',
+    'pandemic',
+    'cyber_attack',
+    'supply_chain_disruption',
+    'climate_change',
+    'political_instability'
+  ];
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="text-center">
+          <Brain className="w-12 h-12 animate-pulse text-blue-500 mx-auto mb-4" />
+          <p className="text-gray-600">Loading scenarios...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Header with filters */}
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900">Crisis Scenarios</h2>
+          <p className="text-gray-600">Manage and analyze your crisis simulation scenarios</p>
+        </div>
+        
+        <div className="flex flex-wrap gap-3">
+          <Select value={filterStatus} onValueChange={setFilterStatus}>
+            <SelectTrigger className="w-40">
+              <SelectValue placeholder="Filter by status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Status</SelectItem>
+              <SelectItem value="draft">Draft</SelectItem>
+              <SelectItem value="active">Active</SelectItem>
+              <SelectItem value="completed">Completed</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Select value={filterType} onValueChange={setFilterType}>
+            <SelectTrigger className="w-48">
+              <SelectValue placeholder="Filter by type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Types</SelectItem>
+              {crisisTypes.map((type) => (
+                <SelectItem key={type} value={type}>
+                  {type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select value={sortBy} onValueChange={setSortBy}>
+            <SelectTrigger className="w-40">
+              <SelectValue placeholder="Sort by" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="created_at">Date Created</SelectItem>
+              <SelectItem value="severity_level">Severity</SelectItem>
+              <SelectItem value="title">Title</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      {/* Scenarios grid */}
+      {filteredAndSortedScenarios.length === 0 ? (
+        <div className="text-center py-12">
+          <Globe className="w-16 h-16 mx-auto mb-4 text-gray-400" />
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">No scenarios found</h3>
+          <p className="text-gray-600 mb-4">
+            {scenarios.length === 0 
+              ? "Create your first crisis scenario to get started"
+              : "No scenarios match your current filters"
+            }
+          </p>
+          {scenarios.length === 0 && (
+            <Button onClick={() => window.location.hash = '#create'} className="bg-blue-600 hover:bg-blue-700">
+              <Plus className="w-4 h-4 mr-2" />
+              Create First Scenario
+            </Button>
+          )}
+        </div>
+      ) : (
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {filteredAndSortedScenarios.map((scenario) => (
+            <Card key={scenario.id} className="hover:shadow-lg transition-shadow duration-200">
+              <CardHeader className="pb-3">
+                <div className="flex items-start justify-between">
+                  <CardTitle className="text-lg leading-tight">{scenario.title}</CardTitle>
+                  <div className="flex gap-1">
+                    <Badge className={getStatusColor(scenario.status)} variant="secondary">
+                      {scenario.status}
+                    </Badge>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 mt-2">
+                  <Badge className={getCrisisTypeColor(scenario.crisis_type)} variant="outline">
+                    {scenario.crisis_type.replace('_', ' ')}
+                  </Badge>
+                  <Badge variant="outline" className="bg-red-50 text-red-700">
+                    Severity {scenario.severity_level}/10
+                  </Badge>
+                </div>
+              </CardHeader>
+              
+              <CardContent className="pt-0">
+                <p className="text-sm text-gray-600 mb-4 line-clamp-3">
+                  {scenario.description}
+                </p>
+                
+                <div className="space-y-2 mb-4">
+                  <div className="flex items-center gap-2 text-xs text-gray-500">
+                    <Globe className="w-3 h-3" />
+                    <span>Regions: {scenario.affected_regions.slice(0, 2).join(', ')}</span>
+                    {scenario.affected_regions.length > 2 && (
+                      <span>+{scenario.affected_regions.length - 2} more</span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-gray-500">
+                    <AlertTriangle className="w-3 h-3" />
+                    <span>Variables: {scenario.key_variables.length}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-gray-500">
+                    <span>Created: {new Date(scenario.created_at).toLocaleDateString()}</span>
+                  </div>
+                </div>
+
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setSelectedScenario(scenario)}
+                    className="flex-1"
+                  >
+                    <Eye className="w-3 h-3 mr-1" />
+                    View
+                  </Button>
+                  
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleRunSimulation(scenario)}
+                    disabled={loading}
+                    className="flex-1"
+                  >
+                    <Play className="w-3 h-3 mr-1" />
+                    Simulate
+                  </Button>
+                  
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setScenarioToDelete(scenario);
+                      setShowDeleteDialog(true);
+                    }}
+                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                  >
+                    <AlertTriangle className="w-3 h-3" />
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      {/* Scenario Detail Dialog */}
+      {selectedScenario && (
+        <Dialog open={!!selectedScenario} onOpenChange={() => setSelectedScenario(null)}>
+          <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Globe className="w-5 h-5" />
+                {selectedScenario.title}
+              </DialogTitle>
+              <DialogDescription>
+                <div className="flex gap-2 mt-2">
+                  <Badge className={getCrisisTypeColor(selectedScenario.crisis_type)}>
+                    {selectedScenario.crisis_type.replace('_', ' ')}
+                  </Badge>
+                  <Badge className={getStatusColor(selectedScenario.status)}>
+                    {selectedScenario.status}
+                  </Badge>
+                  <Badge variant="outline">
+                    Severity {selectedScenario.severity_level}/10
+                  </Badge>
+                </div>
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-6">
+              <div>
+                <h4 className="font-semibold text-gray-900 mb-2">Description</h4>
+                <p className="text-gray-700">{selectedScenario.description}</p>
+              </div>
+              
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-2">Affected Regions</h4>
+                  <div className="space-y-1">
+                    {selectedScenario.affected_regions.map((region, index) => (
+                      <Badge key={index} variant="outline" className="mr-2 mb-1">
+                        {region}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+                
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-2">Key Variables</h4>
+                  <div className="space-y-1">
+                    {selectedScenario.key_variables.map((variable, index) => (
+                      <Badge key={index} variant="outline" className="mr-2 mb-1">
+                        {variable}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-4 text-sm text-gray-600">
+                <div>
+                  <span className="font-medium">Created:</span> {new Date(selectedScenario.created_at).toLocaleString()}
+                </div>
+                <div>
+                  <span className="font-medium">Last Updated:</span> {new Date(selectedScenario.updated_at).toLocaleString()}
+                </div>
+              </div>
+
+              {selectedScenario.simulation_result && (
+                <div className="border-t pt-4">
+                  <h4 className="font-semibold text-gray-900 mb-2">Latest Simulation Results</h4>
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <p className="text-sm text-gray-700 mb-2">
+                      <span className="font-medium">Analysis:</span> {selectedScenario.simulation_result.analysis?.substring(0, 200)}...
+                    </p>
+                    <p className="text-sm text-gray-700">
+                      <span className="font-medium">Confidence Score:</span> {(selectedScenario.simulation_result.confidence_score * 100).toFixed(1)}%
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex gap-3 pt-4">
+                <Button onClick={() => handleRunSimulation(selectedScenario)} disabled={loading} className="flex-1">
+                  <Play className="w-4 h-4 mr-2" />
+                  Run New Simulation
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={() => {
+                    onScenarioSelect(selectedScenario);
+                    setSelectedScenario(null);
+                  }}
+                  className="flex-1"
+                >
+                  <MessageSquare className="w-4 h-4 mr-2" />
+                  Chat with AI Genie
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* Delete Confirmation Dialog */}
+      {showDeleteDialog && scenarioToDelete && (
+        <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Delete Scenario</DialogTitle>
+              <DialogDescription>
+                Are you sure you want to delete "{scenarioToDelete.title}"? This action cannot be undone.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="flex gap-3 pt-4">
+              <Button variant="outline" onClick={() => setShowDeleteDialog(false)} className="flex-1">
+                Cancel
+              </Button>
+              <Button 
+                variant="destructive" 
+                onClick={() => handleDeleteScenario(scenarioToDelete.id)}
+                className="flex-1"
+              >
+                Delete Scenario
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+    </div>
+  );
+};
+
 // Main App Component
 const AppContent = () => {
   const { user, logout } = useAuth();
