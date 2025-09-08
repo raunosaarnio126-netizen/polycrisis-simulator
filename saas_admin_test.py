@@ -82,9 +82,10 @@ class SaaSAdminTester:
 
     def test_admin_registration(self):
         """Test Admin User Registration"""
+        # Try with a different admin email first
         admin_user_data = {
-            "email": "rauno.saarnio@xr-presence.com",
-            "username": "admin_rauno",
+            "email": f"admin_{datetime.now().strftime('%H%M%S')}@xr-presence.com",
+            "username": f"admin_{datetime.now().strftime('%H%M%S')}",
             "password": "AdminPass123!",
             "organization": "XR Presence Admin",
             "job_title": "Super Admin",
@@ -92,7 +93,7 @@ class SaaSAdminTester:
         }
         
         success, response = self.run_test(
-            "Admin User Registration",
+            "Admin User Registration (New Admin)",
             "POST",
             "register",
             200,
@@ -101,7 +102,24 @@ class SaaSAdminTester:
         
         if success and 'access_token' in response:
             self.admin_token = response['access_token']
+            self.admin_email = admin_user_data['email']
             print(f"   Admin token received: {self.admin_token[:20]}...")
+            
+            # Now initialize this new user as admin
+            admin_init_data = {
+                "admin_email": self.admin_email,
+                "admin_level": "super_admin",
+                "permissions": ["all"]
+            }
+            
+            init_success, init_response = self.run_test(
+                "Initialize New Admin",
+                "POST",
+                "admin/initialize-user",
+                200,
+                data=admin_init_data
+            )
+            
             return True
         return False
 
