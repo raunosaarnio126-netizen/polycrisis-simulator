@@ -1415,6 +1415,31 @@ def main():
     print("   Testing Company-Specific Scenario Creation...")
     tester.test_create_company_scenario()
 
+    print("\n👑 Testing SaaS Admin Platform Features...")
+    print("   Testing Admin System Initialization...")
+    tester.test_admin_initialize()
+    
+    print("   Testing License Tier Management...")
+    tester.test_get_license_tiers()
+    
+    print("   Testing Client Management System...")
+    tester.test_create_client()
+    tester.test_get_clients()
+    
+    print("   Testing AI Avatar Management...")
+    tester.test_get_ai_avatars()
+    tester.test_update_avatar_status()
+    
+    print("   Testing Avatar Competence Management...")
+    tester.test_add_avatar_competence()
+    tester.test_get_avatar_competences()
+    
+    print("   Testing Stripe Payment Integration...")
+    tester.test_create_stripe_payment_intent()
+    
+    print("   Testing Admin Dashboard Analytics...")
+    tester.test_admin_dashboard_stats()
+
     print("\n🗑️ Testing Scenario Deletion...")
     tester.test_delete_scenario()
 
