@@ -77,7 +77,9 @@ const AuthPage = () => {
     email: '',
     password: '',
     username: '',
-    organization: ''
+    organization: '',
+    job_title: '',
+    department: ''
   });
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
