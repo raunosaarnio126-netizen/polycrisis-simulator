@@ -1190,6 +1190,277 @@ const ScenarioManagement = ({ onScenarioSelect }) => {
           </DialogContent>
         </Dialog>
       )}
+
+      {/* Implementation View Dialog */}
+      {implementationView && (
+        <Dialog open={!!implementationView} onOpenChange={() => setImplementationView(null)}>
+          <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                {implementationView.type === 'game-book' && <BookOpen className="w-5 h-5 text-blue-600" />}
+                {implementationView.type === 'action-plan' && <CheckSquare className="w-5 h-5 text-green-600" />}
+                {implementationView.type === 'strategy-implementation' && <Target className="w-5 h-5 text-purple-600" />}
+                {implementationView.type.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())} - {implementationView.scenario.title}
+              </DialogTitle>
+              <DialogDescription>
+                Strategic implementation guidance for crisis scenario management
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-6">
+              {implementationView.type === 'game-book' && (
+                <div className="space-y-6">
+                  <div className="bg-blue-50 p-4 rounded-lg">
+                    <h4 className="font-semibold text-blue-900 mb-3 flex items-center gap-2">
+                      <BookOpen className="w-4 h-4" />
+                      Crisis Game Book Content
+                    </h4>
+                    <div className="text-sm text-blue-800 whitespace-pre-line max-h-60 overflow-y-auto">
+                      {implementationView.data.game_book_content}
+                    </div>
+                  </div>
+                  
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <h5 className="font-semibold text-gray-900 mb-2">Critical Decision Points</h5>
+                      <ul className="text-sm text-gray-700 space-y-1">
+                        {implementationView.data.decision_points.map((point, idx) => (
+                          <li key={idx} className="flex items-start gap-2">
+                            <CheckSquare className="w-3 h-3 mt-0.5 text-green-600" />
+                            {point}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <h5 className="font-semibold text-gray-900 mb-2">Resource Requirements</h5>
+                      <ul className="text-sm text-gray-700 space-y-1">
+                        {implementationView.data.resource_requirements.map((resource, idx) => (
+                          <li key={idx} className="flex items-start gap-2">
+                            <Shield className="w-3 h-3 mt-0.5 text-orange-600" />
+                            {resource}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                  
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <h5 className="font-semibold text-gray-900 mb-2">Timeline Phases</h5>
+                      <ul className="text-sm text-gray-700 space-y-1">
+                        {implementationView.data.timeline_phases.map((phase, idx) => (
+                          <li key={idx} className="flex items-start gap-2">
+                            <TrendingUp className="w-3 h-3 mt-0.5 text-blue-600" />
+                            {phase}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <h5 className="font-semibold text-gray-900 mb-2">Success Metrics</h5>
+                      <ul className="text-sm text-gray-700 space-y-1">
+                        {implementationView.data.success_metrics.map((metric, idx) => (
+                          <li key={idx} className="flex items-start gap-2">
+                            <Target className="w-3 h-3 mt-0.5 text-purple-600" />
+                            {metric}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {implementationView.type === 'action-plan' && (
+                <div className="space-y-6">
+                  <div className="grid md:grid-cols-3 gap-4">
+                    <div className="bg-red-50 p-4 rounded-lg">
+                      <h5 className="font-semibold text-red-900 mb-2 flex items-center gap-2">
+                        <AlertTriangle className="w-4 h-4" />
+                        Immediate Actions (0-24h)
+                      </h5>
+                      <ul className="text-sm text-red-800 space-y-1">
+                        {implementationView.data.immediate_actions.map((action, idx) => (
+                          <li key={idx} className="flex items-start gap-2">
+                            <CheckSquare className="w-3 h-3 mt-0.5" />
+                            {action}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    
+                    <div className="bg-yellow-50 p-4 rounded-lg">
+                      <h5 className="font-semibold text-yellow-900 mb-2 flex items-center gap-2">
+                        <TrendingUp className="w-4 h-4" />
+                        Short-term Actions (1-30d)
+                      </h5>
+                      <ul className="text-sm text-yellow-800 space-y-1">
+                        {implementationView.data.short_term_actions.map((action, idx) => (
+                          <li key={idx} className="flex items-start gap-2">
+                            <CheckSquare className="w-3 h-3 mt-0.5" />
+                            {action}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    
+                    <div className="bg-green-50 p-4 rounded-lg">
+                      <h5 className="font-semibold text-green-900 mb-2 flex items-center gap-2">
+                        <Target className="w-4 h-4" />
+                        Long-term Actions (1-12m)
+                      </h5>
+                      <ul className="text-sm text-green-800 space-y-1">
+                        {implementationView.data.long_term_actions.map((action, idx) => (
+                          <li key={idx} className="flex items-start gap-2">
+                            <CheckSquare className="w-3 h-3 mt-0.5" />
+                            {action}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                  
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <h5 className="font-semibold text-gray-900 mb-2">Responsible Parties</h5>
+                      <ul className="text-sm text-gray-700 space-y-1">
+                        {implementationView.data.responsible_parties.map((party, idx) => (
+                          <li key={idx} className="flex items-start gap-2">
+                            <Users className="w-3 h-3 mt-0.5 text-blue-600" />
+                            {party}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <h5 className="font-semibold text-gray-900 mb-2">Resource Allocation</h5>
+                      <ul className="text-sm text-gray-700 space-y-1">
+                        {implementationView.data.resource_allocation.map((resource, idx) => (
+                          <li key={idx} className="flex items-start gap-2">
+                            <Shield className="w-3 h-3 mt-0.5 text-green-600" />
+                            {resource}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-blue-50 p-4 rounded-lg">
+                    <h5 className="font-semibold text-blue-900 mb-2">Priority Level</h5>
+                    <Badge className={`${implementationView.data.priority_level === 'HIGH' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800'}`}>
+                      {implementationView.data.priority_level} PRIORITY
+                    </Badge>
+                  </div>
+                </div>
+              )}
+
+              {implementationView.type === 'strategy-implementation' && (
+                <div className="space-y-6">
+                  <div className="bg-purple-50 p-4 rounded-lg">
+                    <h4 className="font-semibold text-purple-900 mb-3 flex items-center gap-2">
+                      <Target className="w-4 h-4" />
+                      Strategic Implementation Framework
+                    </h4>
+                    <div className="text-sm text-purple-800 whitespace-pre-line max-h-60 overflow-y-auto">
+                      {implementationView.data.implementation_strategy}
+                    </div>
+                  </div>
+                  
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <h5 className="font-semibold text-gray-900 mb-2">Organizational Changes</h5>
+                      <ul className="text-sm text-gray-700 space-y-1">
+                        {implementationView.data.organizational_changes.map((change, idx) => (
+                          <li key={idx} className="flex items-start gap-2">
+                            <Users className="w-3 h-3 mt-0.5 text-blue-600" />
+                            {change}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <h5 className="font-semibold text-gray-900 mb-2">Policy Recommendations</h5>
+                      <ul className="text-sm text-gray-700 space-y-1">
+                        {implementationView.data.policy_recommendations.map((policy, idx) => (
+                          <li key={idx} className="flex items-start gap-2">
+                            <FileText className="w-3 h-3 mt-0.5 text-green-600" />
+                            {policy}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                  
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <h5 className="font-semibold text-gray-900 mb-2">Training Requirements</h5>
+                      <ul className="text-sm text-gray-700 space-y-1">
+                        {implementationView.data.training_requirements.map((training, idx) => (
+                          <li key={idx} className="flex items-start gap-2">
+                            <Brain className="w-3 h-3 mt-0.5 text-purple-600" />
+                            {training}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <h5 className="font-semibold text-gray-900 mb-2">Budget Considerations</h5>
+                      <ul className="text-sm text-gray-700 space-y-1">
+                        {implementationView.data.budget_considerations.map((budget, idx) => (
+                          <li key={idx} className="flex items-start gap-2">
+                            <TrendingUp className="w-3 h-3 mt-0.5 text-orange-600" />
+                            {budget}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <h5 className="font-semibold text-gray-900 mb-2">Stakeholder Engagement</h5>
+                    <ul className="text-sm text-gray-700 space-y-1">
+                      {implementationView.data.stakeholder_engagement.map((engagement, idx) => (
+                        <li key={idx} className="flex items-start gap-2">
+                          <Users className="w-3 h-3 mt-0.5 text-indigo-600" />
+                          {engagement}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex gap-3 pt-4 border-t">
+                <Button 
+                  onClick={() => {
+                    // Create downloadable content
+                    const content = JSON.stringify(implementationView.data, null, 2);
+                    const blob = new Blob([content], { type: 'application/json' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `${implementationView.type}-${implementationView.scenario.title}.json`;
+                    a.click();
+                  }}
+                  className="flex-1"
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  Download {implementationView.type.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                </Button>
+                <Button variant="outline" onClick={() => setImplementationView(null)} className="flex-1">
+                  Close
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 };
