@@ -1106,6 +1106,25 @@ def main():
     print("   Testing Monitoring Dashboard & Analytics...")
     tester.test_monitoring_dashboard()
 
+    print("\n🏢 Testing Enterprise Features...")
+    print("   Testing Company Management System...")
+    tester.test_create_company()
+    tester.test_get_company()
+    
+    print("   Testing Document Intelligence Platform...")
+    tester.test_upload_business_document()
+    tester.test_get_company_documents()
+    
+    print("   Testing Team Management & Collaboration...")
+    tester.test_create_team()
+    tester.test_get_company_teams()
+    
+    print("   Testing Rapid Analysis Tools...")
+    tester.test_generate_rapid_analysis()
+    
+    print("   Testing Company-Specific Scenario Creation...")
+    tester.test_create_company_scenario()
+
     print("\n🗑️ Testing Scenario Deletion...")
     tester.test_delete_scenario()
 
