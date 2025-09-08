@@ -1138,6 +1138,118 @@ const ScenarioManagement = ({ onScenarioSelect }) => {
     }
   };
 
+  const handleSuggestMonitoringSources = async (scenario) => {
+    try {
+      setGeneratingImplementation(true);
+      const response = await axios.post(`${API}/scenarios/${scenario.id}/suggest-monitoring-sources`);
+      setSmartSuggestions({
+        ...smartSuggestions,
+        [scenario.id]: response.data
+      });
+      
+      setImplementationView({ scenario, type: 'monitoring-suggestions', data: response.data });
+      
+      toast({ 
+        title: "Success", 
+        description: "Smart monitoring suggestions generated!",
+        duration: 3000
+      });
+      
+    } catch (error) {
+      toast({ 
+        title: "Error", 
+        description: "Failed to generate monitoring suggestions",
+        variant: "destructive"
+      });
+    } finally {
+      setGeneratingImplementation(false);
+    }
+  };
+
+  const handleOpenMonitoringDashboard = async (scenario) => {
+    try {
+      const response = await axios.get(`${API}/scenarios/${scenario.id}/monitoring-dashboard`);
+      setMonitoringDashboard({
+        ...monitoringDashboard,
+        [scenario.id]: response.data
+      });
+      setShowMonitoringDialog(scenario);
+      
+    } catch (error) {
+      toast({ 
+        title: "Error", 
+        description: "Failed to load monitoring dashboard",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleAddMonitoringSource = async (scenario) => {
+    setShowAddSourceDialog(scenario);
+    setNewSourceData({
+      source_type: '',
+      source_url: '',
+      source_name: '',  
+      monitoring_frequency: 'daily',
+      data_keywords: []
+    });
+  };
+
+  const submitMonitoringSource = async () => {
+    if (!showAddSourceDialog) return;
+    
+    try {
+      const response = await axios.post(`${API}/scenarios/${showAddSourceDialog.id}/add-monitoring-source`, newSourceData);
+      
+      setMonitoringSources({
+        ...monitoringSources,
+        [showAddSourceDialog.id]: [
+          ...(monitoringSources[showAddSourceDialog.id] || []),
+          response.data
+        ]
+      });
+      
+      setShowAddSourceDialog(null);
+      toast({ 
+        title: "Success", 
+        description: "Monitoring source added successfully!",
+        duration: 3000
+      });
+      
+    } catch (error) {
+      toast({ 
+        title: "Error", 
+        description: "Failed to add monitoring source",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleCollectData = async (scenario) => {
+    try {
+      setLoading(true);
+      const response = await axios.post(`${API}/scenarios/${scenario.id}/collect-data`);
+      
+      toast({ 
+        title: "Data Collection Started", 
+        description: `Collecting data from ${response.data.sources_monitored} monitoring sources`,
+        duration: 4000
+      });
+      
+      // Refresh monitoring dashboard
+      setTimeout(() => handleOpenMonitoringDashboard(scenario), 2000);
+      
+    } catch (error) {
+      toast({ 
+        title: "Error", 
+        description: "Failed to start data collection",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleDeployMonitors = async (scenario) => {
     try {
       setDeployingMonitors(true);
