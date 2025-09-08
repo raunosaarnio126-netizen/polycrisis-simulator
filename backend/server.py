@@ -320,6 +320,88 @@ class RapidAnalysis(BaseModel):
     generated_by: str  # User ID
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
+# SaaS Admin & Licensing Models
+class LicenseTier(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    tier_name: str  # "Single User", "Small Team", "Medium Team", "Large Team"
+    max_users: int  # 1, 2, 5, 10
+    monthly_price: float  # USD
+    annual_price: float  # USD (usually with discount)
+    features: List[str]
+    stripe_price_id_monthly: Optional[str] = None
+    stripe_price_id_annual: Optional[str] = None
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class Client(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    client_name: str
+    client_email: str
+    license_tier_id: str
+    license_count: int  # Number of licenses purchased
+    users_active: int = 0  # Current active users
+    subscription_status: str = "trial"  # "trial", "active", "cancelled", "expired"
+    stripe_customer_id: Optional[str] = None
+    stripe_subscription_id: Optional[str] = None
+    trial_end_date: datetime
+    subscription_start_date: Optional[datetime] = None
+    subscription_end_date: Optional[datetime] = None
+    created_by_admin: str  # Admin user ID
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    last_activity: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class ClientCreate(BaseModel):
+    client_name: str
+    client_email: str
+    license_tier_id: str
+    license_count: int = 1
+
+class AdminCredentials(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    admin_email: str
+    admin_level: str = "super_admin"  # "super_admin", "admin", "support"
+    permissions: List[str] = ["all"]  # ["client_management", "licensing", "billing", "support"]
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class AIAvatar(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    avatar_name: str
+    avatar_type: str  # "risk_monitor", "performance_tracker", "anomaly_detector", "trend_analyzer"
+    description: str
+    base_competences: List[str]
+    client_custom_competences: List[str] = []
+    status: str = "active"  # "active", "inactive", "learning", "monitoring"
+    performance_metrics: dict = {}
+    client_id: Optional[str] = None
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class AvatarCompetence(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    avatar_id: str
+    competence_name: str
+    competence_description: str
+    competence_type: str  # "skill", "knowledge", "capability"
+    proficiency_level: int = 1  # 1-10 scale
+    added_by_client: str
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class AvatarCompetenceCreate(BaseModel):
+    competence_name: str
+    competence_description: str
+    competence_type: str
+    proficiency_level: int = 1
+
+class PaymentRecord(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    client_id: str
+    stripe_payment_intent_id: str
+    amount: float
+    currency: str = "USD"
+    payment_status: str  # "pending", "succeeded", "failed", "cancelled"
+    license_tier_id: str
+    license_count: int
+    billing_period: str  # "monthly", "annual"
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
 # Helper functions
 def verify_password(plain_password, hashed_password):
     return pwd_context.verify(plain_password, hashed_password)
