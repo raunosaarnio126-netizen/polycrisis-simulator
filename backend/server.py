@@ -43,6 +43,11 @@ class User(BaseModel):
     email: str
     username: str
     organization: str
+    company_id: Optional[str] = None
+    role: str = "member"  # "admin", "manager", "analyst", "member"
+    department: Optional[str] = None
+    job_title: Optional[str] = None
+    phone: Optional[str] = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class UserCreate(BaseModel):
