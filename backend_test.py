@@ -814,6 +814,25 @@ def main():
     print("   Advanced Analytics Dashboard...")
     tester.test_advanced_analytics_dashboard()
 
+    print("\n🌐 Testing Intelligent Monitoring Network...")
+    print("   Testing Smart Monitoring Source Suggestions...")
+    tester.test_suggest_monitoring_sources()
+    
+    print("   Testing Team Collaboration - Add Monitoring Source...")
+    tester.test_add_monitoring_source()
+    
+    print("   Testing Get Monitoring Sources...")
+    tester.test_get_monitoring_sources()
+    
+    print("   Testing Team Collaboration Features...")
+    tester.test_team_collaboration_features()
+    
+    print("   Testing Automated Data Collection...")
+    tester.test_collect_monitoring_data()
+    
+    print("   Testing Monitoring Dashboard & Analytics...")
+    tester.test_monitoring_dashboard()
+
     print("\n🗑️ Testing Scenario Deletion...")
     tester.test_delete_scenario()
 
