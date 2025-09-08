@@ -1126,6 +1126,111 @@ const ScenarioManagement = ({ onScenarioSelect }) => {
     }
   };
 
+  const handleDeployMonitors = async (scenario) => {
+    try {
+      setDeployingMonitors(true);
+      const response = await axios.post(`${API}/scenarios/${scenario.id}/deploy-monitors`);
+      setMonitorAgents({
+        ...monitorAgents,
+        [scenario.id]: response.data
+      });
+      
+      toast({ 
+        title: "Success", 
+        description: "AI Monitor Agents deployed successfully!",
+        duration: 3000
+      });
+      
+    } catch (error) {
+      toast({ 
+        title: "Error", 
+        description: "Failed to deploy monitor agents",
+        variant: "destructive"
+      });
+    } finally {
+      setDeployingMonitors(false);
+    }
+  };
+
+  const handleComplexSystemsAnalysis = async (scenario) => {
+    try {
+      setGeneratingImplementation(true);
+      const response = await axios.post(`${API}/scenarios/${scenario.id}/complex-systems-analysis`);
+      setComplexSystems({
+        ...complexSystems,
+        [scenario.id]: response.data
+      });
+      
+      setImplementationView({ scenario, type: 'complex-systems', data: response.data });
+      
+      toast({ 
+        title: "Success", 
+        description: "Complex Adaptive Systems analysis completed!",
+        duration: 3000
+      });
+      
+    } catch (error) {
+      toast({ 
+        title: "Error", 
+        description: "Failed to analyze complex systems",
+        variant: "destructive"
+      });
+    } finally {
+      setGeneratingImplementation(false);
+    }
+  };
+
+  const handleGenerateMetrics = async (scenario) => {
+    try {
+      const response = await axios.post(`${API}/scenarios/${scenario.id}/generate-metrics`);
+      setSystemMetrics({
+        ...systemMetrics,
+        [scenario.id]: response.data
+      });
+      
+      toast({ 
+        title: "Success", 
+        description: "System metrics generated successfully!",
+        duration: 3000
+      });
+      
+    } catch (error) {
+      toast({ 
+        title: "Error", 
+        description: "Failed to generate system metrics",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleGenerateLearningInsights = async (scenario) => {
+    try {
+      setGeneratingImplementation(true);
+      const response = await axios.post(`${API}/scenarios/${scenario.id}/generate-learning-insights`);
+      setLearningInsights({
+        ...learningInsights,
+        [scenario.id]: response.data
+      });
+      
+      setImplementationView({ scenario, type: 'learning-insights', data: response.data });
+      
+      toast({ 
+        title: "Success", 
+        description: "Adaptive learning insights generated!",
+        duration: 3000
+      });
+      
+    } catch (error) {
+      toast({ 
+        title: "Error", 
+        description: "Failed to generate learning insights",
+        variant: "destructive"
+      });
+    } finally {
+      setGeneratingImplementation(false);
+    }
+  };
+
   const getCrisisTypeColor = (type) => {
     const colors = {
       'natural_disaster': 'bg-red-100 text-red-800',
