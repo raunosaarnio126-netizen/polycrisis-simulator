@@ -960,9 +960,8 @@ class PolycrisisAPITester:
             success, response = self.run_test(
                 f"Generate Rapid Analysis - {analysis_type}",
                 "POST",
-                f"companies/{self.company_id}/rapid-analysis",
-                200,
-                data={"analysis_type": analysis_type}
+                f"companies/{self.company_id}/rapid-analysis?analysis_type={analysis_type}",
+                200
             )
             
             if success and 'id' in response:
