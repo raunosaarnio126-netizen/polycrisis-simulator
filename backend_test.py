@@ -4,7 +4,7 @@ import json
 from datetime import datetime
 
 class PolycrisisAPITester:
-    def __init__(self, base_url="http://localhost:8001"):
+    def __init__(self, base_url="https://polycrisis-ai.preview.emergentagent.com"):
         self.base_url = base_url
         self.api_url = f"{base_url}/api"
         self.token = None
@@ -12,6 +12,7 @@ class PolycrisisAPITester:
         self.tests_run = 0
         self.tests_passed = 0
         self.created_scenario_id = None
+        self.monitoring_source_id = None
 
     def run_test(self, name, method, endpoint, expected_status, data=None, headers=None):
         """Run a single API test"""
