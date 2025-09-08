@@ -3873,6 +3873,12 @@ const AppContent = () => {
                 <TrendingUp className="w-4 h-4" />
                 Dashboard
               </TabsTrigger>
+              {user?.email === 'rauno.saarnio@xr-presence.com' && (
+                <TabsTrigger value="admin" className="flex items-center gap-2">
+                  <Crown className="w-4 h-4" />
+                  Admin
+                </TabsTrigger>
+              )}
               <TabsTrigger value="company" className="flex items-center gap-2">
                 <Building2 className="w-4 h-4" />
                 Company
@@ -3880,6 +3886,10 @@ const AppContent = () => {
               <TabsTrigger value="documents" className="flex items-center gap-2">
                 <FileText className="w-4 h-4" />
                 Documents
+              </TabsTrigger>
+              <TabsTrigger value="avatars" className="flex items-center gap-2">
+                <Brain className="w-4 h-4" />
+                AI Avatars
               </TabsTrigger>
               <TabsTrigger value="create" className="flex items-center gap-2">
                 <Plus className="w-4 h-4" />
@@ -3890,7 +3900,7 @@ const AppContent = () => {
                 Scenarios
               </TabsTrigger>
               <TabsTrigger value="ai-genie" className="flex items-center gap-2">
-                <Brain className="w-4 h-4" />
+                <MessageSquare className="w-4 h-4" />
                 AI Genie
               </TabsTrigger>
             </TabsList>
