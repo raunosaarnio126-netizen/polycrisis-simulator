@@ -327,6 +327,18 @@ test_plan:
   test_all: false
   test_priority: "high_first"
 
+  - task: "Game Book URL Path Consistency Fix"
+    implemented: true
+    working: "NA"
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Fixed URL path inconsistencies between frontend and backend. Backend uses /game-book (with hyphen), frontend was calling /gamebook (without hyphen). Fixed 3 instances in frontend code to use correct /game-book path."
+
 agent_communication:
   - agent: "main"
     message: "Starting implementation of three action buttons in Company Management section. Backend APIs partially exist, focusing on frontend dialogs and enhanced functionality."
@@ -344,3 +356,5 @@ agent_communication:
     message: "SCENARIO DATA PERSISTENCE TESTING COMPLETED: Comprehensive testing of scenario creation and retrieval functionality as requested in review. Results: 15/15 tests passed (100% success rate). ✅ PRIMARY TESTS COMPLETED: 1) POST /api/scenarios with complete data (title: 'Test Economic Crisis', description: 239 chars, crisis_type: 'economic_crisis', severity_level: 7, affected_regions: ['North America', 'Europe', 'Asia Pacific'], key_variables: ['Inflation Rate', 'Employment', 'GDP Growth', 'Market Volatility']) - All fields preserved correctly, UUID generated properly. 2) GET /api/scenarios - All scenarios retrieved, data integrity verified. 3) GET /api/scenarios/{id} - Individual retrieval working, no truncation. 4) Array preservation - affected_regions and key_variables arrays maintained correctly. 5) Description completeness - Full text preserved without loss. ✅ EDGE CASES TESTED: Empty arrays, long descriptions (3000+ chars), special characters (àáâãäåæçèéêë, 特別地域, переменная), maximum severity (10), large region lists - all handled correctly. ✅ DATA PERSISTENCE VERIFIED: MongoDB storage working correctly, no serialization issues, all 5 test scenarios found in final list. CONCLUSION: Scenario creation and retrieval APIs are production-ready with excellent data integrity."
   - agent: "testing"
     message: "CRITICAL FINLAND REGIONS INVESTIGATION COMPLETED: Comprehensive investigation of reported Finland regions data loss issue. Results: 11/11 tests passed (100% success rate). ✅ INVESTIGATION FINDINGS: 1) NO DATA LOSS DETECTED - Finland regions are being stored and retrieved correctly in all scenarios. 2) MongoDB verification shows multiple scenarios with Finland in affected_regions field, including historical data from previous days and new test scenarios. 3) Complete data flow verification: Request payload → Backend processing → MongoDB storage → API retrieval - all steps preserve Finland data correctly. 4) Tested multiple Finland scenarios with variations (single region, multi-region, different crisis types) - all working perfectly. 5) Array field preservation verified - affected_regions arrays maintain correct structure and content. ✅ ROOT CAUSE ANALYSIS: The reported issue of Finland showing as 'Not specified' is NOT a backend API problem. Backend APIs are working correctly and preserving all region data including Finland. The issue may be: a) Frontend display logic not properly showing the regions, b) User interface not correctly reading the affected_regions field, or c) A specific user workflow that bypasses the standard API endpoints. ✅ RECOMMENDATION: Focus investigation on frontend components and user interface logic for displaying affected_regions data. Backend scenario creation and retrieval APIs are production-ready and handling Finland regions correctly."
+  - agent: "main"
+    message: "GAME BOOK URL PATH FIX COMPLETED: Fixed URL path inconsistencies that were causing 'Game book - error message' when users clicked the Game Book button. Backend endpoints use /game-book (with hyphen) but frontend was inconsistently calling /gamebook (without hyphen). Fixed 3 instances in frontend code to use correct /game-book path. Ready for testing with specific scenario: 9796a80e-976e-463d-ba00-aeb899b76a7a (Finnish Economic Crisis Test)."
