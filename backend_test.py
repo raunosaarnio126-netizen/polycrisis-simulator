@@ -3330,6 +3330,10 @@ def main():
     tester.test_get_action_plan()
     tester.test_get_strategy_implementation()
 
+    print("\n🎯 Testing Specific Game Book Scenario (URL Path Fix)...")
+    print("   Testing Game Book with Finnish Economic Crisis scenario...")
+    tester.test_specific_game_book_scenario()
+
     print("\n🤖 Testing Advanced AI Monitor Agents...")
     print("   Deploying AI Monitor Agents...")
     tester.test_deploy_monitor_agents()
