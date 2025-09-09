@@ -1304,6 +1304,478 @@ class PolycrisisAPITester:
             return True
         return False
 
+    # ========== NEW COMPANY MANAGEMENT ENDPOINTS TESTING ==========
+    
+    def test_company_document_upload_pdf(self):
+        """Test Company Document Upload - PDF File"""
+        if not hasattr(self, 'company_id') or not self.company_id:
+            print("❌ No company ID available for PDF document upload")
+            return False
+            
+        # Create a simple PDF content for testing
+        pdf_content = b"""%PDF-1.4
+1 0 obj
+<<
+/Type /Catalog
+/Pages 2 0 R
+>>
+endobj
+
+2 0 obj
+<<
+/Type /Pages
+/Kids [3 0 R]
+/Count 1
+>>
+endobj
+
+3 0 obj
+<<
+/Type /Page
+/Parent 2 0 R
+/MediaBox [0 0 612 792]
+/Contents 4 0 R
+>>
+endobj
+
+4 0 obj
+<<
+/Length 44
+>>
+stream
+BT
+/F1 12 Tf
+72 720 Td
+(Business Continuity Plan) Tj
+ET
+endstream
+endobj
+
+xref
+0 5
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000206 00000 n 
+trailer
+<<
+/Size 5
+/Root 1 0 R
+>>
+startxref
+299
+%%EOF"""
+        
+        # Use requests to upload file
+        url = f"{self.api_url}/companies/{self.company_id}/documents/upload"
+        headers = {'Authorization': f'Bearer {self.token}'}
+        
+        files = {'file': ('test_document.pdf', pdf_content, 'application/pdf')}
+        data = {'document_type': 'business_plan'}
+        
+        self.tests_run += 1
+        print(f"\n🔍 Testing Company Document Upload - PDF File...")
+        print(f"   URL: {url}")
+        
+        try:
+            response = requests.post(url, files=files, data=data, headers=headers, timeout=120)
+            print(f"   Status Code: {response.status_code}")
+            
+            success = response.status_code == 200
+            if success:
+                self.tests_passed += 1
+                print(f"✅ Passed - Status: {response.status_code}")
+                try:
+                    response_data = response.json()
+                    print(f"   Document ID: {response_data.get('id', 'N/A')}")
+                    print(f"   Document name: {response_data.get('document_name', 'N/A')}")
+                    print(f"   AI analysis length: {len(response_data.get('ai_analysis', ''))}")
+                    print(f"   Key insights: {len(response_data.get('key_insights', []))}")
+                    print(f"   Risk factors: {len(response_data.get('risk_factors', []))}")
+                    print(f"   File size: {response_data.get('file_size', 'N/A')}")
+                    
+                    # Verify required fields are present
+                    required_fields = ['id', 'ai_analysis', 'key_insights', 'risk_factors']
+                    for field in required_fields:
+                        if field not in response_data or not response_data[field]:
+                            print(f"   ⚠️ Missing or empty required field: {field}")
+                            return False
+                    
+                    self.pdf_document_id = response_data.get('id')
+                    return True
+                except Exception as e:
+                    print(f"   ❌ Error parsing response: {e}")
+                    return False
+            else:
+                print(f"❌ Failed - Expected 200, got {response.status_code}")
+                try:
+                    error_data = response.json()
+                    print(f"   Error: {error_data}")
+                except:
+                    print(f"   Error: {response.text}")
+                return False
+
+        except Exception as e:
+            print(f"❌ Failed - Error: {str(e)}")
+            return False
+
+    def test_company_document_upload_docx(self):
+        """Test Company Document Upload - DOCX File"""
+        if not hasattr(self, 'company_id') or not self.company_id:
+            print("❌ No company ID available for DOCX document upload")
+            return False
+            
+        # Create a simple DOCX content for testing (minimal DOCX structure)
+        docx_content = b'PK\x03\x04\x14\x00\x00\x00\x08\x00\x00\x00!\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x13\x00\x00\x00[Content_Types].xmlPK\x03\x04\x14\x00\x00\x00\x08\x00\x00\x00!\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x0b\x00\x00\x00_rels/.relsPK\x03\x04\x14\x00\x00\x00\x08\x00\x00\x00!\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x1c\x00\x00\x00word/document.xmlPK\x01\x02\x14\x00\x14\x00\x00\x00\x08\x00\x00\x00!\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x13\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x80\x01\x00\x00\x00\x00[Content_Types].xmlPK\x01\x02\x14\x00\x14\x00\x00\x00\x08\x00\x00\x00!\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x0b\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x80\x01F\x00\x00\x00_rels/.relsPK\x01\x02\x14\x00\x14\x00\x00\x00\x08\x00\x00\x00!\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x1c\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x80\x01\x84\x00\x00\x00word/document.xmlPK\x05\x06\x00\x00\x00\x00\x03\x00\x03\x00\xca\x00\x00\x00\xd3\x00\x00\x00\x00\x00'
+        
+        # Use requests to upload file
+        url = f"{self.api_url}/companies/{self.company_id}/documents/upload"
+        headers = {'Authorization': f'Bearer {self.token}'}
+        
+        files = {'file': ('test_document.docx', docx_content, 'application/vnd.openxmlformats-officedocument.wordprocessingml.document')}
+        data = {'document_type': 'operational_plan'}
+        
+        self.tests_run += 1
+        print(f"\n🔍 Testing Company Document Upload - DOCX File...")
+        print(f"   URL: {url}")
+        
+        try:
+            response = requests.post(url, files=files, data=data, headers=headers, timeout=120)
+            print(f"   Status Code: {response.status_code}")
+            
+            success = response.status_code == 200
+            if success:
+                self.tests_passed += 1
+                print(f"✅ Passed - Status: {response.status_code}")
+                try:
+                    response_data = response.json()
+                    print(f"   Document ID: {response_data.get('id', 'N/A')}")
+                    print(f"   Document name: {response_data.get('document_name', 'N/A')}")
+                    print(f"   AI analysis length: {len(response_data.get('ai_analysis', ''))}")
+                    print(f"   Key insights: {len(response_data.get('key_insights', []))}")
+                    print(f"   Risk factors: {len(response_data.get('risk_factors', []))}")
+                    print(f"   File size: {response_data.get('file_size', 'N/A')}")
+                    
+                    # Verify required fields are present
+                    required_fields = ['id', 'ai_analysis', 'key_insights', 'risk_factors']
+                    for field in required_fields:
+                        if field not in response_data or not response_data[field]:
+                            print(f"   ⚠️ Missing or empty required field: {field}")
+                            return False
+                    
+                    self.docx_document_id = response_data.get('id')
+                    return True
+                except Exception as e:
+                    print(f"   ❌ Error parsing response: {e}")
+                    return False
+            else:
+                print(f"❌ Failed - Expected 200, got {response.status_code}")
+                try:
+                    error_data = response.json()
+                    print(f"   Error: {error_data}")
+                except:
+                    print(f"   Error: {response.text}")
+                return False
+
+        except Exception as e:
+            print(f"❌ Failed - Error: {str(e)}")
+            return False
+
+    def test_company_document_upload_invalid_file_type(self):
+        """Test Company Document Upload - Invalid File Type Validation"""
+        if not hasattr(self, 'company_id') or not self.company_id:
+            print("❌ No company ID available for invalid file type test")
+            return False
+            
+        # Create a text file (should be rejected)
+        txt_content = b"This is a plain text file that should be rejected"
+        
+        # Use requests to upload file
+        url = f"{self.api_url}/companies/{self.company_id}/documents/upload"
+        headers = {'Authorization': f'Bearer {self.token}'}
+        
+        files = {'file': ('test_document.txt', txt_content, 'text/plain')}
+        data = {'document_type': 'other'}
+        
+        self.tests_run += 1
+        print(f"\n🔍 Testing Company Document Upload - Invalid File Type...")
+        print(f"   URL: {url}")
+        
+        try:
+            response = requests.post(url, files=files, data=data, headers=headers, timeout=120)
+            print(f"   Status Code: {response.status_code}")
+            
+            # Should return 400 for invalid file type
+            success = response.status_code == 400
+            if success:
+                self.tests_passed += 1
+                print(f"✅ Passed - Correctly rejected invalid file type with status: {response.status_code}")
+                try:
+                    error_data = response.json()
+                    print(f"   Error message: {error_data.get('detail', 'N/A')}")
+                    return True
+                except:
+                    print(f"   Error text: {response.text}")
+                    return True
+            else:
+                print(f"❌ Failed - Expected 400, got {response.status_code}")
+                return False
+
+        except Exception as e:
+            print(f"❌ Failed - Error: {str(e)}")
+            return False
+
+    def test_company_document_upload_large_file(self):
+        """Test Company Document Upload - Large File Size Validation"""
+        if not hasattr(self, 'company_id') or not self.company_id:
+            print("❌ No company ID available for large file test")
+            return False
+            
+        # Create a large file (>10MB) - simulate with a large PDF
+        large_content = b"%PDF-1.4\n" + b"A" * (11 * 1024 * 1024)  # 11MB of data
+        
+        # Use requests to upload file
+        url = f"{self.api_url}/companies/{self.company_id}/documents/upload"
+        headers = {'Authorization': f'Bearer {self.token}'}
+        
+        files = {'file': ('large_document.pdf', large_content, 'application/pdf')}
+        data = {'document_type': 'business_plan'}
+        
+        self.tests_run += 1
+        print(f"\n🔍 Testing Company Document Upload - Large File Size...")
+        print(f"   URL: {url}")
+        print(f"   File size: {len(large_content) / (1024*1024):.1f}MB")
+        
+        try:
+            response = requests.post(url, files=files, data=data, headers=headers, timeout=120)
+            print(f"   Status Code: {response.status_code}")
+            
+            # Should return 400 or 413 for file too large
+            success = response.status_code in [400, 413]
+            if success:
+                self.tests_passed += 1
+                print(f"✅ Passed - Correctly rejected large file with status: {response.status_code}")
+                try:
+                    error_data = response.json()
+                    print(f"   Error message: {error_data.get('detail', 'N/A')}")
+                    return True
+                except:
+                    print(f"   Error text: {response.text}")
+                    return True
+            else:
+                print(f"❌ Failed - Expected 400 or 413, got {response.status_code}")
+                return False
+
+        except Exception as e:
+            print(f"❌ Failed - Error: {str(e)}")
+            return False
+
+    def test_get_company_users(self):
+        """Test GET /api/companies/{company_id}/users endpoint"""
+        if not hasattr(self, 'company_id') or not self.company_id:
+            print("❌ No company ID available for getting company users")
+            return False
+            
+        success, response = self.run_test(
+            "Get Company Users",
+            "GET",
+            f"companies/{self.company_id}/users",
+            200
+        )
+        
+        if success and isinstance(response, list):
+            print(f"   Found {len(response)} users for company")
+            for user in response:
+                print(f"   - {user.get('username', 'N/A')} ({user.get('email', 'N/A')})")
+                print(f"     Role: {user.get('role', 'N/A')}, Department: {user.get('department', 'N/A')}")
+                
+                # Verify User model fields are present
+                required_fields = ['id', 'email', 'username', 'organization']
+                for field in required_fields:
+                    if field not in user:
+                        print(f"   ⚠️ Missing required User field: {field}")
+                        return False
+            return True
+        return False
+
+    def test_company_users_access_control(self):
+        """Test Company Users Access Control - Unauthorized Access"""
+        # Create a new user to test access control
+        test_user_data = {
+            "email": f"unauthorized_user_{datetime.now().strftime('%H%M%S')}@example.com",
+            "username": f"unauthorized_{datetime.now().strftime('%H%M%S')}",
+            "password": "TestPass123!",
+            "organization": "Different Organization"
+        }
+        
+        # Register new user
+        register_success, register_response = self.run_test(
+            "Register Unauthorized User",
+            "POST",
+            "register",
+            200,
+            data=test_user_data
+        )
+        
+        if not register_success:
+            print("❌ Could not create unauthorized user for access control test")
+            return False
+            
+        # Store original token
+        original_token = self.token
+        unauthorized_token = register_response.get('access_token')
+        
+        if not unauthorized_token:
+            print("❌ Could not get token for unauthorized user")
+            return False
+            
+        # Switch to unauthorized user token
+        self.token = unauthorized_token
+        
+        # Try to access company users (should fail)
+        success, response = self.run_test(
+            "Get Company Users - Unauthorized Access",
+            "GET",
+            f"companies/{self.company_id}/users",
+            403  # Should return 403 Forbidden
+        )
+        
+        # Restore original token
+        self.token = original_token
+        
+        if success:
+            print("✅ Access control working - Unauthorized access correctly denied")
+            return True
+        else:
+            print("❌ Access control failed - Unauthorized access was allowed")
+            return False
+
+    def test_rapid_analysis_all_types(self):
+        """Test Rapid Analysis with All Analysis Types"""
+        if not hasattr(self, 'company_id') or not self.company_id:
+            print("❌ No company ID available for rapid analysis testing")
+            return False
+            
+        analysis_types = [
+            "vulnerability_assessment",
+            "business_impact", 
+            "scenario_recommendation",
+            "competitive_analysis"
+        ]
+        
+        successful_analyses = 0
+        
+        for analysis_type in analysis_types:
+            success, response = self.run_test(
+                f"Rapid Analysis - {analysis_type}",
+                "POST",
+                f"companies/{self.company_id}/rapid-analysis?analysis_type={analysis_type}",
+                200
+            )
+            
+            if success and 'id' in response:
+                successful_analyses += 1
+                print(f"   ✅ {analysis_type} analysis generated")
+                print(f"     Analysis ID: {response.get('id')}")
+                print(f"     Title: {response.get('analysis_title', 'N/A')}")
+                print(f"     Content length: {len(response.get('analysis_content', ''))}")
+                print(f"     Key findings: {len(response.get('key_findings', []))}")
+                print(f"     Recommendations: {len(response.get('recommendations', []))}")
+                print(f"     Priority level: {response.get('priority_level', 'N/A')}")
+                print(f"     Confidence score: {response.get('confidence_score', 'N/A')}")
+                
+                # Verify RapidAnalysis model fields are present
+                required_fields = ['id', 'analysis_content', 'key_findings', 'recommendations']
+                for field in required_fields:
+                    if field not in response or not response[field]:
+                        print(f"   ⚠️ Missing or empty required field: {field}")
+                        return False
+                        
+            else:
+                print(f"   ❌ Failed to generate {analysis_type} analysis")
+        
+        print(f"   Successfully generated {successful_analyses}/{len(analysis_types)} rapid analyses")
+        return successful_analyses == len(analysis_types)
+
+    def test_team_management_enhanced(self):
+        """Test Enhanced Team Management Endpoints"""
+        if not hasattr(self, 'company_id') or not self.company_id:
+            print("❌ No company ID available for team management testing")
+            return False
+            
+        # Test creating team with email list
+        team_data = {
+            "team_name": "Enhanced Crisis Response Team",
+            "team_description": "Advanced crisis response and management team with specialized roles",
+            "team_members": [
+                "crisis.lead@company.com", 
+                "operations.manager@company.com", 
+                "communications.specialist@company.com",
+                "risk.analyst@company.com"
+            ],
+            "team_roles": ["crisis_manager", "analyst", "coordinator", "observer"]
+        }
+        
+        success, response = self.run_test(
+            "Create Enhanced Team",
+            "POST",
+            f"companies/{self.company_id}/teams",
+            200,
+            data=team_data
+        )
+        
+        if success and 'id' in response:
+            enhanced_team_id = response['id']
+            print(f"   ✅ Enhanced team created with ID: {enhanced_team_id}")
+            print(f"   Team name: {response.get('team_name', 'N/A')}")
+            print(f"   Team description: {response.get('team_description', 'N/A')}")
+            print(f"   Team members: {len(response.get('team_members', []))}")
+            print(f"   Team roles: {response.get('team_roles', [])}")
+            print(f"   Access level: {response.get('access_level', 'N/A')}")
+            
+            # Verify TeamCreate data was properly processed
+            if len(response.get('team_members', [])) != len(team_data['team_members']):
+                print(f"   ⚠️ Team member count mismatch")
+                return False
+                
+            if response.get('team_roles', []) != team_data['team_roles']:
+                print(f"   ⚠️ Team roles mismatch")
+                return False
+            
+            # Test getting company teams
+            teams_success, teams_response = self.run_test(
+                "Get Enhanced Company Teams",
+                "GET",
+                f"companies/{self.company_id}/teams",
+                200
+            )
+            
+            if teams_success and isinstance(teams_response, list):
+                print(f"   ✅ Retrieved {len(teams_response)} teams")
+                
+                # Find our created team
+                created_team = None
+                for team in teams_response:
+                    if team.get('id') == enhanced_team_id:
+                        created_team = team
+                        break
+                
+                if created_team:
+                    print(f"   ✅ Enhanced team found in company teams list")
+                    print(f"   Team lead: {created_team.get('team_lead', 'N/A')}")
+                    print(f"   Active scenarios: {len(created_team.get('active_scenarios', []))}")
+                    return True
+                else:
+                    print(f"   ❌ Enhanced team not found in company teams list")
+                    return False
+            else:
+                print(f"   ❌ Failed to retrieve company teams")
+                return False
+        else:
+            print(f"   ❌ Failed to create enhanced team")
+            return False
+
 def main():
     print("🚀 Starting Polycrisis Simulator API Tests")
     print("=" * 50)
