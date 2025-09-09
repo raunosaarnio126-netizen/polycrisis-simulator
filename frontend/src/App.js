@@ -51,9 +51,11 @@ const AuthProvider = ({ children }) => {
   };
 
   const login = (newToken) => {
+    console.log('Login function called with token:', newToken);
     localStorage.setItem('token', newToken);
     setToken(newToken);
     axios.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
+    console.log('Token set in localStorage and axios headers, authentication should be complete');
   };
 
   const logout = () => {
