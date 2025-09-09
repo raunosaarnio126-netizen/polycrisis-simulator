@@ -3176,45 +3176,14 @@ const CompanyManagement = () => {
         
         <Card 
           className="cursor-pointer hover:shadow-lg transition-all hover:scale-105 border-2 hover:border-purple-300"
-          onClick={async () => {
-            try {
-              // Get current user and company
-              const userResponse = await axios.get(`${API}/me`);
-              if (userResponse.data.company_id) {
-                // Generate rapid analysis
-                setLoading(true);
-                const analysisResponse = await axios.post(`${API}/companies/${userResponse.data.company_id}/rapid-analysis?analysis_type=vulnerability_assessment`);
-                
-                toast({ 
-                  title: "Rapid Analysis Complete", 
-                  description: "AI-powered vulnerability assessment generated successfully!",
-                  duration: 4000
-                });
-                
-                // You could open a dialog here to show the analysis
-                console.log('Analysis result:', analysisResponse.data);
-              } else {
-                toast({ 
-                  title: "Company Required", 
-                  description: "Please complete your company profile first",
-                  variant: "destructive"
-                });
-              }
-            } catch (error) {
-              toast({ 
-                title: "Analysis Error", 
-                description: "Failed to generate rapid analysis. Please try again.",
-                variant: "destructive"
-              });
-            } finally {
-              setLoading(false);
-            }
+          onClick={() => {
+            setShowCompanyInsights(true);
           }}
         >
           <CardContent className="p-4 sm:p-6 text-center">
-            <Zap className="w-6 h-6 sm:w-8 sm:h-8 text-purple-600 mx-auto mb-2" />
-            <h3 className="font-semibold text-gray-900 text-sm sm:text-base">Rapid Analysis</h3>
-            <p className="text-xs sm:text-sm text-gray-600">AI-powered business insights</p>
+            <Brain className="w-6 h-6 sm:w-8 sm:h-8 text-purple-600 mx-auto mb-2" />
+            <h3 className="font-semibold text-gray-900 text-sm sm:text-base">Generate Company Insights</h3>
+            <p className="text-xs sm:text-sm text-gray-600">Financial, market & risk analysis</p>
           </CardContent>
         </Card>
         
