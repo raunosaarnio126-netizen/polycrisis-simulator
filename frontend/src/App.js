@@ -4879,6 +4879,136 @@ Comprehensive Scenario Analysis & Crisis Management Platform
           </div>
         </div>
       )}
+
+      {/* Amend Scenario Dialog */}
+      {showAmendDialog && amendingScenario && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Amend Scenario: {amendingScenario.title}
+                </h3>
+                <button
+                  onClick={closeAmendDialog}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+
+              <div className="space-y-6">
+                <div className="bg-blue-50 p-4 rounded-lg">
+                  <p className="text-sm text-blue-800">
+                    <strong>Fill in missing information</strong> to enhance scenario completeness and accuracy. 
+                    This will improve analysis quality and regional insights.
+                  </p>
+                </div>
+
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="affected-regions" className="text-sm font-medium">
+                      Affected Regions *
+                    </Label>
+                    <Input
+                      id="affected-regions"
+                      value={amendFormData.affected_regions}
+                      onChange={(e) => handleAmendInputChange('affected_regions', e.target.value)}
+                      placeholder="e.g., Finland, Sweden, Norway (comma-separated)"
+                      className="mt-1"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Specify geographic regions or countries affected by this crisis
+                    </p>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="key-variables" className="text-sm font-medium">
+                      Key Variables
+                    </Label>
+                    <Input
+                      id="key-variables"
+                      value={amendFormData.key_variables}
+                      onChange={(e) => handleAmendInputChange('key_variables', e.target.value)}
+                      placeholder="e.g., GDP, Unemployment, Currency, Trade (comma-separated)"
+                      className="mt-1"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Economic, social, or environmental variables to monitor
+                    </p>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="stakeholders" className="text-sm font-medium">
+                      Key Stakeholders
+                    </Label>
+                    <Input
+                      id="stakeholders"
+                      value={amendFormData.stakeholders}
+                      onChange={(e) => handleAmendInputChange('stakeholders', e.target.value)}
+                      placeholder="e.g., Government, EU, Central Bank, Businesses"
+                      className="mt-1"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Organizations, institutions, or groups involved in crisis response
+                    </p>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="timeline" className="text-sm font-medium">
+                      Timeline
+                    </Label>
+                    <Input
+                      id="timeline"
+                      value={amendFormData.timeline}
+                      onChange={(e) => handleAmendInputChange('timeline', e.target.value)}
+                      placeholder="e.g., 6 months, Q2 2025, Immediate to long-term"
+                      className="mt-1"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Expected duration or time frame of the crisis
+                    </p>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="additional-context" className="text-sm font-medium">
+                      Additional Context
+                    </Label>
+                    <textarea
+                      id="additional-context"
+                      value={amendFormData.additional_context}
+                      onChange={(e) => handleAmendInputChange('additional_context', e.target.value)}
+                      placeholder="Additional background information, triggers, or context..."
+                      className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      rows={4}
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Any additional details that provide context for this scenario
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex gap-3 pt-4 border-t">
+                  <Button 
+                    onClick={submitAmendments} 
+                    className="flex-1 bg-blue-600 hover:bg-blue-700"
+                  >
+                    Save Amendments
+                  </Button>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={closeAmendDialog}
+                    className="flex-1"
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
