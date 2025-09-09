@@ -4702,7 +4702,7 @@ const ScenarioAdjusters = () => {
                   max="100"
                   value={septeValues.technological_disruption_pct}
                   onChange={(e) => handleSliderChange('technological_disruption_pct', parseInt(e.target.value))}
-                  className="w-full h-2 bg-gradient-to-r from-yellow-200 to-cyan-200 rounded-lg appearance-none cursor-pointer slider"
+                  className="w-full septe-slider technological-slider"
                 />
                 <div className="flex justify-between text-xs text-gray-500">
                   <span>Disruption</span>
