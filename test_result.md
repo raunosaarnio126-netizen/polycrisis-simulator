@@ -223,7 +223,8 @@ test_plan:
     - "Company Insights Dialog with Print Feature"
     - "Document Analysis Dialog with File Upload"
     - "Team Creation Dialog"
-  stuck_tasks: []
+  stuck_tasks: 
+    - "Document Analysis with File Upload"
   test_all: false
   test_priority: "high_first"
 
