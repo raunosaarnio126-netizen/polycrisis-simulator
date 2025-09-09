@@ -4333,6 +4333,524 @@ const AvatarCompetenceManager = () => {
   );
 };
 
+// Scenario Adjusters - Fuzzy Logic Component
+const ScenarioAdjusters = () => {
+  const [adjustments, setAdjustments] = useState([]);
+  const [currentAdjustment, setCurrentAdjustment] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [company, setCompany] = useState(null);
+  
+  // SEPTE Framework state (Social, Economic, Political, Technological, Environmental)
+  const [septeValues, setSepteValues] = useState({
+    economic_crisis_pct: 50,
+    economic_stability_pct: 50,
+    social_unrest_pct: 50,
+    social_cohesion_pct: 50,
+    environmental_degradation_pct: 50,
+    environmental_resilience_pct: 50,
+    political_instability_pct: 50,
+    political_stability_pct: 50,
+    technological_disruption_pct: 50,
+    technological_advancement_pct: 50
+  });
+  
+  const [adjustmentName, setAdjustmentName] = useState('');
+  const [realTimeAnalysis, setRealTimeAnalysis] = useState('');
+  const [consensusData, setConsensusData] = useState(null);
+
+  useEffect(() => {
+    fetchCompany();
+    fetchAdjustments();
+  }, []);
+
+  const fetchCompany = async () => {
+    try {
+      const userResponse = await axios.get(`${API}/me`);
+      if (userResponse.data.company_id) {
+        const companyResponse = await axios.get(`${API}/companies/${userResponse.data.company_id}`);
+        setCompany(companyResponse.data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch company:', error);
+    }
+  };
+
+  const fetchAdjustments = async () => {
+    try {
+      setLoading(true);
+      const userResponse = await axios.get(`${API}/me`);
+      if (userResponse.data.company_id) {
+        const response = await axios.get(`${API}/companies/${userResponse.data.company_id}/scenario-adjustments`);
+        setAdjustments(response.data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch adjustments:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSliderChange = (field, value) => {
+    // Find the opposing field
+    const opposingFields = {
+      'economic_crisis_pct': 'economic_stability_pct',
+      'economic_stability_pct': 'economic_crisis_pct',
+      'social_unrest_pct': 'social_cohesion_pct',
+      'social_cohesion_pct': 'social_unrest_pct',
+      'environmental_degradation_pct': 'environmental_resilience_pct',
+      'environmental_resilience_pct': 'environmental_degradation_pct',
+      'political_instability_pct': 'political_stability_pct',
+      'political_stability_pct': 'political_instability_pct',
+      'technological_disruption_pct': 'technological_advancement_pct',
+      'technological_advancement_pct': 'technological_disruption_pct'
+    };
+    
+    const opposingField = opposingFields[field];
+    const opposingValue = 100 - value;
+    
+    setSepteValues(prev => ({
+      ...prev,
+      [field]: value,
+      [opposingField]: opposingValue
+    }));
+    
+    // Trigger real-time analysis update
+    updateRealTimeAnalysis({
+      ...septeValues,
+      [field]: value,
+      [opposingField]: opposingValue
+    });
+  };
+
+  const updateRealTimeAnalysis = async (values) => {
+    if (!company || !adjustmentName) return;
+    
+    try {
+      setLoading(true);
+      const response = await axios.put(`${API}/companies/${company.id}/scenario-adjustments/temp`, {
+        adjustment_name: adjustmentName || 'Real-time Analysis',
+        ...values
+      });
+      setRealTimeAnalysis(response.data.real_time_analysis);
+    } catch (error) {
+      console.error('Failed to update analysis:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const saveAdjustment = async () => {
+    if (!company || !adjustmentName.trim()) {
+      toast({
+        title: "Missing Information",
+        description: "Please enter an adjustment name",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const response = await axios.post(`${API}/companies/${company.id}/scenario-adjustments`, {
+        adjustment_name: adjustmentName,
+        ...septeValues
+      });
+      
+      setAdjustments([...adjustments, response.data]);
+      setCurrentAdjustment(response.data);
+      
+      toast({
+        title: "Adjustment Saved",
+        description: `"${adjustmentName}" has been saved successfully`,
+        duration: 4000
+      });
+    } catch (error) {
+      toast({
+        title: "Save Error",
+        description: error.response?.data?.detail || "Failed to save adjustment",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const saveConsensus = async () => {
+    if (!currentAdjustment) {
+      toast({
+        title: "No Adjustment Selected",
+        description: "Please save your current adjustment first",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const response = await axios.post(`${API}/companies/${company.id}/consensus`, {
+        adjustment_id: currentAdjustment.id,
+        consensus_name: `${adjustmentName} - Team Consensus`
+      });
+      
+      setConsensusData(response.data);
+      
+      toast({
+        title: "Consensus Created",
+        description: "Team consensus has been created successfully",
+        duration: 4000
+      });
+    } catch (error) {
+      toast({
+        title: "Consensus Error",
+        description: error.response?.data?.detail || "Failed to create consensus",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadAdjustment = (adjustment) => {
+    setCurrentAdjustment(adjustment);
+    setAdjustmentName(adjustment.adjustment_name);
+    setSepteValues({
+      economic_crisis_pct: adjustment.economic_crisis_pct,
+      economic_stability_pct: adjustment.economic_stability_pct,
+      social_unrest_pct: adjustment.social_unrest_pct,
+      social_cohesion_pct: adjustment.social_cohesion_pct,
+      environmental_degradation_pct: adjustment.environmental_degradation_pct,
+      environmental_resilience_pct: adjustment.environmental_resilience_pct,
+      political_instability_pct: adjustment.political_instability_pct,
+      political_stability_pct: adjustment.political_stability_pct,
+      technological_disruption_pct: adjustment.technological_disruption_pct,
+      technological_advancement_pct: adjustment.technological_advancement_pct
+    });
+    setRealTimeAnalysis(adjustment.real_time_analysis);
+  };
+
+  if (!company) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="text-center">
+          <Building2 className="w-12 h-12 animate-pulse text-blue-500 mx-auto mb-4" />
+          <p className="text-gray-600">Please set up your company profile first</p>
+          <p className="text-sm text-gray-500 mt-2">Go to Company Management to create your profile</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex justify-between items-start">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+            <Layers className="w-8 h-8 text-blue-600" />
+            Scenario Adjusters
+          </h1>
+          <p className="text-gray-600 mt-2">
+            Use fuzzy logic sliders to adjust scenario parameters and see immediate AI-powered impact analysis
+          </p>
+        </div>
+        
+        <div className="flex gap-3">
+          <Button 
+            onClick={saveAdjustment} 
+            disabled={loading || !adjustmentName.trim()}
+            className="bg-blue-600 hover:bg-blue-700"
+          >
+            <Download className="w-4 h-4 mr-2" />
+            Save Adjustment
+          </Button>
+          <Button 
+            onClick={saveConsensus} 
+            disabled={loading || !currentAdjustment}
+            className="bg-green-600 hover:bg-green-700"
+          >
+            <Users className="w-4 h-4 mr-2" />
+            Save Consensus
+          </Button>
+        </div>
+      </div>
+
+      <div className="grid lg:grid-cols-2 gap-6">
+        {/* Left Panel - Adjusters */}
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Layers className="w-5 h-5 text-blue-600" />
+                SEPTE Framework Adjusters
+              </CardTitle>
+              <CardDescription>
+                Adjust the balance between opposing forces for each dimension
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Adjustment Name */}
+              <div>
+                <Label htmlFor="adjustment-name">Adjustment Name</Label>
+                <Input
+                  id="adjustment-name"
+                  value={adjustmentName}
+                  onChange={(e) => setAdjustmentName(e.target.value)}
+                  placeholder="e.g., High Economic Uncertainty Scenario"
+                  className="mt-1"
+                />
+              </div>
+
+              {/* Economic Slider */}
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <Label className="text-sm font-medium">Economic</Label>
+                  <span className="text-xs text-gray-500">
+                    {septeValues.economic_crisis_pct.toFixed(0)}% Crisis - {septeValues.economic_stability_pct.toFixed(0)}% Stability
+                  </span>
+                </div>
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={septeValues.economic_crisis_pct}
+                  onChange={(e) => handleSliderChange('economic_crisis_pct', parseInt(e.target.value))}
+                  className="w-full h-2 bg-gradient-to-r from-red-200 to-green-200 rounded-lg appearance-none cursor-pointer slider"
+                />
+                <div className="flex justify-between text-xs text-gray-500">
+                  <span>Crisis</span>
+                  <span>Stability</span>
+                </div>
+              </div>
+
+              {/* Social Slider */}
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <Label className="text-sm font-medium">Social</Label>
+                  <span className="text-xs text-gray-500">
+                    {septeValues.social_unrest_pct.toFixed(0)}% Unrest - {septeValues.social_cohesion_pct.toFixed(0)}% Cohesion
+                  </span>
+                </div>
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={septeValues.social_unrest_pct}
+                  onChange={(e) => handleSliderChange('social_unrest_pct', parseInt(e.target.value))}
+                  className="w-full h-2 bg-gradient-to-r from-orange-200 to-blue-200 rounded-lg appearance-none cursor-pointer slider"
+                />
+                <div className="flex justify-between text-xs text-gray-500">
+                  <span>Unrest</span>
+                  <span>Cohesion</span>
+                </div>
+              </div>
+
+              {/* Environmental Slider */}
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <Label className="text-sm font-medium">Environmental</Label>
+                  <span className="text-xs text-gray-500">
+                    {septeValues.environmental_degradation_pct.toFixed(0)}% Degradation - {septeValues.environmental_resilience_pct.toFixed(0)}% Resilience
+                  </span>
+                </div>
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={septeValues.environmental_degradation_pct}
+                  onChange={(e) => handleSliderChange('environmental_degradation_pct', parseInt(e.target.value))}
+                  className="w-full h-2 bg-gradient-to-r from-red-300 to-green-300 rounded-lg appearance-none cursor-pointer slider"
+                />
+                <div className="flex justify-between text-xs text-gray-500">
+                  <span>Degradation</span>
+                  <span>Resilience</span>
+                </div>
+              </div>
+
+              {/* Political Slider */}
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <Label className="text-sm font-medium">Political</Label>
+                  <span className="text-xs text-gray-500">
+                    {septeValues.political_instability_pct.toFixed(0)}% Instability - {septeValues.political_stability_pct.toFixed(0)}% Stability
+                  </span>
+                </div>
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={septeValues.political_instability_pct}
+                  onChange={(e) => handleSliderChange('political_instability_pct', parseInt(e.target.value))}
+                  className="w-full h-2 bg-gradient-to-r from-purple-200 to-indigo-200 rounded-lg appearance-none cursor-pointer slider"
+                />
+                <div className="flex justify-between text-xs text-gray-500">
+                  <span>Instability</span>
+                  <span>Stability</span>
+                </div>
+              </div>
+
+              {/* Technological Slider */}
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <Label className="text-sm font-medium">Technological</Label>
+                  <span className="text-xs text-gray-500">
+                    {septeValues.technological_disruption_pct.toFixed(0)}% Disruption - {septeValues.technological_advancement_pct.toFixed(0)}% Advancement
+                  </span>
+                </div>
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={septeValues.technological_disruption_pct}
+                  onChange={(e) => handleSliderChange('technological_disruption_pct', parseInt(e.target.value))}
+                  className="w-full h-2 bg-gradient-to-r from-yellow-200 to-cyan-200 rounded-lg appearance-none cursor-pointer slider"
+                />
+                <div className="flex justify-between text-xs text-gray-500">
+                  <span>Disruption</span>
+                  <span>Advancement</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Right Panel - Analysis */}
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Brain className="w-5 h-5 text-purple-600" />
+                Real-Time Impact Analysis
+              </CardTitle>
+              <CardDescription>
+                AI-generated scenario analysis based on your current settings
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {loading ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="text-center">
+                    <Brain className="w-8 h-8 animate-pulse text-purple-500 mx-auto mb-4" />
+                    <p className="text-gray-600">Analyzing scenario impact...</p>
+                  </div>
+                </div>
+              ) : realTimeAnalysis ? (
+                <div className="space-y-4">
+                  <div className="bg-purple-50 p-4 rounded-lg">
+                    <h4 className="font-semibold text-purple-900 mb-2">Impact Analysis</h4>
+                    <div className="text-sm text-purple-800 whitespace-pre-line">
+                      {realTimeAnalysis}
+                    </div>
+                  </div>
+                  
+                  {currentAdjustment && (
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div className="bg-blue-50 p-3 rounded-lg">
+                        <h4 className="font-semibold text-blue-900 mb-2 flex items-center gap-1">
+                          <Shield className="w-4 h-4" />
+                          Risk Level
+                        </h4>
+                        <Badge variant={
+                          currentAdjustment.risk_level === 'critical' ? 'destructive' :
+                          currentAdjustment.risk_level === 'high' ? 'destructive' :
+                          currentAdjustment.risk_level === 'medium' ? 'default' : 'secondary'
+                        }>
+                          {currentAdjustment.risk_level.toUpperCase()}
+                        </Badge>
+                      </div>
+                      
+                      <div className="bg-green-50 p-3 rounded-lg">
+                        <h4 className="font-semibold text-green-900 mb-2 flex items-center gap-1">
+                          <Target className="w-4 h-4" />
+                          Recommendations
+                        </h4>
+                        <p className="text-sm text-green-800">
+                          {currentAdjustment.recommendations.length} strategic actions
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  <Brain className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                  <p>Adjust the sliders above to see real-time analysis</p>
+                  <p className="text-sm mt-2">AI will analyze the impact of your changes</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Consensus Status */}
+          {consensusData && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="w-5 h-5 text-green-600" />
+                  Team Consensus
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <div className="flex justify-between">
+                    <span className="text-sm font-medium">Consensus Progress</span>
+                    <span className="text-sm text-gray-600">
+                      {consensusData.consensus_percentage.toFixed(1)}%
+                    </span>
+                  </div>
+                  <Progress value={consensusData.consensus_percentage} className="h-2" />
+                  <div className="flex justify-between text-xs text-gray-500">
+                    <span>{consensusData.agreed_by.length} of {consensusData.total_team_members} agreed</span>
+                    <span>{consensusData.consensus_reached ? '✅ Reached' : '⏳ Pending'}</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      </div>
+
+      {/* Saved Adjustments */}
+      {adjustments.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Database className="w-5 h-5 text-gray-600" />
+              Saved Adjustments
+            </CardTitle>
+            <CardDescription>
+              Previously saved scenario adjustments
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {adjustments.map((adjustment) => (
+                <Card 
+                  key={adjustment.id} 
+                  className="cursor-pointer hover:shadow-md transition-shadow"
+                  onClick={() => loadAdjustment(adjustment)}
+                >
+                  <CardContent className="p-4">
+                    <h4 className="font-semibold text-gray-900 mb-2">{adjustment.adjustment_name}</h4>
+                    <div className="space-y-1 text-xs text-gray-600">
+                      <div>Economic: {adjustment.economic_crisis_pct}% - {adjustment.economic_stability_pct}%</div>
+                      <div>Social: {adjustment.social_unrest_pct}% - {adjustment.social_cohesion_pct}%</div>
+                      <div>Risk: <Badge size="sm" variant={
+                        adjustment.risk_level === 'critical' ? 'destructive' :
+                        adjustment.risk_level === 'high' ? 'destructive' :
+                        adjustment.risk_level === 'medium' ? 'default' : 'secondary'
+                      }>{adjustment.risk_level}</Badge></div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+};
+
 // Main App Component
 const AppContent = () => {
   const { user, logout } = useAuth();
