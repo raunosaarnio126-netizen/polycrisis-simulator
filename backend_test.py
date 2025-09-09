@@ -4389,7 +4389,7 @@ startxref
                 "Test Authentication Required for Amendment",
                 "PATCH",
                 f"scenarios/{scenario_id}/amend",
-                401,  # Should fail without authentication
+                403,  # FastAPI returns 403 for "Not authenticated"
                 data={"affected_regions": ["Test"]}
             )
             
