@@ -2932,7 +2932,7 @@ Comprehensive Scenario Analysis & Crisis Management Platform
                   
                   <div className="action-row">
                     <button
-                      onClick={() => handleGenerateImplementation(scenario, 'game-book')}
+                      onClick={() => openDocumentInPanel(scenario, 'game-book')}
                       disabled={generatingImplementation}
                       className="action-button"
                     >
@@ -2941,7 +2941,7 @@ Comprehensive Scenario Analysis & Crisis Management Platform
                     </button>
                     
                     <button
-                      onClick={() => handleGenerateImplementation(scenario, 'action-plan')}
+                      onClick={() => openDocumentInPanel(scenario, 'action-plan')}
                       disabled={generatingImplementation}
                       className="action-button"
                     >
@@ -2950,7 +2950,7 @@ Comprehensive Scenario Analysis & Crisis Management Platform
                     </button>
                     
                     <button
-                      onClick={() => handleGenerateImplementation(scenario, 'strategy-implementation')}
+                      onClick={() => openDocumentInPanel(scenario, 'strategy')}
                       disabled={generatingImplementation}
                       className="action-button"
                     >
@@ -2961,8 +2961,8 @@ Comprehensive Scenario Analysis & Crisis Management Platform
                   
                   <div className="action-row">
                     <button
-                      onClick={() => handleDeployMonitors(scenario)}
-                      disabled={deployingMonitors}
+                      onClick={() => openDocumentInPanel(scenario, 'monitors')}
+                      disabled={generatingImplementation}
                       className="action-button action-button-monitors"
                     >
                       <Monitor className="w-4 h-4" />
@@ -2970,7 +2970,7 @@ Comprehensive Scenario Analysis & Crisis Management Platform
                     </button>
                     
                     <button
-                      onClick={() => handleComplexSystemsAnalysis(scenario)}
+                      onClick={() => openDocumentInPanel(scenario, 'systems')}
                       disabled={generatingImplementation}
                       className="action-button action-button-systems"
                     >
@@ -2979,7 +2979,7 @@ Comprehensive Scenario Analysis & Crisis Management Platform
                     </button>
                     
                     <button
-                      onClick={() => handleGenerateLearningInsights(scenario)}
+                      onClick={() => openDocumentInPanel(scenario, 'learning')}
                       disabled={generatingImplementation}
                       className="action-button action-button-learning"
                     >
@@ -2990,7 +2990,7 @@ Comprehensive Scenario Analysis & Crisis Management Platform
 
                   <div className="action-row">
                     <button
-                      onClick={() => handleSuggestMonitoringSources(scenario)}
+                      onClick={() => openDocumentInPanel(scenario, 'sources')}
                       disabled={generatingImplementation}
                       className="action-button action-button-sources"
                     >
@@ -3007,10 +3007,11 @@ Comprehensive Scenario Analysis & Crisis Management Platform
                     </button>
                     
                     <button
-                      onClick={() => handleOpenMonitoringDashboard(scenario)}
+                      onClick={() => openDocumentInPanel(scenario, 'dashboard')}
+                      disabled={generatingImplementation}
                       className="action-button action-button-dashboard"
                     >
-                      <Cloud className="w-4 h-4" />
+                      <BarChart className="w-4 h-4" />
                       Dashboard
                     </button>
                   </div>
