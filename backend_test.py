@@ -1444,6 +1444,483 @@ class PolycrisisAPITester:
             return True
         return False
 
+    # ========== CRISIS MANAGEMENT FRAMEWORK ENDPOINTS TESTING ==========
+    
+    def test_crisis_framework_summary(self):
+        """Test Crisis Framework Summary endpoint"""
+        success, response = self.run_test(
+            "Crisis Framework Summary",
+            "GET",
+            "crisis-framework/summary",
+            200
+        )
+        
+        if success:
+            print(f"   Total factors: {response.get('total_factors', 'N/A')}")
+            print(f"   Total monitoring tasks: {response.get('total_monitoring_tasks', 'N/A')}")
+            print(f"   High priority factors: {response.get('high_priority_factors', 'N/A')}")
+            print(f"   Real-time monitoring: {response.get('real_time_monitoring', 'N/A')}")
+            print(f"   Categories: {response.get('categories', [])}")
+            
+            # Verify expected structure
+            required_fields = ['total_factors', 'total_monitoring_tasks', 'high_priority_factors', 
+                             'real_time_monitoring', 'categories']
+            
+            for field in required_fields:
+                if field not in response:
+                    print(f"   ❌ Missing required field: {field}")
+                    return False
+            
+            # Verify expected values based on crisis_management_framework.json
+            expected_categories = 4
+            expected_monitoring_tasks = 4
+            
+            if response.get('total_monitoring_tasks') != expected_monitoring_tasks:
+                print(f"   ⚠️ Expected {expected_monitoring_tasks} monitoring tasks, got {response.get('total_monitoring_tasks')}")
+            
+            categories = response.get('categories', [])
+            if len(categories) != expected_categories:
+                print(f"   ⚠️ Expected {expected_categories} categories, got {len(categories)}")
+            
+            # Verify categories contain expected values
+            expected_category_names = [
+                "Environmental Impact Assessment",
+                "Supply Chain Risk Assessment", 
+                "Communication Infrastructure Resilience",
+                "Population Displacement Risk Assessment"
+            ]
+            
+            for expected_cat in expected_category_names:
+                if expected_cat in categories:
+                    print(f"   ✅ Found expected category: {expected_cat}")
+                else:
+                    print(f"   ❌ Missing expected category: {expected_cat}")
+                    
+            return True
+        return False
+
+    def test_crisis_factors_no_filter(self):
+        """Test Crisis Factors endpoint without filters"""
+        success, response = self.run_test(
+            "Crisis Factors - No Filter",
+            "GET",
+            "crisis-framework/factors",
+            200
+        )
+        
+        if success and isinstance(response, list):
+            print(f"   Found {len(response)} crisis factors")
+            
+            # Verify factor structure
+            if response:
+                sample_factor = response[0]
+                required_fields = ['name', 'description', 'metrics', 'impact_scale', 
+                                 'monitoring_frequency', 'data_sources', 'category', 'priority']
+                
+                for field in required_fields:
+                    if field not in sample_factor:
+                        print(f"   ❌ Missing required field in factor: {field}")
+                        return False
+                
+                # Show sample factors
+                print(f"   Sample factors (first 3):")
+                for i, factor in enumerate(response[:3]):
+                    print(f"   {i+1}. {factor.get('name')} ({factor.get('category')})")
+                    print(f"      Priority: {factor.get('priority')}, Impact: {factor.get('impact_scale')}")
+                    print(f"      Monitoring: {factor.get('monitoring_frequency')}")
+                    print(f"      Data sources: {len(factor.get('data_sources', []))}")
+                
+                # Verify we have factors from all 4 categories
+                categories_found = set()
+                for factor in response:
+                    categories_found.add(factor.get('category_key'))
+                
+                expected_categories = {'environmental_impact', 'supply_chain_vulnerabilities', 
+                                     'communication_infrastructure', 'population_displacement'}
+                
+                for expected_cat in expected_categories:
+                    if expected_cat in categories_found:
+                        print(f"   ✅ Found factors from category: {expected_cat}")
+                    else:
+                        print(f"   ❌ Missing factors from category: {expected_cat}")
+                        
+            return True
+        return False
+
+    def test_crisis_factors_category_filter(self):
+        """Test Crisis Factors endpoint with category filtering"""
+        # Test each category filter
+        categories_to_test = [
+            'environmental_impact',
+            'supply_chain_vulnerabilities', 
+            'communication_infrastructure',
+            'population_displacement'
+        ]
+        
+        successful_tests = 0
+        
+        for category in categories_to_test:
+            success, response = self.run_test(
+                f"Crisis Factors - Category Filter: {category}",
+                "GET",
+                f"crisis-framework/factors?category={category}",
+                200
+            )
+            
+            if success and isinstance(response, list):
+                successful_tests += 1
+                print(f"   ✅ Category '{category}': {len(response)} factors")
+                
+                # Verify all factors belong to the requested category
+                for factor in response:
+                    if factor.get('category_key') != category:
+                        print(f"   ❌ Factor from wrong category: {factor.get('category_key')} (expected {category})")
+                        return False
+                        
+                # Show sample factor from this category
+                if response:
+                    sample = response[0]
+                    print(f"      Sample: {sample.get('name')} - {sample.get('description')[:50]}...")
+            else:
+                print(f"   ❌ Failed to get factors for category: {category}")
+        
+        print(f"   Successfully tested {successful_tests}/{len(categories_to_test)} category filters")
+        return successful_tests == len(categories_to_test)
+
+    def test_crisis_factors_priority_filter(self):
+        """Test Crisis Factors endpoint with priority filtering"""
+        # Test high priority filter (all categories should be high priority based on JSON)
+        success, response = self.run_test(
+            "Crisis Factors - Priority Filter: high",
+            "GET",
+            "crisis-framework/factors?priority=high",
+            200
+        )
+        
+        if success and isinstance(response, list):
+            print(f"   Found {len(response)} high priority factors")
+            
+            # Verify all factors have high priority
+            for factor in response:
+                if factor.get('priority') != 'high':
+                    print(f"   ❌ Factor with wrong priority: {factor.get('priority')} (expected high)")
+                    return False
+            
+            print(f"   ✅ All factors correctly filtered by high priority")
+            
+            # Test medium priority (should return empty based on JSON)
+            medium_success, medium_response = self.run_test(
+                "Crisis Factors - Priority Filter: medium",
+                "GET",
+                "crisis-framework/factors?priority=medium",
+                200
+            )
+            
+            if medium_success and isinstance(medium_response, list):
+                print(f"   Medium priority factors: {len(medium_response)} (expected 0)")
+                if len(medium_response) == 0:
+                    print(f"   ✅ Correctly filtered out non-medium priority factors")
+                else:
+                    print(f"   ⚠️ Unexpected medium priority factors found")
+            
+            return True
+        return False
+
+    def test_monitoring_tasks_no_filter(self):
+        """Test Monitoring Tasks endpoint without filters"""
+        success, response = self.run_test(
+            "Monitoring Tasks - No Filter",
+            "GET",
+            "crisis-framework/monitoring-tasks",
+            200
+        )
+        
+        if success and isinstance(response, list):
+            print(f"   Found {len(response)} monitoring tasks")
+            
+            # Verify task structure
+            if response:
+                sample_task = response[0]
+                required_fields = ['task', 'description', 'priority', 'frequency', 
+                                 'data_sources', 'metrics_tracked', 'alert_thresholds']
+                
+                for field in required_fields:
+                    if field not in sample_task:
+                        print(f"   ❌ Missing required field in task: {field}")
+                        return False
+                
+                # Show all monitoring tasks
+                print(f"   Monitoring tasks:")
+                for i, task in enumerate(response):
+                    print(f"   {i+1}. {task.get('task')}")
+                    print(f"      Priority: {task.get('priority')}, Frequency: {task.get('frequency')}")
+                    print(f"      Data sources: {len(task.get('data_sources', []))}")
+                    print(f"      Metrics tracked: {len(task.get('metrics_tracked', []))}")
+                
+                # Verify expected tasks based on JSON
+                expected_task_keys = ['real_time_environmental', 'economic_indicators', 
+                                    'social_media_sentiment', 'infrastructure_monitoring']
+                
+                task_keys_found = [task.get('task_key') for task in response]
+                
+                for expected_key in expected_task_keys:
+                    if expected_key in task_keys_found:
+                        print(f"   ✅ Found expected task: {expected_key}")
+                    else:
+                        print(f"   ❌ Missing expected task: {expected_key}")
+                        
+            return True
+        return False
+
+    def test_monitoring_tasks_priority_filter(self):
+        """Test Monitoring Tasks endpoint with priority filtering"""
+        # Test critical priority filter
+        success, response = self.run_test(
+            "Monitoring Tasks - Priority Filter: critical",
+            "GET",
+            "crisis-framework/monitoring-tasks?priority=critical",
+            200
+        )
+        
+        if success and isinstance(response, list):
+            print(f"   Found {len(response)} critical priority tasks")
+            
+            # Verify all tasks have critical priority
+            for task in response:
+                if task.get('priority') != 'critical':
+                    print(f"   ❌ Task with wrong priority: {task.get('priority')} (expected critical)")
+                    return False
+            
+            # Show critical tasks
+            for task in response:
+                print(f"   ✅ Critical task: {task.get('task')}")
+            
+            # Test high priority filter
+            high_success, high_response = self.run_test(
+                "Monitoring Tasks - Priority Filter: high",
+                "GET",
+                "crisis-framework/monitoring-tasks?priority=high",
+                200
+            )
+            
+            if high_success and isinstance(high_response, list):
+                print(f"   Found {len(high_response)} high priority tasks")
+                for task in high_response:
+                    print(f"   ✅ High priority task: {task.get('task')}")
+            
+            # Test medium priority filter
+            medium_success, medium_response = self.run_test(
+                "Monitoring Tasks - Priority Filter: medium",
+                "GET",
+                "crisis-framework/monitoring-tasks?priority=medium",
+                200
+            )
+            
+            if medium_success and isinstance(medium_response, list):
+                print(f"   Found {len(medium_response)} medium priority tasks")
+                for task in medium_response:
+                    print(f"   ✅ Medium priority task: {task.get('task')}")
+            
+            return True
+        return False
+
+    def test_monitoring_tasks_frequency_filter(self):
+        """Test Monitoring Tasks endpoint with frequency filtering"""
+        # Test real_time frequency filter
+        success, response = self.run_test(
+            "Monitoring Tasks - Frequency Filter: real_time",
+            "GET",
+            "crisis-framework/monitoring-tasks?frequency=real_time",
+            200
+        )
+        
+        if success and isinstance(response, list):
+            print(f"   Found {len(response)} real-time monitoring tasks")
+            
+            # Verify all tasks have real_time frequency
+            for task in response:
+                if task.get('frequency') != 'real_time':
+                    print(f"   ❌ Task with wrong frequency: {task.get('frequency')} (expected real_time)")
+                    return False
+            
+            # Show real-time tasks
+            for task in response:
+                print(f"   ✅ Real-time task: {task.get('task')}")
+            
+            # Test daily frequency filter
+            daily_success, daily_response = self.run_test(
+                "Monitoring Tasks - Frequency Filter: daily",
+                "GET",
+                "crisis-framework/monitoring-tasks?frequency=daily",
+                200
+            )
+            
+            if daily_success and isinstance(daily_response, list):
+                print(f"   Found {len(daily_response)} daily monitoring tasks")
+                for task in daily_response:
+                    print(f"   ✅ Daily task: {task.get('task')}")
+            
+            return True
+        return False
+
+    def test_scenario_assessment_finnish_crisis(self):
+        """Test Scenario Assessment with specific Finnish Economic Crisis scenario"""
+        # Use the specific scenario ID from review request
+        scenario_id = "9796a80e-976e-463d-ba00-aeb899b76a7a"
+        
+        print(f"\n🔍 Testing Crisis Framework Scenario Assessment...")
+        print(f"   Scenario ID: {scenario_id}")
+        print(f"   Title: Finnish Economic Crisis Test")
+        
+        # First login with test credentials
+        test_email = "test@example.com"
+        test_password = "password123"
+        
+        login_data = {
+            "email": test_email,
+            "password": test_password
+        }
+        
+        login_success, login_response = self.run_test(
+            "Login for Scenario Assessment",
+            "POST",
+            "login",
+            200,
+            data=login_data
+        )
+        
+        if not login_success or 'access_token' not in login_response:
+            print("❌ Failed to login with test credentials")
+            return False
+            
+        # Update token for subsequent requests
+        original_token = self.token
+        self.token = login_response['access_token']
+        print(f"   Logged in successfully with test credentials")
+        
+        try:
+            # Test scenario assessment
+            assessment_data = {
+                "scenario_id": scenario_id
+            }
+            
+            success, response = self.run_test(
+                "Crisis Framework Scenario Assessment",
+                "POST",
+                "crisis-framework/scenario-assessment",
+                200,
+                data=assessment_data
+            )
+            
+            if not success:
+                print("❌ Failed to assess scenario against crisis factors")
+                return False
+                
+            # Verify assessment response structure
+            required_fields = ['scenario_id', 'scenario_title', 'crisis_type', 'severity_level',
+                             'relevant_factors', 'recommended_monitoring', 'assessment_timestamp',
+                             'total_factors', 'critical_monitoring_tasks']
+            
+            missing_fields = []
+            for field in required_fields:
+                if field not in response:
+                    missing_fields.append(field)
+            
+            if missing_fields:
+                print(f"❌ Missing required fields in assessment response: {missing_fields}")
+                return False
+                
+            print(f"✅ Scenario assessment completed successfully")
+            print(f"   Scenario ID: {response.get('scenario_id')}")
+            print(f"   Scenario title: {response.get('scenario_title')}")
+            print(f"   Crisis type: {response.get('crisis_type')}")
+            print(f"   Severity level: {response.get('severity_level')}")
+            print(f"   Total relevant factors: {response.get('total_factors')}")
+            print(f"   Critical monitoring tasks: {response.get('critical_monitoring_tasks')}")
+            
+            # Verify relevant factors
+            relevant_factors = response.get('relevant_factors', [])
+            if relevant_factors:
+                print(f"   Relevant factors found: {len(relevant_factors)}")
+                for i, factor in enumerate(relevant_factors[:3]):  # Show first 3
+                    print(f"   {i+1}. {factor.get('name')} ({factor.get('category')})")
+                    print(f"      Relevance: {factor.get('relevance_score')}")
+            else:
+                print(f"   ⚠️ No relevant factors found")
+            
+            # Verify recommended monitoring
+            recommended_monitoring = response.get('recommended_monitoring', [])
+            if recommended_monitoring:
+                print(f"   Recommended monitoring tasks: {len(recommended_monitoring)}")
+                for i, task in enumerate(recommended_monitoring):
+                    print(f"   {i+1}. {task.get('task')} (Priority: {task.get('priority')})")
+                    print(f"      Frequency: {task.get('frequency')}")
+            else:
+                print(f"   ⚠️ No recommended monitoring tasks found")
+            
+            # Test with invalid scenario ID
+            invalid_assessment_data = {
+                "scenario_id": "invalid-scenario-id-12345"
+            }
+            
+            invalid_success, invalid_response = self.run_test(
+                "Crisis Assessment with Invalid Scenario ID",
+                "POST",
+                "crisis-framework/scenario-assessment",
+                404,  # Should return 404 for non-existent scenario
+                data=invalid_assessment_data
+            )
+            
+            if not invalid_success:
+                print("❌ Invalid scenario ID test failed - should return 404")
+                return False
+                
+            print(f"✅ Invalid scenario ID properly handled with 404")
+            
+            return True
+            
+        finally:
+            # Restore original token
+            self.token = original_token
+
+    def test_crisis_framework_authentication(self):
+        """Test that Crisis Framework endpoints require authentication"""
+        # Store current token
+        temp_token = self.token
+        self.token = None
+        
+        endpoints_to_test = [
+            ("crisis-framework/summary", "GET"),
+            ("crisis-framework/factors", "GET"),
+            ("crisis-framework/monitoring-tasks", "GET"),
+            ("crisis-framework/scenario-assessment", "POST")
+        ]
+        
+        successful_auth_tests = 0
+        
+        for endpoint, method in endpoints_to_test:
+            data = {"scenario_id": "test-id"} if method == "POST" else None
+            
+            success, response = self.run_test(
+                f"Authentication Test - {endpoint}",
+                method,
+                endpoint,
+                401,  # Should fail without authentication
+                data=data
+            )
+            
+            if success:
+                successful_auth_tests += 1
+                print(f"   ✅ {endpoint} properly requires authentication")
+            else:
+                print(f"   ❌ {endpoint} authentication test failed")
+        
+        # Restore token
+        self.token = temp_token
+        
+        print(f"   Authentication tests passed: {successful_auth_tests}/{len(endpoints_to_test)}")
+        return successful_auth_tests == len(endpoints_to_test)
+
     # ========== KNOWLEDGE TOPOLOGY ENDPOINTS TESTING ==========
     
     def test_knowledge_topology_summary(self):
