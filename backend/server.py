@@ -1970,6 +1970,19 @@ async def get_company_teams(company_id: str, current_user: User = Depends(get_cu
     teams = await db.teams.find({"company_id": company_id}).to_list(1000)
     return [Team(**team) for team in teams]
 
+@api_router.get("/companies/{company_id}/users", response_model=List[User])
+async def get_company_users(company_id: str, current_user: User = Depends(get_current_user)):
+    """Get all users associated with a company for team creation"""
+    # Verify company access
+    if current_user.company_id != company_id:
+        company = await db.companies.find_one({"id": company_id, "created_by": current_user.id})
+        if not company:
+            raise HTTPException(status_code=403, detail="Access denied")
+    
+    # Get all users for this company
+    users = await db.users.find({"company_id": company_id}).to_list(1000)
+    return [User(**user) for user in users]
+
 # Rapid Analysis Tools
 @api_router.post("/companies/{company_id}/rapid-analysis", response_model=RapidAnalysis)
 async def generate_rapid_analysis(company_id: str, analysis_type: str, current_user: User = Depends(get_current_user)):
