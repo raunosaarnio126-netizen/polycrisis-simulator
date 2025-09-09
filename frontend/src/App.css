@@ -116,6 +116,45 @@ body {
   background: #94a3b8;
 }
 
+/* Hide scrollbar for horizontal navigation */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* Internet Explorer 10+ */
+  scrollbar-width: none;  /* Firefox */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;  /* Safari and Chrome */
+}
+
+/* Mobile responsive navigation */
+@media (max-width: 640px) {
+  .min-w-max {
+    min-width: max-content;
+  }
+  
+  /* Ensure tabs don't get too cramped */
+  [role="tab"] {
+    min-width: 60px;
+    padding: 0.5rem 0.25rem;
+  }
+}
+
+/* Extra small screens */
+@media (max-width: 475px) {
+  .xs\:hidden {
+    display: none;
+  }
+  
+  .xs\:inline {
+    display: inline;
+  }
+  
+  [role="tab"] {
+    min-width: 50px;
+    padding: 0.5rem 0.125rem;
+  }
+}
+
 /* Form focus states */
 .form-input:focus {
   outline: none;
