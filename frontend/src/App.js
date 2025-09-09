@@ -1400,6 +1400,574 @@ const ScenarioManagement = ({ onScenarioSelect }) => {
     return colors[status] || 'bg-gray-100 text-gray-800';
   };
 
+  const generateComprehensivePDFReport = async (scenario) => {
+    if (!scenario) {
+      toast({
+        title: "No Scenario Selected",
+        description: "Please select a scenario to generate a comprehensive report",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      // Gather all scenario data
+      const reportSections = [];
+      
+      // Try to fetch all available implementations for this scenario
+      try {
+        const gameBookResponse = await axios.get(`${API}/scenarios/${scenario.id}/gamebook`);
+        reportSections.push({
+          title: "Crisis Game Book",
+          type: "gamebook",
+          data: gameBookResponse.data
+        });
+      } catch (error) {
+        console.log("Game Book not available for this scenario");
+      }
+
+      try {
+        const actionPlanResponse = await axios.get(`${API}/scenarios/${scenario.id}/action-plan`);
+        reportSections.push({
+          title: "Action Plan",
+          type: "action-plan",
+          data: actionPlanResponse.data
+        });
+      } catch (error) {
+        console.log("Action Plan not available for this scenario");
+      }
+
+      try {
+        const strategyResponse = await axios.get(`${API}/scenarios/${scenario.id}/strategy-implementation`);
+        reportSections.push({
+          title: "Implementation Strategy",
+          type: "strategy",
+          data: strategyResponse.data
+        });
+      } catch (error) {
+        console.log("Strategy Implementation not available for this scenario");
+      }
+
+      try {
+        const monitorsResponse = await axios.get(`${API}/scenarios/${scenario.id}/monitor-agents`);
+        reportSections.push({
+          title: "AI Monitor Agents",
+          type: "monitors",
+          data: monitorsResponse.data
+        });
+      } catch (error) {
+        console.log("AI Monitors not available for this scenario");
+      }
+
+      try {
+        const systemsResponse = await axios.get(`${API}/scenarios/${scenario.id}/complex-systems`);
+        reportSections.push({
+          title: "Complex Adaptive Systems Analysis",
+          type: "systems",
+          data: systemsResponse.data
+        });
+      } catch (error) {
+        console.log("Complex Systems analysis not available for this scenario");
+      }
+
+      try {
+        const learningResponse = await axios.get(`${API}/scenarios/${scenario.id}/learning-insights`);
+        reportSections.push({
+          title: "AI Learning Insights",
+          type: "learning",
+          data: learningResponse.data
+        });
+      } catch (error) {
+        console.log("Learning Insights not available for this scenario");
+      }
+
+      // Generate comprehensive report content
+      const reportContent = generateFullReportHTML(scenario, reportSections);
+      
+      // Open print dialog for PDF
+      const printWindow = window.open('', '_blank');
+      
+      if (!printWindow) {
+        // Fallback to text download if popup blocked
+        downloadComprehensiveReport(scenario, reportSections);
+        return;
+      }
+      
+      printWindow.document.write(reportContent);
+      printWindow.document.close();
+      
+      printWindow.onload = () => {
+        printWindow.focus();
+        setTimeout(() => {
+          printWindow.print();
+        }, 500);
+      };
+
+      toast({
+        title: "PDF Report Generated",
+        description: "Comprehensive scenario report opened for printing/PDF export",
+        duration: 4000
+      });
+
+    } catch (error) {
+      console.error('PDF generation failed:', error);
+      toast({
+        title: "PDF Generation Failed",
+        description: "Failed to generate comprehensive report. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const generateFullReportHTML = (scenario, reportSections) => {
+    const currentDate = new Date().toLocaleDateString();
+    const currentTime = new Date().toLocaleTimeString();
+    
+    return `
+      <html>
+        <head>
+          <title>Comprehensive Scenario Report - ${scenario.title}</title>
+          <meta charset="utf-8">
+          <style>
+            body { 
+              font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+              margin: 0; 
+              padding: 40px;
+              line-height: 1.6; 
+              color: #333; 
+              background: white;
+            }
+            .header { 
+              border-bottom: 3px solid #3b82f6; 
+              padding-bottom: 30px; 
+              margin-bottom: 40px; 
+              text-align: center;
+            }
+            .title { 
+              font-size: 32px; 
+              font-weight: bold; 
+              color: #1f2937; 
+              margin-bottom: 10px; 
+            }
+            .subtitle { 
+              color: #6b7280; 
+              font-size: 16px; 
+              margin-bottom: 20px;
+            }
+            .meta-info {
+              background: #f8fafc;
+              padding: 20px;
+              border-radius: 8px;
+              margin-bottom: 30px;
+              border-left: 4px solid #3b82f6;
+            }
+            .meta-row {
+              display: flex;
+              justify-content: space-between;
+              margin-bottom: 8px;
+            }
+            .meta-label {
+              font-weight: 600;
+              color: #374151;
+            }
+            .section { 
+              margin-bottom: 40px; 
+              page-break-inside: avoid; 
+              border: 1px solid #e5e7eb;
+              border-radius: 8px;
+              overflow: hidden;
+            }
+            .section-header {
+              background: #3b82f6;
+              color: white;
+              padding: 15px 20px;
+              font-size: 20px;
+              font-weight: bold;
+              margin: 0;
+            }
+            .section-content {
+              padding: 20px;
+            }
+            .section-title { 
+              font-size: 18px; 
+              font-weight: bold; 
+              margin-bottom: 15px; 
+              color: #1f2937; 
+              border-bottom: 2px solid #e5e7eb; 
+              padding-bottom: 8px; 
+            }
+            .content-block {
+              margin-bottom: 20px;
+              padding: 15px;
+              background: #f9fafb;
+              border-radius: 6px;
+              border-left: 3px solid #10b981;
+            }
+            .list-item { 
+              margin-bottom: 12px; 
+              padding-left: 25px; 
+              position: relative; 
+              font-size: 14px; 
+              line-height: 1.6;
+            }
+            .list-item:before { 
+              content: "▶"; 
+              position: absolute; 
+              left: 0; 
+              color: #3b82f6; 
+              font-weight: bold; 
+            }
+            .action-item {
+              background: white;
+              border: 1px solid #d1d5db;
+              padding: 12px;
+              margin-bottom: 8px;
+              border-radius: 4px;
+              border-left: 4px solid #f59e0b;
+            }
+            .priority-high { border-left-color: #ef4444; }
+            .priority-medium { border-left-color: #f59e0b; }
+            .priority-low { border-left-color: #10b981; }
+            .toc {
+              background: #f8fafc;
+              padding: 20px;
+              border-radius: 8px;
+              margin-bottom: 30px;
+            }
+            .toc-title {
+              font-size: 18px;
+              font-weight: bold;
+              margin-bottom: 15px;
+              color: #1f2937;
+            }
+            .toc-item {
+              margin-bottom: 8px;
+              color: #3b82f6;
+              text-decoration: none;
+            }
+            @media print { 
+              body { margin: 20px; font-size: 12px; }
+              .header { margin-bottom: 20px; }
+              .section { margin-bottom: 25px; page-break-inside: avoid; }
+              .section-header { background: #4b5563 !important; }
+            }
+            @page { 
+              margin: 2cm; 
+              size: A4;
+            }
+            .footer {
+              margin-top: 40px;
+              padding-top: 20px;
+              border-top: 2px solid #e5e7eb;
+              text-align: center;
+              color: #6b7280;
+              font-size: 12px;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <div class="title">Comprehensive Scenario Report</div>
+            <div class="subtitle">${scenario.title}</div>
+            <div style="color: #6b7280; font-size: 14px;">
+              Generated on ${currentDate} at ${currentTime}
+            </div>
+          </div>
+
+          <div class="meta-info">
+            <div class="meta-row">
+              <span class="meta-label">Crisis Type:</span>
+              <span>${scenario.crisis_type.replace(/_/g, ' ').toUpperCase()}</span>
+            </div>
+            <div class="meta-row">
+              <span class="meta-label">Severity Level:</span>
+              <span>${scenario.severity_level}/10</span>
+            </div>
+            <div class="meta-row">
+              <span class="meta-label">Status:</span>
+              <span>${scenario.status.toUpperCase()}</span>
+            </div>
+            <div class="meta-row">
+              <span class="meta-label">Location:</span>
+              <span>${scenario.location || 'Not specified'}</span>
+            </div>
+            <div class="meta-row">
+              <span class="meta-label">Timeline:</span>
+              <span>${scenario.timeline || 'Not specified'}</span>
+            </div>
+          </div>
+
+          <div class="toc">
+            <div class="toc-title">Table of Contents</div>
+            <div class="toc-item">1. Scenario Overview</div>
+            ${reportSections.map((section, idx) => `<div class="toc-item">${idx + 2}. ${section.title}</div>`).join('')}
+          </div>
+
+          <div class="section">
+            <div class="section-header">1. Scenario Overview</div>
+            <div class="section-content">
+              <div class="content-block">
+                <strong>Description:</strong><br>
+                ${scenario.description || 'No description provided'}
+              </div>
+              ${scenario.key_stakeholders ? `
+                <div class="content-block">
+                  <strong>Key Stakeholders:</strong><br>
+                  ${scenario.key_stakeholders.map(stakeholder => `<div class="list-item">${stakeholder}</div>`).join('')}
+                </div>
+              ` : ''}
+              ${scenario.potential_impacts ? `
+                <div class="content-block">
+                  <strong>Potential Impacts:</strong><br>
+                  ${scenario.potential_impacts.map(impact => `<div class="list-item">${impact}</div>`).join('')}
+                </div>
+              ` : ''}
+            </div>
+          </div>
+
+          ${reportSections.map((section, idx) => {
+            let sectionContent = '';
+            
+            if (section.type === 'gamebook' && section.data) {
+              sectionContent = `
+                <div class="content-block">
+                  <strong>Game Book Content:</strong><br>
+                  ${section.data.game_book_content || 'No content available'}
+                </div>
+              `;
+            } else if (section.type === 'action-plan' && section.data) {
+              sectionContent = `
+                <div class="section-title">Immediate Actions (0-24h)</div>
+                ${section.data.immediate_actions ? section.data.immediate_actions.map(action => `
+                  <div class="action-item priority-high">
+                    <strong>${action.action}</strong><br>
+                    <em>Priority: ${action.priority} | Timeline: ${action.timeline}</em><br>
+                    ${action.description}
+                  </div>
+                `).join('') : '<p>No immediate actions defined</p>'}
+                
+                <div class="section-title">Short-term Actions (1-30d)</div>
+                ${section.data.short_term_actions ? section.data.short_term_actions.map(action => `
+                  <div class="action-item priority-medium">
+                    <strong>${action.action}</strong><br>
+                    <em>Priority: ${action.priority} | Timeline: ${action.timeline}</em><br>
+                    ${action.description}
+                  </div>
+                `).join('') : '<p>No short-term actions defined</p>'}
+                
+                <div class="section-title">Long-term Actions (1-12m)</div>
+                ${section.data.long_term_actions ? section.data.long_term_actions.map(action => `
+                  <div class="action-item priority-low">
+                    <strong>${action.action}</strong><br>
+                    <em>Priority: ${action.priority} | Timeline: ${action.timeline}</em><br>
+                    ${action.description}
+                  </div>
+                `).join('') : '<p>No long-term actions defined</p>'}
+              `;
+            } else if (section.type === 'strategy' && section.data) {
+              sectionContent = `
+                <div class="content-block">
+                  <strong>Implementation Strategy:</strong><br>
+                  ${section.data.implementation_strategy || 'No strategy available'}
+                </div>
+              `;
+            } else if (section.type === 'monitors' && section.data) {
+              sectionContent = `
+                <div class="content-block">
+                  <strong>Risk Monitor:</strong><br>
+                  ${section.data.risk_monitor || 'No risk monitor data'}
+                </div>
+                <div class="content-block">
+                  <strong>Performance Monitor:</strong><br>
+                  ${section.data.performance_monitor || 'No performance monitor data'}
+                </div>
+                <div class="content-block">
+                  <strong>Anomaly Monitor:</strong><br>
+                  ${section.data.anomaly_monitor || 'No anomaly monitor data'}
+                </div>
+                <div class="content-block">
+                  <strong>Trend Monitor:</strong><br>
+                  ${section.data.trend_monitor || 'No trend monitor data'}
+                </div>
+              `;
+            } else if (section.type === 'systems' && section.data) {
+              sectionContent = `
+                <div class="content-block">
+                  <strong>System Analysis:</strong><br>
+                  ${section.data.system_analysis || 'No system analysis available'}
+                </div>
+                ${section.data.interconnections ? `
+                  <div class="content-block">
+                    <strong>Key Interconnections:</strong><br>
+                    ${section.data.interconnections.map(connection => `<div class="list-item">${connection}</div>`).join('')}
+                  </div>
+                ` : ''}
+              `;
+            } else if (section.type === 'learning' && section.data) {
+              sectionContent = `
+                <div class="content-block">
+                  <strong>Learning Analysis:</strong><br>
+                  ${section.data.learning_analysis || 'No learning analysis available'}
+                </div>
+                ${section.data.insights ? `
+                  <div class="content-block">
+                    <strong>Key Insights:</strong><br>
+                    ${section.data.insights.map(insight => `<div class="list-item">${insight}</div>`).join('')}
+                  </div>
+                ` : ''}
+              `;
+            } else {
+              sectionContent = '<div class="content-block">This section has not been generated yet. Click the corresponding button in the scenario dashboard to generate content.</div>';
+            }
+
+            return `
+              <div class="section">
+                <div class="section-header">${idx + 2}. ${section.title}</div>
+                <div class="section-content">
+                  ${sectionContent}
+                </div>
+              </div>
+            `;
+          }).join('')}
+
+          <div class="footer">
+            <div>Generated by Polycrisis Simulator</div>
+            <div>Comprehensive Scenario Analysis & Crisis Management Platform</div>
+          </div>
+        </body>
+      </html>
+    `;
+  };
+
+  const downloadComprehensiveReport = (scenario, reportSections) => {
+    try {
+      const content = `
+COMPREHENSIVE SCENARIO REPORT
+${scenario.title}
+Generated on ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}
+
+${'='.repeat(100)}
+
+SCENARIO OVERVIEW:
+- Crisis Type: ${scenario.crisis_type.replace(/_/g, ' ').toUpperCase()}
+- Severity Level: ${scenario.severity_level}/10  
+- Status: ${scenario.status.toUpperCase()}
+- Location: ${scenario.location || 'Not specified'}
+- Timeline: ${scenario.timeline || 'Not specified'}
+
+Description:
+${scenario.description || 'No description provided'}
+
+${scenario.key_stakeholders ? `
+Key Stakeholders:
+${scenario.key_stakeholders.map((stakeholder, idx) => `${idx + 1}. ${stakeholder}`).join('\n')}
+` : ''}
+
+${scenario.potential_impacts ? `
+Potential Impacts:
+${scenario.potential_impacts.map((impact, idx) => `${idx + 1}. ${impact}`).join('\n')}
+` : ''}
+
+${'='.repeat(100)}
+
+${reportSections.map((section, idx) => {
+  let sectionContent = '';
+  
+  if (section.type === 'gamebook' && section.data) {
+    sectionContent = section.data.game_book_content || 'No content available';
+  } else if (section.type === 'action-plan' && section.data) {
+    sectionContent = `
+IMMEDIATE ACTIONS (0-24h):
+${section.data.immediate_actions ? section.data.immediate_actions.map((action, i) => 
+  `${i + 1}. ${action.action} (Priority: ${action.priority}, Timeline: ${action.timeline})\n   ${action.description}`
+).join('\n') : 'No immediate actions defined'}
+
+SHORT-TERM ACTIONS (1-30d):
+${section.data.short_term_actions ? section.data.short_term_actions.map((action, i) => 
+  `${i + 1}. ${action.action} (Priority: ${action.priority}, Timeline: ${action.timeline})\n   ${action.description}`
+).join('\n') : 'No short-term actions defined'}
+
+LONG-TERM ACTIONS (1-12m):
+${section.data.long_term_actions ? section.data.long_term_actions.map((action, i) => 
+  `${i + 1}. ${action.action} (Priority: ${action.priority}, Timeline: ${action.timeline})\n   ${action.description}`
+).join('\n') : 'No long-term actions defined'}
+    `;
+  } else if (section.type === 'strategy' && section.data) {
+    sectionContent = section.data.implementation_strategy || 'No strategy available';
+  } else if (section.type === 'monitors' && section.data) {
+    sectionContent = `
+Risk Monitor: ${section.data.risk_monitor || 'No data'}
+Performance Monitor: ${section.data.performance_monitor || 'No data'}
+Anomaly Monitor: ${section.data.anomaly_monitor || 'No data'}
+Trend Monitor: ${section.data.trend_monitor || 'No data'}
+    `;
+  } else if (section.type === 'systems' && section.data) {
+    sectionContent = `
+System Analysis: ${section.data.system_analysis || 'No analysis available'}
+${section.data.interconnections ? `
+Key Interconnections:
+${section.data.interconnections.map((connection, i) => `${i + 1}. ${connection}`).join('\n')}
+` : ''}
+    `;
+  } else if (section.type === 'learning' && section.data) {
+    sectionContent = `
+Learning Analysis: ${section.data.learning_analysis || 'No analysis available'}
+${section.data.insights ? `
+Key Insights:
+${section.data.insights.map((insight, i) => `${i + 1}. ${insight}`).join('\n')}
+` : ''}
+    `;
+  } else {
+    sectionContent = 'This section has not been generated yet.';
+  }
+
+  return `
+${section.title.toUpperCase()}:
+${'-'.repeat(50)}
+${sectionContent}
+
+${'='.repeat(100)}
+  `;
+}).join('')}
+
+Generated by Polycrisis Simulator
+Comprehensive Scenario Analysis & Crisis Management Platform
+      `.trim();
+
+      const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = url;
+      a.download = `comprehensive_report_${scenario.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_${Date.now()}.txt`;
+      
+      document.body.appendChild(a);
+      a.click();
+      
+      setTimeout(() => {
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+      }, 100);
+
+      toast({
+        title: "Report Downloaded",
+        description: "Comprehensive scenario report downloaded as text file",
+        duration: 3000
+      });
+
+    } catch (error) {
+      console.error('Download failed:', error);
+      toast({
+        title: "Download Failed",
+        description: "Failed to download comprehensive report",
+        variant: "destructive"
+      });
+    }
+  };
+
   const filteredAndSortedScenarios = scenarios
     .filter(scenario => {
       if (filterStatus !== 'all' && scenario.status !== filterStatus) return false;
