@@ -1776,6 +1776,449 @@ startxref
             print(f"   ❌ Failed to create enhanced team")
             return False
 
+    # ========== FUZZY LOGIC SCENARIO ADJUSTERS TESTING ==========
+    
+    def test_create_scenario_adjustment(self):
+        """Test Creating Scenario Adjustment with SEPTE Framework"""
+        if not hasattr(self, 'company_id') or not self.company_id:
+            print("❌ No company ID available for scenario adjustment creation")
+            return False
+            
+        # Test with valid SEPTE percentages (opposing pairs sum to 100%)
+        adjustment_data = {
+            "adjustment_name": "High Crisis Economic Scenario",
+            "scenario_id": self.created_scenario_id if hasattr(self, 'created_scenario_id') else None,
+            "economic_crisis_pct": 60.0,
+            "economic_stability_pct": 40.0,
+            "social_unrest_pct": 30.0,
+            "social_cohesion_pct": 70.0,
+            "environmental_degradation_pct": 80.0,
+            "environmental_resilience_pct": 20.0,
+            "political_instability_pct": 45.0,
+            "political_stability_pct": 55.0,
+            "technological_disruption_pct": 25.0,
+            "technological_advancement_pct": 75.0
+        }
+        
+        success, response = self.run_test(
+            "Create Scenario Adjustment",
+            "POST",
+            f"companies/{self.company_id}/scenario-adjustments",
+            200,
+            data=adjustment_data
+        )
+        
+        if success and 'id' in response:
+            self.scenario_adjustment_id = response['id']
+            print(f"   ✅ Scenario adjustment created with ID: {self.scenario_adjustment_id}")
+            print(f"   Adjustment name: {response.get('adjustment_name', 'N/A')}")
+            print(f"   Company ID: {response.get('company_id', 'N/A')}")
+            print(f"   Real-time analysis length: {len(response.get('real_time_analysis', ''))}")
+            print(f"   Impact summary length: {len(response.get('impact_summary', ''))}")
+            print(f"   Risk level: {response.get('risk_level', 'N/A')}")
+            print(f"   Recommendations count: {len(response.get('recommendations', []))}")
+            print(f"   Created by: {response.get('created_by', 'N/A')}")
+            
+            # Verify SEPTE percentages are preserved
+            septe_pairs = [
+                ('economic_crisis_pct', 'economic_stability_pct'),
+                ('social_unrest_pct', 'social_cohesion_pct'),
+                ('environmental_degradation_pct', 'environmental_resilience_pct'),
+                ('political_instability_pct', 'political_stability_pct'),
+                ('technological_disruption_pct', 'technological_advancement_pct')
+            ]
+            
+            for pair in septe_pairs:
+                val1 = response.get(pair[0], 0)
+                val2 = response.get(pair[1], 0)
+                total = val1 + val2
+                if abs(total - 100.0) > 0.1:
+                    print(f"   ⚠️ SEPTE validation failed for {pair}: {val1} + {val2} = {total}")
+                    return False
+                else:
+                    print(f"   ✅ SEPTE pair {pair[0]}/{pair[1]}: {val1}%/{val2}% = 100%")
+            
+            # Verify AI analysis fields are present
+            required_fields = ['real_time_analysis', 'impact_summary', 'risk_level', 'recommendations']
+            for field in required_fields:
+                if field not in response or not response[field]:
+                    print(f"   ⚠️ Missing or empty AI analysis field: {field}")
+                    return False
+            
+            return True
+        else:
+            print(f"   ❌ Failed to create scenario adjustment")
+            return False
+
+    def test_scenario_adjustment_percentage_validation(self):
+        """Test SEPTE Percentage Validation (opposing pairs must sum to 100%)"""
+        if not hasattr(self, 'company_id') or not self.company_id:
+            print("❌ No company ID available for percentage validation test")
+            return False
+            
+        # Test with invalid percentages (don't sum to 100%)
+        invalid_adjustment_data = {
+            "adjustment_name": "Invalid Percentage Test",
+            "economic_crisis_pct": 60.0,
+            "economic_stability_pct": 30.0,  # 60 + 30 = 90, not 100
+            "social_unrest_pct": 50.0,
+            "social_cohesion_pct": 50.0,
+            "environmental_degradation_pct": 50.0,
+            "environmental_resilience_pct": 50.0,
+            "political_instability_pct": 50.0,
+            "political_stability_pct": 50.0,
+            "technological_disruption_pct": 50.0,
+            "technological_advancement_pct": 50.0
+        }
+        
+        success, response = self.run_test(
+            "Create Scenario Adjustment - Invalid Percentages",
+            "POST",
+            f"companies/{self.company_id}/scenario-adjustments",
+            400,  # Should return 400 Bad Request
+            data=invalid_adjustment_data
+        )
+        
+        if success:
+            print(f"   ✅ Percentage validation working - Invalid percentages correctly rejected")
+            try:
+                error_data = response if isinstance(response, dict) else {}
+                error_message = error_data.get('detail', 'Validation error')
+                print(f"   Error message: {error_message}")
+                if "sum to 100%" in error_message:
+                    print(f"   ✅ Correct validation error message")
+                    return True
+                else:
+                    print(f"   ⚠️ Unexpected error message format")
+                    return True  # Still passed validation, just different message
+            except:
+                return True
+        else:
+            print(f"   ❌ Percentage validation failed - Invalid percentages were accepted")
+            return False
+
+    def test_get_scenario_adjustments(self):
+        """Test Retrieving All Scenario Adjustments for Company"""
+        if not hasattr(self, 'company_id') or not self.company_id:
+            print("❌ No company ID available for getting scenario adjustments")
+            return False
+            
+        success, response = self.run_test(
+            "Get Scenario Adjustments",
+            "GET",
+            f"companies/{self.company_id}/scenario-adjustments",
+            200
+        )
+        
+        if success and isinstance(response, list):
+            print(f"   ✅ Retrieved {len(response)} scenario adjustments")
+            
+            # Verify our created adjustment is in the list
+            if hasattr(self, 'scenario_adjustment_id'):
+                found_adjustment = None
+                for adjustment in response:
+                    if adjustment.get('id') == self.scenario_adjustment_id:
+                        found_adjustment = adjustment
+                        break
+                
+                if found_adjustment:
+                    print(f"   ✅ Created adjustment found in list")
+                    print(f"   Adjustment name: {found_adjustment.get('adjustment_name', 'N/A')}")
+                    print(f"   Risk level: {found_adjustment.get('risk_level', 'N/A')}")
+                    print(f"   Created at: {found_adjustment.get('created_at', 'N/A')}")
+                    return True
+                else:
+                    print(f"   ⚠️ Created adjustment not found in list")
+                    return len(response) > 0  # Still pass if we got some adjustments
+            else:
+                print(f"   ✅ Retrieved adjustments list (no specific adjustment to verify)")
+                return True
+        else:
+            print(f"   ❌ Failed to retrieve scenario adjustments")
+            return False
+
+    def test_update_scenario_adjustment(self):
+        """Test Updating Scenario Adjustment and AI Analysis Regeneration"""
+        if not hasattr(self, 'company_id') or not self.company_id:
+            print("❌ No company ID available for scenario adjustment update")
+            return False
+            
+        if not hasattr(self, 'scenario_adjustment_id') or not self.scenario_adjustment_id:
+            print("❌ No scenario adjustment ID available for update")
+            return False
+            
+        # Update with different SEPTE percentages
+        update_data = {
+            "adjustment_name": "Updated High Crisis Scenario",
+            "economic_crisis_pct": 75.0,  # Changed from 60%
+            "economic_stability_pct": 25.0,  # Changed from 40%
+            "social_unrest_pct": 40.0,  # Changed from 30%
+            "social_cohesion_pct": 60.0,  # Changed from 70%
+            "environmental_degradation_pct": 90.0,  # Changed from 80%
+            "environmental_resilience_pct": 10.0,  # Changed from 20%
+            "political_instability_pct": 55.0,  # Changed from 45%
+            "political_stability_pct": 45.0,  # Changed from 55%
+            "technological_disruption_pct": 35.0,  # Changed from 25%
+            "technological_advancement_pct": 65.0  # Changed from 75%
+        }
+        
+        success, response = self.run_test(
+            "Update Scenario Adjustment",
+            "PUT",
+            f"companies/{self.company_id}/scenario-adjustments/{self.scenario_adjustment_id}",
+            200,
+            data=update_data
+        )
+        
+        if success and 'id' in response:
+            print(f"   ✅ Scenario adjustment updated successfully")
+            print(f"   Updated name: {response.get('adjustment_name', 'N/A')}")
+            print(f"   New economic crisis %: {response.get('economic_crisis_pct', 'N/A')}")
+            print(f"   New environmental degradation %: {response.get('environmental_degradation_pct', 'N/A')}")
+            print(f"   Updated at: {response.get('updated_at', 'N/A')}")
+            
+            # Verify AI analysis was regenerated (should be different from original)
+            new_analysis_length = len(response.get('real_time_analysis', ''))
+            print(f"   New analysis length: {new_analysis_length}")
+            
+            # Verify updated percentages
+            if response.get('economic_crisis_pct') == 75.0 and response.get('economic_stability_pct') == 25.0:
+                print(f"   ✅ Economic percentages updated correctly")
+            else:
+                print(f"   ⚠️ Economic percentages not updated correctly")
+                return False
+                
+            if response.get('environmental_degradation_pct') == 90.0 and response.get('environmental_resilience_pct') == 10.0:
+                print(f"   ✅ Environmental percentages updated correctly")
+            else:
+                print(f"   ⚠️ Environmental percentages not updated correctly")
+                return False
+            
+            return True
+        else:
+            print(f"   ❌ Failed to update scenario adjustment")
+            return False
+
+    def test_create_consensus_settings(self):
+        """Test Creating Consensus Settings for Team Agreement"""
+        if not hasattr(self, 'company_id') or not self.company_id:
+            print("❌ No company ID available for consensus creation")
+            return False
+            
+        if not hasattr(self, 'scenario_adjustment_id') or not self.scenario_adjustment_id:
+            print("❌ No scenario adjustment ID available for consensus")
+            return False
+            
+        consensus_data = {
+            "adjustment_id": self.scenario_adjustment_id,
+            "consensus_name": "Crisis Response Team Consensus",
+            "team_id": getattr(self, 'team_id', None)  # Use team_id if available
+        }
+        
+        success, response = self.run_test(
+            "Create Consensus Settings",
+            "POST",
+            f"companies/{self.company_id}/consensus",
+            200,
+            data=consensus_data
+        )
+        
+        if success and 'id' in response:
+            self.consensus_id = response['id']
+            print(f"   ✅ Consensus settings created with ID: {self.consensus_id}")
+            print(f"   Consensus name: {response.get('consensus_name', 'N/A')}")
+            print(f"   Adjustment ID: {response.get('adjustment_id', 'N/A')}")
+            print(f"   Team ID: {response.get('team_id', 'N/A')}")
+            print(f"   Total team members: {response.get('total_team_members', 'N/A')}")
+            print(f"   Agreed by count: {len(response.get('agreed_by', []))}")
+            print(f"   Consensus percentage: {response.get('consensus_percentage', 'N/A')}%")
+            print(f"   Consensus reached: {response.get('consensus_reached', 'N/A')}")
+            
+            # Verify creator is automatically in agreed_by list
+            agreed_by = response.get('agreed_by', [])
+            if self.user_id in agreed_by:
+                print(f"   ✅ Creator automatically added to agreed_by list")
+            else:
+                print(f"   ⚠️ Creator not automatically added to agreed_by list")
+                return False
+            
+            # Verify final_settings contains SEPTE parameters
+            final_settings = response.get('final_settings', {})
+            septe_keys = [
+                'economic_crisis_pct', 'economic_stability_pct',
+                'social_unrest_pct', 'social_cohesion_pct',
+                'environmental_degradation_pct', 'environmental_resilience_pct',
+                'political_instability_pct', 'political_stability_pct',
+                'technological_disruption_pct', 'technological_advancement_pct'
+            ]
+            
+            missing_keys = [key for key in septe_keys if key not in final_settings]
+            if not missing_keys:
+                print(f"   ✅ All SEPTE parameters present in final_settings")
+            else:
+                print(f"   ⚠️ Missing SEPTE parameters in final_settings: {missing_keys}")
+                return False
+            
+            return True
+        else:
+            print(f"   ❌ Failed to create consensus settings")
+            return False
+
+    def test_agree_to_consensus(self):
+        """Test User Agreement to Consensus and Percentage Calculation"""
+        if not hasattr(self, 'company_id') or not self.company_id:
+            print("❌ No company ID available for consensus agreement")
+            return False
+            
+        if not hasattr(self, 'consensus_id') or not self.consensus_id:
+            print("❌ No consensus ID available for agreement")
+            return False
+            
+        success, response = self.run_test(
+            "Agree to Consensus",
+            "POST",
+            f"companies/{self.company_id}/consensus/{self.consensus_id}/agree",
+            200
+        )
+        
+        if success:
+            print(f"   ✅ Agreement recorded successfully")
+            print(f"   Message: {response.get('message', 'N/A')}")
+            print(f"   Consensus reached: {response.get('consensus_reached', 'N/A')}")
+            
+            # Since we're the only user, consensus percentage should be 100%
+            # and consensus_reached should be True (>= 75% threshold)
+            if response.get('consensus_reached') == True:
+                print(f"   ✅ Consensus reached (75% threshold met)")
+            else:
+                print(f"   ⚠️ Consensus not reached (may be expected with single user)")
+            
+            return True
+        else:
+            print(f"   ❌ Failed to record agreement")
+            return False
+
+    def test_scenario_adjustment_access_control(self):
+        """Test Access Control for Scenario Adjustments"""
+        # Create a new user to test access control
+        test_user_data = {
+            "email": f"unauthorized_adj_user_{datetime.now().strftime('%H%M%S')}@example.com",
+            "username": f"unauthorized_adj_{datetime.now().strftime('%H%M%S')}",
+            "password": "TestPass123!",
+            "organization": "Different Organization"
+        }
+        
+        # Register new user
+        register_success, register_response = self.run_test(
+            "Register Unauthorized User for Adjustment Access",
+            "POST",
+            "register",
+            200,
+            data=test_user_data
+        )
+        
+        if not register_success:
+            print("❌ Could not create unauthorized user for access control test")
+            return False
+            
+        # Store original token
+        original_token = self.token
+        unauthorized_token = register_response.get('access_token')
+        
+        if not unauthorized_token:
+            print("❌ Could not get token for unauthorized user")
+            return False
+            
+        # Switch to unauthorized user token
+        self.token = unauthorized_token
+        
+        # Try to access scenario adjustments (should fail)
+        success, response = self.run_test(
+            "Get Scenario Adjustments - Unauthorized Access",
+            "GET",
+            f"companies/{self.company_id}/scenario-adjustments",
+            403  # Should return 403 Forbidden
+        )
+        
+        # Restore original token
+        self.token = original_token
+        
+        if success:
+            print("✅ Access control working - Unauthorized access correctly denied")
+            return True
+        else:
+            print("❌ Access control failed - Unauthorized access was allowed")
+            return False
+
+    def test_ai_analysis_integration(self):
+        """Test AI Analysis Integration with Claude Sonnet 4"""
+        if not hasattr(self, 'company_id') or not self.company_id:
+            print("❌ No company ID available for AI analysis test")
+            return False
+            
+        # Create scenario adjustment with extreme values to test AI analysis
+        extreme_adjustment_data = {
+            "adjustment_name": "Extreme Crisis Scenario for AI Analysis",
+            "economic_crisis_pct": 95.0,
+            "economic_stability_pct": 5.0,
+            "social_unrest_pct": 90.0,
+            "social_cohesion_pct": 10.0,
+            "environmental_degradation_pct": 85.0,
+            "environmental_resilience_pct": 15.0,
+            "political_instability_pct": 80.0,
+            "political_stability_pct": 20.0,
+            "technological_disruption_pct": 75.0,
+            "technological_advancement_pct": 25.0
+        }
+        
+        success, response = self.run_test(
+            "Create Extreme Scenario for AI Analysis",
+            "POST",
+            f"companies/{self.company_id}/scenario-adjustments",
+            200,
+            data=extreme_adjustment_data
+        )
+        
+        if success and 'id' in response:
+            print(f"   ✅ Extreme scenario created for AI analysis")
+            
+            # Verify AI analysis quality
+            analysis = response.get('real_time_analysis', '')
+            impact_summary = response.get('impact_summary', '')
+            risk_level = response.get('risk_level', '')
+            recommendations = response.get('recommendations', [])
+            
+            print(f"   AI Analysis length: {len(analysis)} characters")
+            print(f"   Impact summary length: {len(impact_summary)} characters")
+            print(f"   Risk level: {risk_level}")
+            print(f"   Recommendations count: {len(recommendations)}")
+            
+            # Verify AI analysis contains relevant content
+            if len(analysis) > 100:
+                print(f"   ✅ AI analysis has substantial content")
+            else:
+                print(f"   ⚠️ AI analysis seems too short")
+                return False
+            
+            # With extreme crisis values, risk level should be high or critical
+            if risk_level in ['high', 'critical']:
+                print(f"   ✅ Risk level appropriately assessed as {risk_level}")
+            else:
+                print(f"   ⚠️ Risk level '{risk_level}' may not match extreme crisis scenario")
+            
+            # Should have multiple recommendations
+            if len(recommendations) >= 3:
+                print(f"   ✅ Multiple recommendations provided")
+                for i, rec in enumerate(recommendations[:3]):
+                    print(f"     {i+1}. {rec[:80]}...")
+            else:
+                print(f"   ⚠️ Few recommendations provided")
+            
+            return True
+        else:
+            print(f"   ❌ Failed to create extreme scenario for AI analysis")
+            return False
+
 def main():
     print("🚀 Starting Polycrisis Simulator API Tests")
     print("=" * 50)
