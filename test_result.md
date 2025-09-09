@@ -122,16 +122,19 @@ backend:
         comment: "Rapid analysis endpoint already exists with multiple analysis types. Need to enhance frontend to utilize all types and add print functionality"
 
   - task: "Document Analysis with File Upload"
-    implemented: false
-    working: "NA"
+    implemented: true
+    working: false
     file: "/app/backend/server.py"
-    stuck_count: 0
+    stuck_count: 1
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "Basic document upload exists but need to add file upload capability for PDF/DOCX files"
+      - working: false
+        agent: "testing"
+        comment: "POST /api/companies/{company_id}/documents/upload endpoint implemented with PDF/DOCX support and AI analysis. File type validation working correctly (rejects non-PDF/DOCX files). However, PDF and DOCX text extraction failing due to PyPDF2 and python-docx parsing issues. AI analysis integration with Claude Sonnet 4 is working. Missing file size validation (no 10MB limit implemented)."
 
   - task: "Team Creation API"
     implemented: true
@@ -144,6 +147,33 @@ backend:
       - working: true
         agent: "main"
         comment: "Team creation endpoints already exist. Need to add endpoint to get existing users for team member selection"
+      - working: true
+        agent: "testing"
+        comment: "Team management endpoints fully functional. POST /api/companies/{company_id}/teams creates teams with email lists. GET /api/companies/{company_id}/teams retrieves teams. GET /api/companies/{company_id}/users returns company users with proper access control. All endpoints working correctly."
+
+  - task: "Company Users API Endpoint"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "GET /api/companies/{company_id}/users endpoint working correctly. Returns list of users for company with proper User model format. Access control implemented - only company members or creators can access. All required User fields present in response."
+
+  - task: "Enhanced Rapid Analysis API"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "POST /api/companies/{company_id}/rapid-analysis endpoint enhanced and fully functional. All analysis types working: vulnerability_assessment, business_impact, scenario_recommendation, competitive_analysis. AI integration with Claude Sonnet 4 working correctly. Response includes proper RapidAnalysis model with analysis_content, key_findings, recommendations, priority_level, and confidence_score."
 
 frontend:
   - task: "Company Insights Dialog with Print Feature"
