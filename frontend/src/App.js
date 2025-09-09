@@ -4658,7 +4658,7 @@ const ScenarioAdjusters = () => {
                   max="100"
                   value={septeValues.environmental_degradation_pct}
                   onChange={(e) => handleSliderChange('environmental_degradation_pct', parseInt(e.target.value))}
-                  className="w-full h-2 bg-gradient-to-r from-red-300 to-green-300 rounded-lg appearance-none cursor-pointer slider"
+                  className="w-full septe-slider environmental-slider"
                 />
                 <div className="flex justify-between text-xs text-gray-500">
                   <span>Degradation</span>
