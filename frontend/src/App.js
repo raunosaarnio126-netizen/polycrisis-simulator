@@ -349,14 +349,14 @@ const AdvancedDashboard = () => {
       {/* Advanced Metrics Cards */}
       <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
         <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
-          <CardContent className="p-6">
+          <CardContent className="p-3 sm:p-4 lg:p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-blue-600 font-medium">Active Scenarios</p>
-                <p className="text-3xl font-bold text-blue-900">{stats.active_scenarios || 0}</p>
+                <p className="text-xs sm:text-sm text-blue-600 font-medium">Active Scenarios</p>
+                <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-blue-900">{stats.active_scenarios || 0}</p>
                 <p className="text-xs text-blue-700">of {stats.total_scenarios || 0} total</p>
               </div>
-              <Globe className="w-10 h-10 text-blue-500" />
+              <Globe className="w-6 h-6 sm:w-8 sm:h-8 lg:w-10 lg:h-10 text-blue-500" />
             </div>
           </CardContent>
         </Card>
