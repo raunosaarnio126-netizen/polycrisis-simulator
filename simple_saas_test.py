@@ -5,7 +5,7 @@ from datetime import datetime
 
 def test_saas_admin_features():
     """Test SaaS Admin Platform Features"""
-    base_url = "https://crisis-adapt.preview.emergentagent.com/api"
+    base_url = "https://crisis-monitor-3.preview.emergentagent.com/api"
     
     print("🚀 Testing SaaS Admin Platform Features")
     print("=" * 50)
