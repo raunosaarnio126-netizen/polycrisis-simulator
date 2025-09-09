@@ -3159,10 +3159,21 @@ Comprehensive Scenario Analysis & Crisis Management Platform
                 <div className="scenario-meta">
                   <div className="meta-item">
                     <Globe className="w-4 h-4 meta-icon" />
-                    <span>Regions: {scenario.affected_regions?.length ? 
-                      scenario.affected_regions.slice(0, 2).join(', ') + 
-                      (scenario.affected_regions.length > 2 ? ` +${scenario.affected_regions.length - 2} more` : '') 
-                      : 'Not specified'}</span>
+                    <span>Regions: {(() => {
+                      // Debug logging
+                      console.log('Debug - Full scenario object:', scenario);
+                      console.log('Debug - affected_regions field:', scenario.affected_regions);
+                      console.log('Debug - affected_regions type:', typeof scenario.affected_regions);
+                      console.log('Debug - affected_regions is array:', Array.isArray(scenario.affected_regions));
+                      console.log('Debug - affected_regions length:', scenario.affected_regions?.length);
+                      
+                      if (scenario.affected_regions && Array.isArray(scenario.affected_regions) && scenario.affected_regions.length > 0) {
+                        return scenario.affected_regions.slice(0, 2).join(', ') + 
+                          (scenario.affected_regions.length > 2 ? ` +${scenario.affected_regions.length - 2} more` : '');
+                      } else {
+                        return 'Not specified';
+                      }
+                    })()}</span>
                   </div>
                   <div className="meta-item">
                     <AlertTriangle className="w-4 h-4 meta-icon" />
