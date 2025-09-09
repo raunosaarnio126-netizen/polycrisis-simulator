@@ -173,7 +173,7 @@ class GameBookTester:
             "Test Authentication Required for Game Book",
             "POST",
             f"scenarios/{scenario_id}/game-book",
-            401  # Should fail without authentication
+            403  # FastAPI returns 403 for missing authentication
         )
         
         self.token = temp_token  # Restore token
