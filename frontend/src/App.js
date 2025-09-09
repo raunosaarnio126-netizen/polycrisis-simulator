@@ -3033,6 +3033,258 @@ const CompanyManagement = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Company Insights Dialog */}
+      {showCompanyInsights && (
+        <Dialog open={showCompanyInsights} onOpenChange={setShowCompanyInsights}>  
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Brain className="w-6 h-6 text-purple-600" />
+                Generate Company Insights
+              </DialogTitle>
+              <DialogDescription>
+                Get comprehensive AI-powered analysis including financial analysis, market research, and risk assessment
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-6">
+              {/* Analysis Type Selection */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <Button
+                  variant="outline"
+                  className="h-auto p-4 flex flex-col items-center gap-2 hover:bg-blue-50 hover:border-blue-300"
+                  onClick={() => generateInsights('vulnerability_assessment')}
+                  disabled={loading}
+                >
+                  <Shield className="w-6 h-6 text-blue-600" />
+                  <span className="text-sm">Risk Assessment</span>
+                </Button>
+                
+                <Button
+                  variant="outline"
+                  className="h-auto p-4 flex flex-col items-center gap-2 hover:bg-green-50 hover:border-green-300"
+                  onClick={() => generateInsights('business_impact')}
+                  disabled={loading}
+                >
+                  <DollarSign className="w-6 h-6 text-green-600" />
+                  <span className="text-sm">Financial Analysis</span>
+                </Button>
+                
+                <Button
+                  variant="outline"
+                  className="h-auto p-4 flex flex-col items-center gap-2 hover:bg-purple-50 hover:border-purple-300"
+                  onClick={() => generateInsights('competitive_analysis')}
+                  disabled={loading}
+                >
+                  <BarChart3 className="w-6 h-6 text-purple-600" />
+                  <span className="text-sm">Market Research</span>
+                </Button>
+                
+                <Button
+                  variant="outline"
+                  className="h-auto p-4 flex flex-col items-center gap-2 hover:bg-orange-50 hover:border-orange-300"
+                  onClick={() => analyzeWebsite()}
+                  disabled={loading || !company?.website_url}
+                >
+                  <Globe className="w-6 h-6 text-orange-600" />
+                  <span className="text-sm">Website Analysis</span>
+                </Button>
+              </div>
+
+              {/* Analysis Results */}
+              {companyInsightsData && (
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <h3 className="text-lg font-semibold">{companyInsightsData.analysis_title}</h3>
+                    <Button
+                      variant="outline"
+                      onClick={() => printAnalysis()}
+                      className="flex items-center gap-2"
+                    >
+                      <Download className="w-4 h-4" />
+                      Print Analysis
+                    </Button>
+                  </div>
+                  
+                  <div className="bg-gray-50 p-6 rounded-lg">
+                    <div className="prose max-w-none">
+                      <div className="whitespace-pre-line text-sm text-gray-800">
+                        {companyInsightsData.analysis_content}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="bg-blue-50 p-4 rounded-lg">
+                      <h4 className="font-semibold text-blue-900 mb-3 flex items-center gap-2">
+                        <Lightbulb className="w-4 h-4" />
+                        Key Findings
+                      </h4>
+                      <ul className="space-y-2">
+                        {companyInsightsData.key_findings.map((finding, idx) => (
+                          <li key={idx} className="text-sm text-blue-800 flex items-start gap-2">
+                            <div className="w-1.5 h-1.5 bg-blue-600 rounded-full mt-2 flex-shrink-0"></div>
+                            {finding}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    
+                    <div className="bg-green-50 p-4 rounded-lg">
+                      <h4 className="font-semibold text-green-900 mb-3 flex items-center gap-2">
+                        <Target className="w-4 h-4" />
+                        Recommendations
+                      </h4>
+                      <ul className="space-y-2">
+                        {companyInsightsData.recommendations.map((rec, idx) => (
+                          <li key={idx} className="text-sm text-green-800 flex items-start gap-2">
+                            <div className="w-1.5 h-1.5 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
+                            {rec}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              {loading && (
+                <div className="flex items-center justify-center py-8">
+                  <div className="text-center">
+                    <Brain className="w-8 h-8 animate-pulse text-purple-500 mx-auto mb-4" />
+                    <p className="text-gray-600">Generating comprehensive analysis...</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* Document Analysis Dialog */}
+      {showDocumentAnalysis && (
+        <Dialog open={showDocumentAnalysis} onOpenChange={setShowDocumentAnalysis}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <FileText className="w-6 h-6 text-blue-600" />
+                Analyze Documents
+              </DialogTitle>
+              <DialogDescription>
+                Upload PDF or DOCX files for AI-powered analysis and insights
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-6">
+              {/* File Upload */}
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+                <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Upload Document</h3>
+                <p className="text-gray-600 mb-4">Support for PDF and DOCX files up to 10MB</p>
+                <input
+                  type="file"
+                  accept=".pdf,.docx"
+                  onChange={handleFileUpload}
+                  className="hidden"
+                  id="file-upload"
+                />
+                <label htmlFor="file-upload">
+                  <Button className="bg-blue-600 hover:bg-blue-700" disabled={loading}>
+                    {loading ? 'Uploading...' : 'Choose File'}
+                  </Button>
+                </label>
+              </div>
+              
+              {/* Document Type Selection */}
+              <div>
+                <Label htmlFor="doc-type">Document Type</Label>
+                <Select defaultValue="business_plan">
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select document type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="business_plan">Business Plan</SelectItem>
+                    <SelectItem value="market_strategy">Market Strategy</SelectItem>
+                    <SelectItem value="financial_report">Financial Report</SelectItem>
+                    <SelectItem value="operational_plan">Operational Plan</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* Team Creation Dialog */}
+      {showTeamCreator && (
+        <Dialog open={showTeamCreator} onOpenChange={setShowTeamCreator}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Users2 className="w-6 h-6 text-green-600" />
+                Create Team
+              </DialogTitle>
+              <DialogDescription>
+                Create a crisis response team with existing company users
+              </DialogDescription>
+            </DialogHeader>
+            
+            <form onSubmit={handleCreateTeam} className="space-y-6">
+              <div>
+                <Label htmlFor="team-name">Team Name</Label>
+                <Input
+                  id="team-name"
+                  placeholder="e.g., Crisis Response Team Alpha"
+                  required
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="team-description">Team Description</Label>
+                <Textarea
+                  id="team-description"
+                  placeholder="Describe the team's role and responsibilities..."
+                  rows={3}
+                  required
+                />
+              </div>
+              
+              <div>
+                <Label>Team Members</Label>
+                <div className="space-y-2 max-h-40 overflow-y-auto border rounded-lg p-3">
+                  {availableUsers.map(user => (
+                    <div key={user.id} className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        id={`user-${user.id}`}
+                        className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+                      />
+                      <label htmlFor={`user-${user.id}`} className="flex-1 text-sm">
+                        <div className="font-medium">{user.username}</div>
+                        <div className="text-gray-500">{user.email} • {user.job_title || 'No title'}</div>
+                      </label>
+                    </div>
+                  ))}
+                  {availableUsers.length === 0 && (
+                    <p className="text-gray-500 text-sm">No other users available</p>
+                  )}
+                </div>
+              </div>
+              
+              <div className="flex gap-3">
+                <Button type="submit" disabled={loading} className="bg-green-600 hover:bg-green-700 flex-1">
+                  {loading ? 'Creating...' : 'Create Team'}
+                </Button>
+                <Button type="button" variant="outline" onClick={() => setShowTeamCreator(false)}>
+                  Cancel
+                </Button>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 };
