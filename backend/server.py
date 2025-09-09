@@ -842,6 +842,13 @@ async def get_scenario(scenario_id: str, current_user: User = Depends(get_curren
         raise HTTPException(status_code=404, detail="Scenario not found")
     return Scenario(**scenario)
 
+class ScenarioAmendment(BaseModel):
+    affected_regions: Optional[List[str]] = None
+    key_variables: Optional[List[str]] = None
+    additional_context: Optional[str] = None
+    stakeholders: Optional[str] = None
+    timeline: Optional[str] = None
+
 @api_router.put("/scenarios/{scenario_id}", response_model=Scenario)
 async def update_scenario(scenario_id: str, scenario_data: ScenarioCreate, current_user: User = Depends(get_current_user)):
     scenario = await db.scenarios.find_one({"id": scenario_id, "user_id": current_user.id})
@@ -852,6 +859,35 @@ async def update_scenario(scenario_id: str, scenario_data: ScenarioCreate, curre
     update_data["updated_at"] = datetime.now(timezone.utc)
     
     await db.scenarios.update_one({"id": scenario_id}, {"$set": update_data})
+    updated_scenario = await db.scenarios.find_one({"id": scenario_id})
+    return Scenario(**updated_scenario)
+
+@api_router.patch("/scenarios/{scenario_id}/amend", response_model=Scenario)
+async def amend_scenario(scenario_id: str, amendment_data: ScenarioAmendment, current_user: User = Depends(get_current_user)):
+    """Amend specific fields of a scenario without requiring all fields"""
+    scenario = await db.scenarios.find_one({"id": scenario_id, "user_id": current_user.id})
+    if not scenario:
+        raise HTTPException(status_code=404, detail="Scenario not found")
+    
+    # Only update fields that are provided (not None)
+    update_data = {}
+    if amendment_data.affected_regions is not None:
+        update_data["affected_regions"] = amendment_data.affected_regions
+    if amendment_data.key_variables is not None:
+        update_data["key_variables"] = amendment_data.key_variables
+    if amendment_data.additional_context is not None:
+        update_data["additional_context"] = amendment_data.additional_context
+    if amendment_data.stakeholders is not None:
+        update_data["stakeholders"] = amendment_data.stakeholders
+    if amendment_data.timeline is not None:
+        update_data["timeline"] = amendment_data.timeline
+    
+    # Always update the timestamp
+    update_data["updated_at"] = datetime.now(timezone.utc)
+    
+    if update_data:
+        await db.scenarios.update_one({"id": scenario_id}, {"$set": update_data})
+    
     updated_scenario = await db.scenarios.find_one({"id": scenario_id})
     return Scenario(**updated_scenario)
 
