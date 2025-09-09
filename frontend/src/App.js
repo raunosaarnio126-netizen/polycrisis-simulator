@@ -2073,200 +2073,171 @@ Comprehensive Scenario Analysis & Crisis Management Platform
       ) : (
         <div className="grid gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3">
           {filteredAndSortedScenarios.map((scenario) => (
-            <Card key={scenario.id} className="hover:shadow-lg transition-shadow duration-200">
-              <CardHeader className="pb-3">
-                <div className="flex items-start justify-between">
-                  <CardTitle className="text-lg leading-tight">{scenario.title}</CardTitle>
-                  <div className="flex gap-1">
-                    <Badge className={getStatusColor(scenario.status)} variant="secondary">
+            <Card key={scenario.id} className="scenario-card">
+              <CardHeader className="scenario-header pb-4">
+                <div className="flex items-start justify-between mb-3">
+                  <CardTitle className="scenario-title flex-1 pr-2">{scenario.title}</CardTitle>
+                  <div className="scenario-badges">
+                    <div className={`status-badge status-${scenario.status}`}>
                       {scenario.status}
-                    </Badge>
+                    </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-2 mt-2">
-                  <Badge className={getCrisisTypeColor(scenario.crisis_type)} variant="outline">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <div className={`crisis-badge crisis-${scenario.crisis_type.split('_')[0]}`}>
                     {scenario.crisis_type.replace('_', ' ')}
-                  </Badge>
-                  <Badge variant="outline" className="bg-red-50 text-red-700">
+                  </div>
+                  <div className="severity-badge">
                     Severity {scenario.severity_level}/10
-                  </Badge>
+                  </div>
                 </div>
               </CardHeader>
               
               <CardContent className="pt-0">
-                <p className="text-sm text-gray-600 mb-4 line-clamp-3">
+                <p className="scenario-description">
                   {scenario.description}
                 </p>
                 
-                <div className="space-y-2 mb-4">
-                  <div className="flex items-center gap-2 text-xs text-gray-500">
-                    <Globe className="w-3 h-3" />
-                    <span>Regions: {scenario.affected_regions.slice(0, 2).join(', ')}</span>
-                    {scenario.affected_regions.length > 2 && (
-                      <span>+{scenario.affected_regions.length - 2} more</span>
-                    )}
+                <div className="scenario-meta">
+                  <div className="meta-item">
+                    <Globe className="w-4 h-4 meta-icon" />
+                    <span>Regions: {scenario.affected_regions?.length ? 
+                      scenario.affected_regions.slice(0, 2).join(', ') + 
+                      (scenario.affected_regions.length > 2 ? ` +${scenario.affected_regions.length - 2} more` : '') 
+                      : 'Not specified'}</span>
                   </div>
-                  <div className="flex items-center gap-2 text-xs text-gray-500">
-                    <AlertTriangle className="w-3 h-3" />
-                    <span>Variables: {scenario.key_variables.length}</span>
+                  <div className="meta-item">
+                    <AlertTriangle className="w-4 h-4 meta-icon" />
+                    <span>Variables: {scenario.key_variables?.length || 0}</span>
                   </div>
-                  <div className="flex items-center gap-2 text-xs text-gray-500">
+                  <div className="meta-item">
+                    <Timer className="w-4 h-4 meta-icon" />
                     <span>Created: {new Date(scenario.created_at).toLocaleDateString()}</span>
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
+                <div className="action-buttons">
+                  <div className="action-row">
+                    <button
                       onClick={() => setSelectedScenario(scenario)}
-                      className="flex-1"
+                      className="action-button action-button-primary"
                     >
-                      <Eye className="w-3 h-3 mr-1" />
+                      <Eye className="w-4 h-4" />
                       View
-                    </Button>
+                    </button>
                     
-                    <Button
-                      variant="outline"
-                      size="sm"
+                    <button
                       onClick={() => handleRunSimulation(scenario)}
                       disabled={loading}
-                      className="flex-1"
+                      className="action-button action-button-primary"
                     >
-                      <Play className="w-3 h-3 mr-1" />
+                      <Play className="w-4 h-4" />
                       Simulate
-                    </Button>
+                    </button>
                     
-                    <Button
-                      variant="outline"
-                      size="sm"
+                    <button
                       onClick={() => {
                         setScenarioToDelete(scenario);
                         setShowDeleteDialog(true);
                       }}
-                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                      className="action-button action-button-danger"
                     >
-                      <Trash2 className="w-3 h-3 mr-1" />
-                      Delete
-                    </Button>
+                      <Trash2 className="w-4 h-4" />
+                    </button>
                     
-                    <Button
-                      variant="outline"
-                      size="sm"
+                    <button
                       onClick={() => generateComprehensivePDFReport(scenario)}
                       disabled={loading}
-                      className="bg-purple-50 hover:bg-purple-100 text-purple-700 border-purple-200"
+                      className="action-button action-button-special"
                       title="Generate comprehensive PDF report with all sections"
                     >
-                      <FileText className="w-3 h-3 mr-1" />
-                      Print All PDF
-                    </Button>
+                      <FileText className="w-4 h-4" />
+                    </button>
                   </div>
                   
-                  <div className="space-y-1">
-                    <div className="flex gap-1">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleGenerateImplementation(scenario, 'game-book')}
-                        disabled={generatingImplementation}
-                        className="flex-1 text-xs py-1"
-                      >
-                        <BookOpen className="w-3 h-3 mr-1" />
-                        Game Book
-                      </Button>
-                      
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleGenerateImplementation(scenario, 'action-plan')}
-                        disabled={generatingImplementation}
-                        className="flex-1 text-xs py-1"
-                      >
-                        <CheckSquare className="w-3 h-3 mr-1" />
-                        Actions
-                      </Button>
-                      
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleGenerateImplementation(scenario, 'strategy-implementation')}
-                        disabled={generatingImplementation}
-                        className="flex-1 text-xs py-1"
-                      >
-                        <Target className="w-3 h-3 mr-1" />
-                        Strategy
-                      </Button>
-                    </div>
+                  <div className="action-row">
+                    <button
+                      onClick={() => handleGenerateImplementation(scenario, 'game-book')}
+                      disabled={generatingImplementation}
+                      className="action-button"
+                    >
+                      <BookOpen className="w-4 h-4" />
+                      Game Book
+                    </button>
                     
-                    <div className="flex gap-1">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleDeployMonitors(scenario)}
-                        disabled={deployingMonitors}
-                        className="flex-1 text-xs py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200"
-                      >
-                        <Monitor className="w-3 h-3 mr-1" />
-                        AI Monitors
-                      </Button>
-                      
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleComplexSystemsAnalysis(scenario)}
-                        disabled={generatingImplementation}
-                        className="flex-1 text-xs py-1 bg-purple-50 hover:bg-purple-100 text-purple-700 border-purple-200"
-                      >
-                        <Network className="w-3 h-3 mr-1" />
-                        Complex Systems
-                      </Button>
-                      
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleGenerateLearningInsights(scenario)}
-                        disabled={generatingImplementation}
-                        className="flex-1 text-xs py-1 bg-green-50 hover:bg-green-100 text-green-700 border-green-200"
-                      >
-                        <Brain className="w-3 h-3 mr-1" />
-                        AI Learning
-                      </Button>
-                    </div>
+                    <button
+                      onClick={() => handleGenerateImplementation(scenario, 'action-plan')}
+                      disabled={generatingImplementation}
+                      className="action-button"
+                    >
+                      <CheckSquare className="w-4 h-4" />
+                      Actions
+                    </button>
                     
-                    <div className="flex gap-1">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleSuggestMonitoringSources(scenario)}
-                        disabled={generatingImplementation}
-                        className="flex-1 text-xs py-1 bg-yellow-50 hover:bg-yellow-100 text-yellow-700 border-yellow-200"
-                      >
-                        <Lightbulb className="w-3 h-3 mr-1" />
-                        Smart Sources
-                      </Button>
-                      
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleAddMonitoringSource(scenario)}
-                        className="flex-1 text-xs py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border-indigo-200"
-                      >
-                        <Link className="w-3 h-3 mr-1" />
-                        Add Sources
-                      </Button>
-                      
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleOpenMonitoringDashboard(scenario)}
-                        className="flex-1 text-xs py-1 bg-teal-50 hover:bg-teal-100 text-teal-700 border-teal-200"
-                      >
-                        <Cloud className="w-3 h-3 mr-1" />
-                        Dashboard
-                      </Button>
-                    </div>
+                    <button
+                      onClick={() => handleGenerateImplementation(scenario, 'strategy-implementation')}
+                      disabled={generatingImplementation}
+                      className="action-button"
+                    >
+                      <Target className="w-4 h-4" />
+                      Strategy
+                    </button>
+                  </div>
+                  
+                  <div className="action-row">
+                    <button
+                      onClick={() => handleDeployMonitors(scenario)}
+                      disabled={deployingMonitors}
+                      className="action-button action-button-monitors"
+                    >
+                      <Monitor className="w-4 h-4" />
+                      AI Monitors
+                    </button>
+                    
+                    <button
+                      onClick={() => handleComplexSystemsAnalysis(scenario)}
+                      disabled={generatingImplementation}
+                      className="action-button action-button-systems"
+                    >
+                      <Network className="w-4 h-4" />
+                      Complex Systems
+                    </button>
+                    
+                    <button
+                      onClick={() => handleGenerateLearningInsights(scenario)}
+                      disabled={generatingImplementation}
+                      className="action-button action-button-learning"
+                    >
+                      <Brain className="w-4 h-4" />
+                      AI Learning
+                    </button>
+                  </div>
+
+                  <div className="action-row">
+                    <button
+                      onClick={() => handleSuggestMonitoringSources(scenario)}
+                      disabled={generatingImplementation}
+                      className="action-button action-button-sources"
+                    >
+                      <Lightbulb className="w-4 h-4" />
+                      Smart Sources
+                    </button>
+                    
+                    <button
+                      onClick={() => handleAddMonitoringSource(scenario)}
+                      className="action-button action-button-special"
+                    >
+                      <Link className="w-4 h-4" />
+                      Add Sources
+                    </button>
+                    
+                    <button
+                      onClick={() => handleOpenMonitoringDashboard(scenario)}
+                      className="action-button action-button-dashboard"
+                    >
+                      <Cloud className="w-4 h-4" />
+                      Dashboard
+                    </button>
                   </div>
                 </div>
               </CardContent>
