@@ -362,14 +362,14 @@ const AdvancedDashboard = () => {
         </Card>
         
         <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200">
-          <CardContent className="p-6">
+          <CardContent className="p-3 sm:p-4 lg:p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-purple-600 font-medium">AI Monitor Agents</p>
-                <p className="text-3xl font-bold text-purple-900">{advancedAnalytics.total_monitor_agents || 0}</p>
+                <p className="text-xs sm:text-sm text-purple-600 font-medium">AI Monitor Agents</p>
+                <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-purple-900">{advancedAnalytics.total_monitor_agents || 0}</p>
                 <p className="text-xs text-purple-700">Real-time monitoring</p>
               </div>
-              <Monitor className="w-10 h-10 text-purple-500" />
+              <Monitor className="w-6 h-6 sm:w-8 sm:h-8 lg:w-10 lg:h-10 text-purple-500" />
             </div>
           </CardContent>
         </Card>
