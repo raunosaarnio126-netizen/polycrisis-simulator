@@ -141,6 +141,9 @@ class Scenario(BaseModel):
     affected_regions: List[str]
     key_variables: List[str]
     status: str = "draft"  # "draft", "active", "completed"
+    additional_context: Optional[str] = None
+    stakeholders: Optional[str] = None
+    timeline: Optional[str] = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
