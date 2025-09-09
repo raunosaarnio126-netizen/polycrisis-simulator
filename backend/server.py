@@ -1965,6 +1965,10 @@ async def upload_document_file(
         # Read file content
         file_content = await file.read()
         
+        # Check file size (10MB limit)
+        if len(file_content) > 10 * 1024 * 1024:
+            raise HTTPException(status_code=400, detail="File size must be less than 10MB")
+        
         # Extract text based on file type
         text_content = ""
         if file.filename.lower().endswith('.pdf'):
