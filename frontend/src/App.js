@@ -3150,18 +3150,13 @@ const CompanyManagement = () => {
         <Card 
           className="cursor-pointer hover:shadow-lg transition-all hover:scale-105 border-2 hover:border-blue-300"
           onClick={() => {
-            // Navigate to Documents tab
-            const documentsTab = document.querySelector('[role="tab"][value="documents"]');
-            if (documentsTab) {
-              documentsTab.click();
-            }
-            toast({ title: "Navigating to Documents", description: "Upload and analyze your business documents" });
+            setShowDocumentAnalysis(true);
           }}
         >
           <CardContent className="p-4 sm:p-6 text-center">
-            <Upload className="w-6 h-6 sm:w-8 sm:h-8 text-blue-600 mx-auto mb-2" />
-            <h3 className="font-semibold text-gray-900 text-sm sm:text-base">Upload Documents</h3>
-            <p className="text-xs sm:text-sm text-gray-600">Business plans & strategy docs</p>
+            <FileText className="w-6 h-6 sm:w-8 sm:h-8 text-blue-600 mx-auto mb-2" />
+            <h3 className="font-semibold text-gray-900 text-sm sm:text-base">Analyze Documents</h3>
+            <p className="text-xs sm:text-sm text-gray-600">Upload PDF & DOCX for AI analysis</p>
           </CardContent>
         </Card>
         
