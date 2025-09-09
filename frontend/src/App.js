@@ -8296,6 +8296,596 @@ const KnowledgeTopology = () => {
   );
 };
 
+const CrisisManagementFramework = () => {
+  const [frameworkSummary, setFrameworkSummary] = useState(null);
+  const [crisisFactors, setCrisisFactors] = useState([]);
+  const [monitoringTasks, setMonitoringTasks] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [activeView, setActiveView] = useState('overview');
+  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [selectedPriority, setSelectedPriority] = useState('all');
+  const [scenarioAssessment, setScenarioAssessment] = useState(null);
+  const [selectedScenarioId, setSelectedScenarioId] = useState('');
+  const [scenarios, setScenarios] = useState([]);
+
+  useEffect(() => {
+    fetchFrameworkData();
+    fetchScenarios();
+  }, []);
+
+  const fetchFrameworkData = async () => {
+    try {
+      setLoading(true);
+      
+      // Fetch summary
+      const summaryResponse = await axios.get(`${API}/crisis-framework/summary`);
+      setFrameworkSummary(summaryResponse.data);
+      
+      // Fetch factors
+      const factorsResponse = await axios.get(`${API}/crisis-framework/factors`);
+      setCrisisFactors(factorsResponse.data);
+      
+      // Fetch monitoring tasks
+      const tasksResponse = await axios.get(`${API}/crisis-framework/monitoring-tasks`);
+      setMonitoringTasks(tasksResponse.data);
+      
+    } catch (error) {
+      console.error('Failed to fetch framework data:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load crisis management framework",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchScenarios = async () => {
+    try {
+      const response = await axios.get(`${API}/scenarios`);
+      setScenarios(response.data);
+    } catch (error) {
+      console.error('Failed to fetch scenarios:', error);
+    }
+  };
+
+  const assessScenario = async () => {
+    if (!selectedScenarioId) return;
+    
+    try {
+      const response = await axios.post(`${API}/crisis-framework/scenario-assessment?scenario_id=${selectedScenarioId}`);
+      setScenarioAssessment(response.data);
+      setActiveView('assessment');
+    } catch (error) {
+      console.error('Failed to assess scenario:', error);
+      toast({
+        title: "Error",
+        description: "Failed to assess scenario against crisis factors",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const filteredFactors = useMemo(() => {
+    return crisisFactors.filter(factor => {
+      if (selectedCategory !== 'all' && factor.category_key !== selectedCategory) return false;
+      if (selectedPriority !== 'all' && factor.priority !== selectedPriority) return false;
+      return true;
+    });
+  }, [crisisFactors, selectedCategory, selectedPriority]);
+
+  const filteredMonitoringTasks = useMemo(() => {
+    return monitoringTasks.filter(task => {
+      if (selectedPriority !== 'all' && task.priority !== selectedPriority) return false;
+      return true;
+    });
+  }, [monitoringTasks, selectedPriority]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading Crisis Management Framework...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="bg-white rounded-lg shadow-sm border p-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+              <Shield className="w-6 h-6 text-red-600" />
+              Crisis Management Framework
+            </h1>
+            <p className="text-gray-600 mt-1">
+              Comprehensive framework for environmental, infrastructure, and population crisis assessment
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Navigation Tabs */}
+      <div className="bg-white rounded-lg shadow-sm border">
+        <div className="border-b">
+          <div className="flex space-x-8 px-6">
+            <button
+              onClick={() => setActiveView('overview')}
+              className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                activeView === 'overview'
+                  ? 'border-red-500 text-red-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              Overview
+            </button>
+            <button
+              onClick={() => setActiveView('factors')}
+              className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                activeView === 'factors'
+                  ? 'border-red-500 text-red-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              Crisis Factors
+            </button>
+            <button
+              onClick={() => setActiveView('monitoring')}
+              className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                activeView === 'monitoring'
+                  ? 'border-red-500 text-red-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              Monitoring Tasks
+            </button>
+            <button
+              onClick={() => setActiveView('scenario-assessment')}
+              className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                activeView === 'scenario-assessment'
+                  ? 'border-red-500 text-red-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              Scenario Assessment
+            </button>
+            {scenarioAssessment && (
+              <button
+                onClick={() => setActiveView('assessment')}
+                className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                  activeView === 'assessment'
+                    ? 'border-red-500 text-red-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                Assessment Results
+              </button>
+            )}
+          </div>
+        </div>
+
+        <div className="p-6">
+          {/* Overview Tab */}
+          {activeView === 'overview' && frameworkSummary && (
+            <div className="space-y-6">
+              {/* Statistics Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="bg-red-50 p-4 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-red-600">Total Crisis Factors</p>
+                      <p className="text-2xl font-bold text-red-900">{frameworkSummary.total_factors}</p>
+                    </div>
+                    <AlertTriangle className="w-8 h-8 text-red-500" />
+                  </div>
+                </div>
+                
+                <div className="bg-orange-50 p-4 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-orange-600">High Priority Factors</p>
+                      <p className="text-2xl font-bold text-orange-900">{frameworkSummary.high_priority_factors}</p>
+                    </div>
+                    <Shield className="w-8 h-8 text-orange-500" />
+                  </div>
+                </div>
+                
+                <div className="bg-blue-50 p-4 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-blue-600">Monitoring Tasks</p>
+                      <p className="text-2xl font-bold text-blue-900">{frameworkSummary.total_monitoring_tasks}</p>
+                    </div>
+                    <Monitor className="w-8 h-8 text-blue-500" />
+                  </div>
+                </div>
+                
+                <div className="bg-green-50 p-4 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-green-600">Real-time Monitoring</p>
+                      <p className="text-2xl font-bold text-green-900">{frameworkSummary.real_time_monitoring}</p>
+                    </div>
+                    <Activity className="w-8 h-8 text-green-500" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Categories Overview */}
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Crisis Management Categories</h3>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  {frameworkSummary.categories.map((category, index) => (
+                    <div key={index} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
+                      <h4 className="font-semibold text-gray-900 mb-2">{category}</h4>
+                      <div className="flex items-center text-sm text-gray-600">
+                        <Shield className="w-4 h-4 mr-1" />
+                        Comprehensive risk assessment and monitoring
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Key Suggestions Implementation */}
+              <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-6 rounded-lg border">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Implemented Suggestions</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <h4 className="font-medium text-gray-800 mb-3 flex items-center gap-2">
+                      <CheckSquare className="w-5 h-5 text-green-600" />
+                      Crisis Assessment Factors
+                    </h4>
+                    <ul className="space-y-2 text-sm text-gray-600">
+                      <li className="flex items-center gap-2">
+                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                        Environmental impact factors
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                        Supply chain vulnerabilities analysis
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                        Communication infrastructure resilience
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                        Population displacement scenarios
+                      </li>
+                    </ul>
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-gray-800 mb-3 flex items-center gap-2">
+                      <Monitor className="w-5 h-5 text-blue-600" />
+                      Monitoring Tasks
+                    </h4>
+                    <ul className="space-y-2 text-sm text-gray-600">
+                      <li className="flex items-center gap-2">
+                        <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                        Real-time weather and environmental monitoring
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                        Economic indicator tracking
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                        Social media sentiment analysis
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                        Infrastructure status monitoring
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Crisis Factors Tab */}
+          {activeView === 'factors' && (
+            <div className="space-y-6">
+              {/* Filters */}
+              <div className="flex flex-col sm:flex-row gap-4 bg-gray-50 p-4 rounded-lg">
+                <div className="flex-1">
+                  <Label htmlFor="category-filter" className="text-sm font-medium">Category</Label>
+                  <select
+                    id="category-filter"
+                    value={selectedCategory}
+                    onChange={(e) => setSelectedCategory(e.target.value)}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500"
+                  >
+                    <option value="all">All Categories</option>
+                    <option value="environmental_impact">Environmental Impact</option>
+                    <option value="supply_chain_vulnerabilities">Supply Chain Vulnerabilities</option>
+                    <option value="communication_infrastructure">Communication Infrastructure</option>
+                    <option value="population_displacement">Population Displacement</option>
+                  </select>
+                </div>
+                
+                <div className="flex-1">
+                  <Label htmlFor="priority-filter" className="text-sm font-medium">Priority</Label>
+                  <select
+                    id="priority-filter"
+                    value={selectedPriority}
+                    onChange={(e) => setSelectedPriority(e.target.value)}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500"
+                  >
+                    <option value="all">All Priorities</option>
+                    <option value="high">High Priority</option>
+                    <option value="medium">Medium Priority</option>
+                    <option value="low">Low Priority</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Crisis Factors Grid */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {filteredFactors.map((factor, index) => (
+                  <div key={index} className="border rounded-lg p-6 hover:shadow-lg transition-shadow bg-white">
+                    <div className="flex justify-between items-start mb-3">
+                      <div className="flex-1">
+                        <h3 className="font-bold text-lg text-gray-900">{factor.name}</h3>
+                        <p className="text-sm text-gray-600">{factor.category}</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                          factor.priority === 'high' ? 'bg-red-100 text-red-800' :
+                          factor.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
+                          'bg-green-100 text-green-800'
+                        }`}>
+                          {factor.priority}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <p className="text-sm text-gray-700 mb-4">{factor.description}</p>
+                    
+                    <div className="mb-4">
+                      <h4 className="font-medium text-gray-800 mb-2">Key Metrics:</h4>
+                      <div className="flex flex-wrap gap-1">
+                        {factor.metrics.slice(0, 3).map((metric, idx) => (
+                          <span key={idx} className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
+                            {metric.replace(/_/g, ' ')}
+                          </span>
+                        ))}
+                        {factor.metrics.length > 3 && (
+                          <span className="text-xs text-gray-500">
+                            +{factor.metrics.length - 3} more
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <p className="text-gray-500">Impact Scale</p>
+                        <p className="font-semibold">{factor.impact_scale.replace(/_/g, ' ')}</p>
+                      </div>
+                      <div>
+                        <p className="text-gray-500">Monitoring</p>
+                        <p className="font-semibold">{factor.monitoring_frequency.replace(/_/g, ' ')}</p>
+                      </div>
+                    </div>
+                    
+                    <div className="mt-4 pt-4 border-t">
+                      <p className="text-sm text-gray-600 mb-1">Data Sources:</p>
+                      <p className="text-xs text-gray-500">
+                        {factor.data_sources.slice(0, 2).join(', ')}
+                        {factor.data_sources.length > 2 && ` +${factor.data_sources.length - 2} more`}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Monitoring Tasks Tab */}
+          {activeView === 'monitoring' && (
+            <div className="space-y-6">
+              {/* Priority Filter */}
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <Label htmlFor="monitoring-priority" className="text-sm font-medium">Filter by Priority</Label>
+                <select
+                  id="monitoring-priority"
+                  value={selectedPriority}
+                  onChange={(e) => setSelectedPriority(e.target.value)}
+                  className="mt-1 block w-full sm:w-64 rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500"
+                >
+                  <option value="all">All Priorities</option>
+                  <option value="critical">Critical</option>
+                  <option value="high">High</option>
+                  <option value="medium">Medium</option>
+                  <option value="low">Low</option>
+                </select>
+              </div>
+
+              {/* Monitoring Tasks Grid */}
+              <div className="grid grid-cols-1 gap-6">
+                {filteredMonitoringTasks.map((task, index) => (
+                  <div key={index} className="border rounded-lg p-6 bg-white hover:shadow-md transition-shadow">
+                    <div className="flex justify-between items-start mb-4">
+                      <div className="flex-1">
+                        <h3 className="font-bold text-lg text-gray-900">{task.task}</h3>
+                        <p className="text-sm text-gray-600 mt-1">{task.description}</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
+                          task.priority === 'critical' ? 'bg-red-100 text-red-800' :
+                          task.priority === 'high' ? 'bg-orange-100 text-orange-800' :
+                          task.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
+                          'bg-green-100 text-green-800'
+                        }`}>
+                          {task.priority}
+                        </span>
+                        <span className="bg-blue-100 text-blue-800 text-sm px-2 py-1 rounded">
+                          {task.frequency.replace(/_/g, ' ')}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <div className="mb-4">
+                      <h4 className="font-medium text-gray-800 mb-2">Metrics Tracked:</h4>
+                      <div className="flex flex-wrap gap-1">
+                        {task.metrics_tracked.slice(0, 5).map((metric, idx) => (
+                          <span key={idx} className="bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded">
+                            {metric.replace(/_/g, ' ')}
+                          </span>
+                        ))}
+                        {task.metrics_tracked.length > 5 && (
+                          <span className="text-xs text-gray-500">
+                            +{task.metrics_tracked.length - 5} more metrics
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    
+                    <div className="bg-gray-50 p-3 rounded">
+                      <h4 className="font-medium text-gray-800 mb-2">Alert Thresholds:</h4>
+                      <div className="space-y-1">
+                        {Object.entries(task.alert_thresholds).slice(0, 3).map(([key, value], idx) => (
+                          <div key={idx} className="text-sm">
+                            <span className="font-medium text-gray-700">{key.replace(/_/g, ' ')}:</span>
+                            <span className="text-gray-600 ml-2">{value.replace(/_/g, ' ')}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Scenario Assessment Tab */}
+          {activeView === 'scenario-assessment' && (
+            <div className="space-y-6">
+              <div className="bg-gray-50 p-6 rounded-lg">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Assess Scenario Against Crisis Factors</h3>
+                <p className="text-gray-600 mb-6">
+                  Select a scenario to analyze its relevant crisis factors and recommended monitoring tasks.
+                </p>
+                
+                <div className="flex flex-col sm:flex-row gap-4">
+                  <div className="flex-1">
+                    <Label htmlFor="scenario-select" className="text-sm font-medium">Select Scenario</Label>
+                    <select
+                      id="scenario-select"
+                      value={selectedScenarioId}
+                      onChange={(e) => setSelectedScenarioId(e.target.value)}
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500"
+                    >
+                      <option value="">Choose a scenario...</option>
+                      {scenarios.map((scenario) => (
+                        <option key={scenario.id} value={scenario.id}>
+                          {scenario.title} - {scenario.crisis_type.replace('_', ' ')} (Severity: {scenario.severity_level})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  
+                  <div className="flex items-end">
+                    <Button
+                      onClick={assessScenario}
+                      disabled={!selectedScenarioId}
+                      className="w-full sm:w-auto"
+                    >
+                      Assess Scenario
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Assessment Results Tab */}
+          {activeView === 'assessment' && scenarioAssessment && (
+            <div className="space-y-6">
+              <div className="bg-blue-50 p-6 rounded-lg">
+                <h3 className="text-lg font-semibold text-blue-900 mb-2">
+                  Assessment Results: {scenarioAssessment.scenario_title}
+                </h3>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
+                  <div>
+                    <p className="text-blue-700">Crisis Type</p>
+                    <p className="font-semibold">{scenarioAssessment.crisis_type.replace('_', ' ')}</p>
+                  </div>
+                  <div>
+                    <p className="text-blue-700">Severity Level</p>
+                    <p className="font-semibold">{scenarioAssessment.severity_level}/10</p>
+                  </div>
+                  <div>
+                    <p className="text-blue-700">Relevant Factors</p>
+                    <p className="font-semibold">{scenarioAssessment.total_factors}</p>
+                  </div>
+                  <div>
+                    <p className="text-blue-700">Critical Monitoring</p>
+                    <p className="font-semibold">{scenarioAssessment.critical_monitoring_tasks}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Relevant Factors */}
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-4">Relevant Crisis Factors</h4>
+                  <div className="space-y-4">
+                    {scenarioAssessment.relevant_factors.map((factor, index) => (
+                      <div key={index} className="border rounded-lg p-4 bg-white">
+                        <h5 className="font-medium text-gray-900">{factor.name}</h5>
+                        <p className="text-sm text-gray-600 mb-2">{factor.description}</p>
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-gray-500">{factor.category}</span>
+                          <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">
+                            {Math.round(factor.relevance_score * 100)}% relevant
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Recommended Monitoring */}
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-4">Recommended Monitoring Tasks</h4>
+                  <div className="space-y-4">
+                    {scenarioAssessment.recommended_monitoring.map((task, index) => (
+                      <div key={index} className="border rounded-lg p-4 bg-white">
+                        <div className="flex justify-between items-start mb-2">
+                          <h5 className="font-medium text-gray-900">{task.task}</h5>
+                          <span className={`px-2 py-1 rounded text-xs font-semibold ${
+                            task.priority === 'critical' ? 'bg-red-100 text-red-800' :
+                            task.priority === 'high' ? 'bg-orange-100 text-orange-800' :
+                            'bg-yellow-100 text-yellow-800'
+                          }`}>
+                            {task.priority}
+                          </span>
+                        </div>
+                        <p className="text-sm text-gray-600 mb-2">{task.description}</p>
+                        <div className="text-xs text-gray-500">
+                          Frequency: {task.frequency.replace(/_/g, ' ')}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // Main App Component
 const AppContent = () => {
   const { user, logout } = useAuth();
