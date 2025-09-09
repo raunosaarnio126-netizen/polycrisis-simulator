@@ -161,3 +161,70 @@ body {
   border-color: #3b82f6;
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
+
+/* SEPTE Framework Slider Styles */
+.septe-slider {
+  appearance: none;
+  height: 8px;
+  border-radius: 9999px;
+  outline: none;
+  transition: all 0.3s ease;
+}
+
+.septe-slider::-webkit-slider-thumb {
+  appearance: none;
+  height: 24px;
+  width: 24px;
+  border-radius: 50%;
+  background: #ffffff;
+  cursor: pointer;
+  border: 3px solid #3b82f6;
+  box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
+  transition: all 0.2s ease;
+}
+
+.septe-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 12px rgba(59, 130, 246, 0.4);
+}
+
+.septe-slider::-moz-range-thumb {
+  height: 24px;
+  width: 24px;
+  border-radius: 50%;
+  background: #ffffff;
+  cursor: pointer;
+  border: 3px solid #3b82f6;
+  box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
+  transition: all 0.2s ease;
+}
+
+.septe-slider::-moz-range-thumb:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 12px rgba(59, 130, 246, 0.4);
+}
+
+/* Economic slider - red to green gradient */
+.economic-slider {
+  background: linear-gradient(to right, #fee2e2 0%, #dcfce7 100%);
+}
+
+/* Social slider - orange to blue gradient */
+.social-slider {
+  background: linear-gradient(to right, #fed7aa 0%, #dbeafe 100%);
+}
+
+/* Environmental slider - red to green gradient */
+.environmental-slider {
+  background: linear-gradient(to right, #fecaca 0%, #bbf7d0 100%);
+}
+
+/* Political slider - purple to indigo gradient */
+.political-slider {
+  background: linear-gradient(to right, #e9d5ff 0%, #c7d2fe 100%);
+}
+
+/* Technological slider - yellow to cyan gradient */
+.technological-slider {
+  background: linear-gradient(to right, #fef3c7 0%, #cffafe 100%);
+}
