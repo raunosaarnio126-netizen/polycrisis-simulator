@@ -1887,6 +1887,23 @@ def main():
     print("   Testing Company-Specific Scenario Creation...")
     tester.test_create_company_scenario()
 
+    print("\n🆕 Testing NEW Company Management Endpoints...")
+    print("   Testing Document Upload with File Validation...")
+    tester.test_company_document_upload_pdf()
+    tester.test_company_document_upload_docx()
+    tester.test_company_document_upload_invalid_file_type()
+    tester.test_company_document_upload_large_file()
+    
+    print("   Testing Company Users Endpoint...")
+    tester.test_get_company_users()
+    tester.test_company_users_access_control()
+    
+    print("   Testing Enhanced Rapid Analysis...")
+    tester.test_rapid_analysis_all_types()
+    
+    print("   Testing Enhanced Team Management...")
+    tester.test_team_management_enhanced()
+
     print("\n👑 Testing SaaS Admin Platform Features...")
     print("   Testing Admin System Initialization...")
     tester.test_admin_initialize()
