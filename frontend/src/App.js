@@ -141,18 +141,18 @@ const AuthPage = () => {
               <TabsTrigger value="register" className="text-white data-[state=active]:bg-blue-500">Register</TabsTrigger>
             </TabsList>
             
-            <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-              <TabsContent value="login" className="space-y-4">
+            <TabsContent value="login" className="mt-6">
+              <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
                   <Label htmlFor="email" className="text-white">Email</Label>
                   <Input
                     id="email"
                     type="email"
-                    value={formData.email}
-                    onChange={(e) => setFormData({...formData, email: e.target.value})}
-                    className="bg-white/10 border-white/20 text-white placeholder:text-gray-400"
                     placeholder="Enter your email"
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     required
+                    className="bg-white/10 border-white/20 text-white placeholder-gray-400"
                   />
                 </div>
                 <div>
@@ -160,92 +160,106 @@ const AuthPage = () => {
                   <Input
                     id="password"
                     type="password"
-                    value={formData.password}
-                    onChange={(e) => setFormData({...formData, password: e.target.value})}
-                    className="bg-white/10 border-white/20 text-white placeholder:text-gray-400"
                     placeholder="Enter your password"
+                    value={formData.password}
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                     required
+                    className="bg-white/10 border-white/20 text-white placeholder-gray-400"
                   />
                 </div>
-              </TabsContent>
-              
-              <TabsContent value="register" className="space-y-4">
+                <Button 
+                  type="submit" 
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                  disabled={loading}
+                >
+                  {loading ? "Logging in..." : "Login"}
+                </Button>
+              </form>
+            </TabsContent>
+            
+            <TabsContent value="register" className="mt-6">
+              <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <Label htmlFor="email" className="text-white">Email</Label>
+                  <Label htmlFor="reg-email" className="text-white">Email</Label>
                   <Input
-                    id="email"
+                    id="reg-email"
                     type="email"
-                    value={formData.email}
-                    onChange={(e) => setFormData({...formData, email: e.target.value})}
-                    className="bg-white/10 border-white/20 text-white placeholder:text-gray-400"
                     placeholder="Enter your email"
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     required
+                    className="bg-white/10 border-white/20 text-white placeholder-gray-400"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="reg-password" className="text-white">Password</Label>
+                  <Input
+                    id="reg-password"
+                    type="password"
+                    placeholder="Create a password"
+                    value={formData.password}
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    required
+                    className="bg-white/10 border-white/20 text-white placeholder-gray-400"
                   />
                 </div>
                 <div>
                   <Label htmlFor="username" className="text-white">Username</Label>
                   <Input
                     id="username"
-                    value={formData.username}
-                    onChange={(e) => setFormData({...formData, username: e.target.value})}
-                    className="bg-white/10 border-white/20 text-white placeholder:text-gray-400"
+                    type="text"  
                     placeholder="Choose a username"
+                    value={formData.username}
+                    onChange={(e) => setFormData({ ...formData, username: e.target.value })}
                     required
+                    className="bg-white/10 border-white/20 text-white placeholder-gray-400"
                   />
                 </div>
                 <div>
                   <Label htmlFor="organization" className="text-white">Organization</Label>
                   <Input
                     id="organization"
+                    type="text"
+                    placeholder="Your organization"
                     value={formData.organization}
-                    onChange={(e) => setFormData({...formData, organization: e.target.value})}
-                    className="bg-white/10 border-white/20 text-white placeholder:text-gray-400"
-                    placeholder="Your organization name"
+                    onChange={(e) => setFormData({ ...formData, organization: e.target.value })}
                     required
+                    className="bg-white/10 border-white/20 text-white placeholder-gray-400"
                   />
                 </div>
-                <div>
-                  <Label htmlFor="job_title" className="text-white">Job Title</Label>
-                  <Input
-                    id="job_title"
-                    value={formData.job_title || ''}
-                    onChange={(e) => setFormData({...formData, job_title: e.target.value})}
-                    className="bg-white/10 border-white/20 text-white placeholder:text-gray-400"
-                    placeholder="Your job title (optional)"
-                  />
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="job_title" className="text-white">Job Title</Label>
+                    <Input
+                      id="job_title"
+                      type="text"
+                      placeholder="Your job title"
+                      value={formData.job_title}
+                      onChange={(e) => setFormData({ ...formData, job_title: e.target.value })}
+                      className="bg-white/10 border-white/20 text-white placeholder-gray-400"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="department" className="text-white">Department</Label>
+                    <Input
+                      id="department"
+                      type="text"
+                      placeholder="Your department"
+                      value={formData.department}
+                      onChange={(e) => setFormData({ ...formData, department: e.target.value })}
+                      className="bg-white/10 border-white/20 text-white placeholder-gray-400"
+                    />
+                  </div>
                 </div>
-                <div>
-                  <Label htmlFor="department" className="text-white">Department</Label>
-                  <Input
-                    id="department"
-                    value={formData.department || ''}
-                    onChange={(e) => setFormData({...formData, department: e.target.value})}
-                    className="bg-white/10 border-white/20 text-white placeholder:text-gray-400"
-                    placeholder="Your department (optional)"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="password" className="text-white">Password</Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    value={formData.password}
-                    onChange={(e) => setFormData({...formData, password: e.target.value})}
-                    className="bg-white/10 border-white/20 text-white placeholder:text-gray-400"
-                    placeholder="Create a password"
-                    required
-                  />
-                </div>
-              </TabsContent>
-              
-              <Button 
-                type="submit" 
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white" 
-                disabled={loading}
-              >
-                {loading ? 'Processing...' : (isLogin ? 'Login' : 'Register')}
-              </Button>
-            </form>
+                <Button 
+                  type="submit" 
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                  disabled={loading}
+                >
+                  {loading ? "Registering..." : "Register"}
+                </Button>
+              </form>
+            </TabsContent>
           </Tabs>
         </CardContent>
       </Card>
