@@ -1687,17 +1687,11 @@ class PolycrisisAPITester:
 
     def test_crisis_strategy_cyber_attack(self):
         """Test Crisis Strategy endpoint - Cyber Attack (severity 6)"""
-        crisis_data = {
-            "crisis_type": "cyber_attack",
-            "severity_level": 6
-        }
-        
         success, response = self.run_test(
             "Crisis Strategy - Cyber Attack (Severity 6)",
             "POST",
-            "knowledge-topology/crisis-strategy",
-            200,
-            data=crisis_data
+            "knowledge-topology/crisis-strategy?crisis_type=cyber_attack&severity_level=6",
+            200
         )
         
         if success:
