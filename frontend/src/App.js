@@ -3487,24 +3487,86 @@ const CompanyManagement = () => {
               
               <div>
                 <Label>Team Members</Label>
-                <div className="space-y-2 max-h-40 overflow-y-auto border rounded-lg p-3">
-                  {availableUsers.map(user => (
-                    <div key={user.id} className="flex items-center space-x-2">
-                      <input
-                        type="checkbox"
-                        id={`user-${user.id}`}
-                        className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
-                      />
-                      <label htmlFor={`user-${user.id}`} className="flex-1 text-sm">
-                        <div className="font-medium">{user.username}</div>
-                        <div className="text-gray-500">{user.email} • {user.job_title || 'No title'}</div>
-                      </label>
+                
+                {/* Existing Users Section */}
+                {availableUsers.length > 0 && (
+                  <div className="mb-4">
+                    <Label className="text-sm text-gray-600 mb-2 block">Select Existing Users</Label>
+                    <div className="space-y-2 max-h-32 overflow-y-auto border rounded-lg p-3">
+                      {availableUsers.map(user => (
+                        <div key={user.id} className="flex items-center space-x-2">
+                          <input
+                            type="checkbox"
+                            id={`user-${user.id}`}
+                            className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+                          />
+                          <label htmlFor={`user-${user.id}`} className="flex-1 text-sm">
+                            <div className="font-medium">{user.username}</div>
+                            <div className="text-gray-500">{user.email} • {user.job_title || 'No title'}</div>
+                          </label>
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                  {availableUsers.length === 0 && (
-                    <p className="text-gray-500 text-sm">No other users available</p>
+                  </div>
+                )}
+
+                {/* Invite New Members Section */}
+                <div>
+                  <Label className="text-sm text-gray-600 mb-2 block">Invite New Members</Label>
+                  <div className="flex gap-2 mb-3">
+                    <Input
+                      type="email"
+                      value={inviteEmail}
+                      onChange={(e) => setInviteEmail(e.target.value)}
+                      placeholder="Enter email address to invite"
+                      className="flex-1"
+                      onKeyPress={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          addInviteEmail();
+                        }
+                      }}
+                    />
+                    <Button 
+                      type="button" 
+                      onClick={addInviteEmail}
+                      disabled={!inviteEmail.trim()}
+                      variant="outline"
+                      className="flex items-center gap-1"
+                    >
+                      <Plus className="w-4 h-4" />
+                      Invite
+                    </Button>
+                  </div>
+
+                  {/* Invited Emails List */}
+                  {inviteEmails.length > 0 && (
+                    <div className="space-y-2">
+                      <Label className="text-xs text-gray-500">Invited Members:</Label>
+                      <div className="flex flex-wrap gap-2">
+                        {inviteEmails.map((email, index) => (
+                          <div key={index} className="flex items-center gap-1 bg-blue-100 text-blue-800 px-2 py-1 rounded-md text-sm">
+                            <span>{email}</span>
+                            <button
+                              type="button"
+                              onClick={() => removeInviteEmail(email)}
+                              className="text-blue-600 hover:text-blue-800 ml-1"
+                            >
+                              ×
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                      <p className="text-xs text-gray-500">
+                        Invitations will be sent to these email addresses when the team is created.
+                      </p>
+                    </div>
                   )}
                 </div>
+
+                {availableUsers.length === 0 && inviteEmails.length === 0 && (
+                  <p className="text-gray-500 text-sm mt-2">No users available. Use the invite feature to add team members.</p>
+                )}
               </div>
               
               <div className="flex gap-3">
