@@ -1720,17 +1720,11 @@ class PolycrisisAPITester:
 
     def test_crisis_strategy_pandemic(self):
         """Test Crisis Strategy endpoint - Pandemic (severity 9)"""
-        crisis_data = {
-            "crisis_type": "pandemic",
-            "severity_level": 9
-        }
-        
         success, response = self.run_test(
             "Crisis Strategy - Pandemic (Severity 9)",
             "POST",
-            "knowledge-topology/crisis-strategy",
-            200,
-            data=crisis_data
+            "knowledge-topology/crisis-strategy?crisis_type=pandemic&severity_level=9",
+            200
         )
         
         if success:
