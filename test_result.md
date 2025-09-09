@@ -319,7 +319,7 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Game Book URL Path Consistency Fix"
+    - "Knowledge Topology Endpoints"
   stuck_tasks: 
     - "Document Analysis with File Upload"
   test_all: false
