@@ -2649,6 +2649,8 @@ const CompanyManagement = () => {
   const [company, setCompany] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showCreateCompany, setShowCreateCompany] = useState(false);
+  const [showRapidAnalysis, setShowRapidAnalysis] = useState(false);
+  const [rapidAnalysisData, setRapidAnalysisData] = useState(null);
   const [companyData, setCompanyData] = useState({
     company_name: '',
     industry: '',
