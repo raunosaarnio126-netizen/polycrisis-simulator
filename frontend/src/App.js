@@ -3246,25 +3246,41 @@ Comprehensive Scenario Analysis & Crisis Management Platform
     if (!amendingScenario) return;
     
     try {
-      // Process the form data
-      const updatedData = {
-        affected_regions: amendFormData.affected_regions
-          ? amendFormData.affected_regions.split(',').map(r => r.trim()).filter(r => r.length > 0)
-          : [],
-        key_variables: amendFormData.key_variables
-          ? amendFormData.key_variables.split(',').map(v => v.trim()).filter(v => v.length > 0)
-          : [],
-        additional_context: amendFormData.additional_context.trim(),
-        stakeholders: amendFormData.stakeholders.trim(),
-        timeline: amendFormData.timeline.trim()
-      };
-
-      // Update scenario via API
-      const response = await axios.put(`${API}/scenarios/${amendingScenario.id}`, updatedData);
+      // Process the form data - only send fields that have values
+      const updatedData = {};
       
-      // Update the scenarios list
+      if (amendFormData.affected_regions.trim()) {
+        updatedData.affected_regions = amendFormData.affected_regions
+          .split(',')
+          .map(r => r.trim())
+          .filter(r => r.length > 0);
+      }
+      
+      if (amendFormData.key_variables.trim()) {
+        updatedData.key_variables = amendFormData.key_variables
+          .split(',')
+          .map(v => v.trim())
+          .filter(v => v.length > 0);
+      }
+      
+      if (amendFormData.additional_context.trim()) {
+        updatedData.additional_context = amendFormData.additional_context.trim();
+      }
+      
+      if (amendFormData.stakeholders.trim()) {
+        updatedData.stakeholders = amendFormData.stakeholders.trim();
+      }
+      
+      if (amendFormData.timeline.trim()) {
+        updatedData.timeline = amendFormData.timeline.trim();
+      }
+
+      // Use the new PATCH endpoint for amendments
+      const response = await axios.patch(`${API}/scenarios/${amendingScenario.id}/amend`, updatedData);
+      
+      // Update the scenarios list with the response data
       setScenarios(scenarios.map(s => 
-        s.id === amendingScenario.id ? { ...s, ...updatedData } : s
+        s.id === amendingScenario.id ? response.data : s
       ));
       
       toast({
@@ -3279,7 +3295,7 @@ Comprehensive Scenario Analysis & Crisis Management Platform
       console.error('Failed to update scenario:', error);
       toast({
         title: "Update Failed",
-        description: "Failed to update scenario information. Please try again.",
+        description: error.response?.data?.detail || "Failed to update scenario information. Please try again.",
         variant: "destructive"
       });
     }
