@@ -4153,6 +4153,297 @@ startxref
         
         return passed_tests >= 3  # At least 3 out of 4 tests should pass
 
+    def test_scenario_amendment_functionality(self):
+        """Test the newly fixed scenario amendment functionality"""
+        print("\n🔍 Testing Scenario Amendment Functionality (Review Request)...")
+        
+        # Test credentials from review request
+        test_email = "test@example.com"
+        test_password = "password123"
+        scenario_id = "9796a80e-976e-463d-ba00-aeb899b76a7a"
+        
+        print(f"   Scenario ID: {scenario_id}")
+        print(f"   User: {test_email}")
+        
+        # First login with test credentials
+        login_data = {
+            "email": test_email,
+            "password": test_password
+        }
+        
+        login_success, login_response = self.run_test(
+            "Login with Test Credentials for Amendment",
+            "POST",
+            "login",
+            200,
+            data=login_data
+        )
+        
+        if not login_success or 'access_token' not in login_response:
+            print("❌ Failed to login with test credentials")
+            return False
+            
+        # Update token for subsequent requests
+        original_token = self.token
+        self.token = login_response['access_token']
+        print(f"   Logged in successfully with test credentials")
+        
+        try:
+            # Test 1: Get original scenario to verify current state
+            original_success, original_response = self.run_test(
+                "Get Original Scenario Before Amendment",
+                "GET",
+                f"scenarios/{scenario_id}",
+                200
+            )
+            
+            if not original_success:
+                print("❌ Failed to get original scenario")
+                return False
+                
+            print(f"✅ Original scenario retrieved")
+            print(f"   Title: {original_response.get('title', 'N/A')}")
+            print(f"   Original affected_regions: {original_response.get('affected_regions', [])}")
+            print(f"   Original key_variables: {original_response.get('key_variables', [])}")
+            print(f"   Original additional_context: {original_response.get('additional_context', 'None')}")
+            print(f"   Original stakeholders: {original_response.get('stakeholders', 'None')}")
+            print(f"   Original timeline: {original_response.get('timeline', 'None')}")
+            
+            # Test 2: Test PATCH endpoint with partial amendment data
+            amendment_data = {
+                "affected_regions": ["Finland", "Sweden", "Estonia"],
+                "key_variables": ["GDP Growth", "Employment Rate", "Trade Balance"],
+                "additional_context": "Enhanced scenario with regional economic interdependencies",
+                "stakeholders": "Nordic Council, EU Commission, Central Banks",
+                "timeline": "6-12 months recovery period"
+            }
+            
+            amendment_success, amendment_response = self.run_test(
+                "PATCH Scenario Amendment",
+                "PATCH",
+                f"scenarios/{scenario_id}/amend",
+                200,
+                data=amendment_data
+            )
+            
+            if not amendment_success:
+                print("❌ Failed to amend scenario")
+                return False
+                
+            print(f"✅ Scenario amendment successful")
+            print(f"   Amendment ID: {amendment_response.get('id')}")
+            
+            # Verify amendment response structure
+            required_fields = ['id', 'title', 'description', 'crisis_type', 'severity_level', 
+                             'affected_regions', 'key_variables', 'additional_context', 
+                             'stakeholders', 'timeline', 'updated_at']
+            
+            missing_fields = []
+            for field in required_fields:
+                if field not in amendment_response:
+                    missing_fields.append(field)
+            
+            if missing_fields:
+                print(f"❌ Missing required fields in amendment response: {missing_fields}")
+                return False
+                
+            # Test 3: Verify only provided fields were updated
+            print(f"   Verifying field updates...")
+            
+            # Check updated fields
+            updated_regions = amendment_response.get('affected_regions', [])
+            updated_variables = amendment_response.get('key_variables', [])
+            updated_context = amendment_response.get('additional_context', '')
+            updated_stakeholders = amendment_response.get('stakeholders', '')
+            updated_timeline = amendment_response.get('timeline', '')
+            
+            # Verify updated fields match amendment data
+            if updated_regions != amendment_data['affected_regions']:
+                print(f"❌ affected_regions not updated correctly: {updated_regions} vs {amendment_data['affected_regions']}")
+                return False
+            print(f"   ✅ affected_regions updated correctly: {updated_regions}")
+            
+            if updated_variables != amendment_data['key_variables']:
+                print(f"❌ key_variables not updated correctly: {updated_variables} vs {amendment_data['key_variables']}")
+                return False
+            print(f"   ✅ key_variables updated correctly: {updated_variables}")
+            
+            if updated_context != amendment_data['additional_context']:
+                print(f"❌ additional_context not updated correctly")
+                return False
+            print(f"   ✅ additional_context updated correctly")
+            
+            if updated_stakeholders != amendment_data['stakeholders']:
+                print(f"❌ stakeholders not updated correctly")
+                return False
+            print(f"   ✅ stakeholders updated correctly")
+            
+            if updated_timeline != amendment_data['timeline']:
+                print(f"❌ timeline not updated correctly")
+                return False
+            print(f"   ✅ timeline updated correctly")
+            
+            # Verify unchanged fields remain the same
+            if amendment_response.get('title') != original_response.get('title'):
+                print(f"❌ title should not have changed")
+                return False
+            print(f"   ✅ title unchanged: {amendment_response.get('title')}")
+            
+            if amendment_response.get('description') != original_response.get('description'):
+                print(f"❌ description should not have changed")
+                return False
+            print(f"   ✅ description unchanged")
+            
+            if amendment_response.get('crisis_type') != original_response.get('crisis_type'):
+                print(f"❌ crisis_type should not have changed")
+                return False
+            print(f"   ✅ crisis_type unchanged: {amendment_response.get('crisis_type')}")
+            
+            if amendment_response.get('severity_level') != original_response.get('severity_level'):
+                print(f"❌ severity_level should not have changed")
+                return False
+            print(f"   ✅ severity_level unchanged: {amendment_response.get('severity_level')}")
+            
+            # Test 4: Verify GET scenarios returns updated scenario
+            get_updated_success, get_updated_response = self.run_test(
+                "GET Updated Scenario After Amendment",
+                "GET",
+                f"scenarios/{scenario_id}",
+                200
+            )
+            
+            if not get_updated_success:
+                print("❌ Failed to get updated scenario")
+                return False
+                
+            # Verify GET response matches PATCH response
+            if get_updated_response.get('affected_regions') != amendment_data['affected_regions']:
+                print(f"❌ GET response affected_regions doesn't match amendment")
+                return False
+                
+            if get_updated_response.get('key_variables') != amendment_data['key_variables']:
+                print(f"❌ GET response key_variables doesn't match amendment")
+                return False
+                
+            if get_updated_response.get('additional_context') != amendment_data['additional_context']:
+                print(f"❌ GET response additional_context doesn't match amendment")
+                return False
+                
+            if get_updated_response.get('stakeholders') != amendment_data['stakeholders']:
+                print(f"❌ GET response stakeholders doesn't match amendment")
+                return False
+                
+            if get_updated_response.get('timeline') != amendment_data['timeline']:
+                print(f"❌ GET response timeline doesn't match amendment")
+                return False
+                
+            print(f"✅ GET scenarios returns correctly updated scenario")
+            
+            # Test 5: Test partial amendment (only some fields)
+            partial_amendment_data = {
+                "affected_regions": ["Finland", "Norway"],
+                "additional_context": "Updated context with Norway inclusion"
+            }
+            
+            partial_success, partial_response = self.run_test(
+                "PATCH Partial Scenario Amendment",
+                "PATCH",
+                f"scenarios/{scenario_id}/amend",
+                200,
+                data=partial_amendment_data
+            )
+            
+            if not partial_success:
+                print("❌ Failed partial amendment")
+                return False
+                
+            # Verify only specified fields were updated
+            if partial_response.get('affected_regions') != partial_amendment_data['affected_regions']:
+                print(f"❌ Partial amendment affected_regions not updated correctly")
+                return False
+            print(f"   ✅ Partial amendment affected_regions updated: {partial_response.get('affected_regions')}")
+            
+            if partial_response.get('additional_context') != partial_amendment_data['additional_context']:
+                print(f"❌ Partial amendment additional_context not updated correctly")
+                return False
+            print(f"   ✅ Partial amendment additional_context updated")
+            
+            # Verify other fields remained from previous amendment
+            if partial_response.get('key_variables') != amendment_data['key_variables']:
+                print(f"❌ Partial amendment should not have changed key_variables")
+                return False
+            print(f"   ✅ key_variables unchanged from previous amendment")
+            
+            if partial_response.get('stakeholders') != amendment_data['stakeholders']:
+                print(f"❌ Partial amendment should not have changed stakeholders")
+                return False
+            print(f"   ✅ stakeholders unchanged from previous amendment")
+            
+            # Test 6: Test authentication requirement
+            temp_token = self.token
+            self.token = None
+            
+            auth_test_success, auth_test_response = self.run_test(
+                "Test Authentication Required for Amendment",
+                "PATCH",
+                f"scenarios/{scenario_id}/amend",
+                401,  # Should fail without authentication
+                data={"affected_regions": ["Test"]}
+            )
+            
+            self.token = temp_token  # Restore token
+            
+            if not auth_test_success:
+                print("❌ Authentication test failed - endpoint should require authentication")
+                return False
+                
+            print(f"✅ Authentication properly enforced for amendment endpoint")
+            
+            # Test 7: Test with invalid scenario ID
+            invalid_scenario_id = "invalid-scenario-id-12345"
+            invalid_success, invalid_response = self.run_test(
+                "Test Amendment with Invalid Scenario ID",
+                "PATCH",
+                f"scenarios/{invalid_scenario_id}/amend",
+                404,  # Should return 404 for non-existent scenario
+                data={"affected_regions": ["Test"]}
+            )
+            
+            if not invalid_success:
+                print("❌ Invalid scenario ID test failed - should return 404")
+                return False
+                
+            print(f"✅ Invalid scenario ID properly handled with 404")
+            
+            # Test 8: Test with empty amendment data
+            empty_success, empty_response = self.run_test(
+                "Test Amendment with Empty Data",
+                "PATCH",
+                f"scenarios/{scenario_id}/amend",
+                200,  # Should succeed but not change anything
+                data={}
+            )
+            
+            if not empty_success:
+                print("❌ Empty amendment data test failed")
+                return False
+                
+            print(f"✅ Empty amendment data handled correctly")
+            
+            print(f"\n🎉 SCENARIO AMENDMENT FUNCTIONALITY TESTING COMPLETED SUCCESSFULLY!")
+            print(f"   ✅ PATCH endpoint accepts partial data without validation errors")
+            print(f"   ✅ Only provided fields are updated in database")
+            print(f"   ✅ Response returns complete updated scenario with new fields")
+            print(f"   ✅ GET scenarios reflects the amendments")
+            print(f"   ✅ Fields not provided in amendment remain unchanged")
+            print(f"   ✅ Authentication and error handling working correctly")
+            
+            return True
+            
+        finally:
+            # Restore original token
+            self.token = original_token
+
 def main():
     print("🚀 Starting Polycrisis Simulator API Tests")
     print("=" * 50)
