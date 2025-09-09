@@ -3510,17 +3510,52 @@ Comprehensive Scenario Analysis & Crisis Management Platform
                   <div className="meta-item">
                     <Globe className="w-4 h-4 meta-icon" />
                     <span>Regions: {(() => {
-                      // Debug logging
-                      console.log('Debug - Full scenario object:', scenario);
-                      console.log('Debug - affected_regions field:', scenario.affected_regions);
-                      console.log('Debug - affected_regions type:', typeof scenario.affected_regions);
-                      console.log('Debug - affected_regions is array:', Array.isArray(scenario.affected_regions));
-                      console.log('Debug - affected_regions length:', scenario.affected_regions?.length);
+                      // Enhanced debug logging
+                      console.log('=== SCENARIO REGIONS DEBUG ===');
+                      console.log('Scenario ID:', scenario.id);
+                      console.log('Scenario Title:', scenario.title);
+                      console.log('Full scenario object:', JSON.stringify(scenario, null, 2));
+                      console.log('affected_regions raw value:', scenario.affected_regions);
+                      console.log('affected_regions type:', typeof scenario.affected_regions);
+                      console.log('affected_regions is array:', Array.isArray(scenario.affected_regions));
+                      console.log('affected_regions is string:', typeof scenario.affected_regions === 'string');
+                      console.log('affected_regions length:', scenario.affected_regions?.length);
                       
-                      if (scenario.affected_regions && Array.isArray(scenario.affected_regions) && scenario.affected_regions.length > 0) {
-                        return scenario.affected_regions.slice(0, 2).join(', ') + 
-                          (scenario.affected_regions.length > 2 ? ` +${scenario.affected_regions.length - 2} more` : '');
+                      // Handle both array and string formats
+                      let regions = scenario.affected_regions;
+                      
+                      // If it's a string that looks like JSON, try to parse it
+                      if (typeof regions === 'string') {
+                        console.log('Regions is string, attempting to parse...');
+                        try {
+                          // Try parsing as JSON array
+                          const parsed = JSON.parse(regions);
+                          if (Array.isArray(parsed)) {
+                            regions = parsed;
+                            console.log('Successfully parsed regions as JSON array:', parsed);
+                          } else {
+                            console.log('Parsed value is not an array:', parsed);
+                          }
+                        } catch (e) {
+                          console.log('Failed to parse as JSON, treating as comma-separated string');
+                          // If not JSON, treat as comma-separated string
+                          regions = regions.split(',').map(r => r.trim()).filter(r => r.length > 0);
+                        }
+                      }
+                      
+                      console.log('Final processed regions:', regions);
+                      console.log('============================');
+                      
+                      if (regions && Array.isArray(regions) && regions.length > 0) {
+                        const displayText = regions.slice(0, 2).join(', ') + 
+                          (regions.length > 2 ? ` +${regions.length - 2} more` : '');
+                        console.log('Displaying regions text:', displayText);
+                        return displayText;
+                      } else if (typeof regions === 'string' && regions.trim().length > 0) {
+                        console.log('Displaying regions as string:', regions);
+                        return regions;
                       } else {
+                        console.log('No regions found, showing "Not specified"');
                         return 'Not specified';
                       }
                     })()}</span>
