@@ -3890,6 +3890,40 @@ def main():
     print("   Testing Admin Dashboard Analytics...")
     tester.test_admin_dashboard_stats()
 
+    print("\n🧠 Testing KNOWLEDGE TOPOLOGY ENDPOINTS...")
+    print("   Testing Knowledge Topology Summary...")
+    tester.test_knowledge_topology_summary()
+    
+    print("   Testing Knowledge Sources - No Filter...")
+    tester.test_knowledge_sources_no_filter()
+    
+    print("   Testing Knowledge Sources - Priority Filters...")
+    tester.test_knowledge_sources_priority_filter()
+    
+    print("   Testing Knowledge Sources - API Filter...")
+    tester.test_knowledge_sources_api_filter()
+    
+    print("   Testing Knowledge Sources - Specialization Filters...")
+    tester.test_knowledge_sources_specialization_filter()
+    
+    print("   Testing Crisis Strategy - Economic Crisis (Severity 8)...")
+    tester.test_crisis_strategy_economic_crisis()
+    
+    print("   Testing Crisis Strategy - Cyber Attack (Severity 6)...")
+    tester.test_crisis_strategy_cyber_attack()
+    
+    print("   Testing Crisis Strategy - Pandemic (Severity 9)...")
+    tester.test_crisis_strategy_pandemic()
+    
+    print("   Testing Crisis Strategy - Invalid Severity...")
+    tester.test_crisis_strategy_invalid_severity()
+    
+    print("   Testing Crisis Strategy - Unknown Crisis Type...")
+    tester.test_crisis_strategy_unknown_crisis_type()
+    
+    print("   Testing Knowledge Topology Authentication...")
+    tester.test_knowledge_topology_authentication()
+
     print("\n🗑️ Testing Scenario Deletion...")
     tester.test_delete_scenario()
 
