@@ -3223,6 +3223,87 @@ Comprehensive Scenario Analysis & Crisis Management Platform
   };
 
   // Multi-document management functions
+  const handleAmendScenario = (scenario) => {
+    setAmendingScenario(scenario);
+    
+    // Pre-populate form with existing data
+    setAmendFormData({
+      affected_regions: Array.isArray(scenario.affected_regions) 
+        ? scenario.affected_regions.join(', ') 
+        : scenario.affected_regions || '',
+      key_variables: Array.isArray(scenario.key_variables) 
+        ? scenario.key_variables.join(', ') 
+        : scenario.key_variables || '',
+      additional_context: scenario.additional_context || '',
+      stakeholders: scenario.stakeholders || '',
+      timeline: scenario.timeline || ''
+    });
+    
+    setShowAmendDialog(true);
+  };
+
+  const submitAmendments = async () => {
+    if (!amendingScenario) return;
+    
+    try {
+      // Process the form data
+      const updatedData = {
+        affected_regions: amendFormData.affected_regions
+          ? amendFormData.affected_regions.split(',').map(r => r.trim()).filter(r => r.length > 0)
+          : [],
+        key_variables: amendFormData.key_variables
+          ? amendFormData.key_variables.split(',').map(v => v.trim()).filter(v => v.length > 0)
+          : [],
+        additional_context: amendFormData.additional_context.trim(),
+        stakeholders: amendFormData.stakeholders.trim(),
+        timeline: amendFormData.timeline.trim()
+      };
+
+      // Update scenario via API
+      const response = await axios.put(`${API}/scenarios/${amendingScenario.id}`, updatedData);
+      
+      // Update the scenarios list
+      setScenarios(scenarios.map(s => 
+        s.id === amendingScenario.id ? { ...s, ...updatedData } : s
+      ));
+      
+      toast({
+        title: "Scenario Updated",
+        description: "Missing information has been successfully added to the scenario."
+      });
+      
+      setShowAmendDialog(false);
+      setAmendingScenario(null);
+      
+    } catch (error) {
+      console.error('Failed to update scenario:', error);
+      toast({
+        title: "Update Failed",
+        description: "Failed to update scenario information. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleAmendInputChange = (field, value) => {
+    setAmendFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const closeAmendDialog = () => {
+    setShowAmendDialog(false);
+    setAmendingScenario(null);
+    setAmendFormData({
+      affected_regions: '',
+      key_variables: '',
+      additional_context: '',
+      stakeholders: '',
+      timeline: ''
+    });
+  };
+
   const openDocumentInPanel = async (scenario, documentType) => {
     const documentId = `${scenario.id}-${documentType}`;
     
