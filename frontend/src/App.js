@@ -7647,6 +7647,10 @@ const AppContent = () => {
           <TabsContent value="ai-genie">
             <AIGenie selectedScenario={selectedScenario} />
           </TabsContent>
+          
+          <TabsContent value="knowledge-topology">
+            <KnowledgeTopology />
+          </TabsContent>
         </Tabs>
       </main>
     </div>
