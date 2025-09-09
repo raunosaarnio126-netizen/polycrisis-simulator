@@ -2565,6 +2565,316 @@ startxref
         
         return passed_verifications >= (total_verifications * 0.8)  # 80% pass rate
 
+    def test_scenario_data_persistence_comprehensive(self):
+        """Comprehensive test for scenario creation and retrieval functionality"""
+        print("\n" + "="*80)
+        print("🎯 COMPREHENSIVE SCENARIO DATA PERSISTENCE TESTING")
+        print("="*80)
+        
+        # Test 1: Create scenario with complete data as specified in review
+        print("\n🔍 Test 1: Creating scenario with complete data...")
+        complete_scenario_data = {
+            "title": "Test Economic Crisis",
+            "description": "A comprehensive economic downturn scenario for testing data persistence with detailed analysis of market volatility, unemployment rates, and cascading effects across multiple sectors including banking, retail, and manufacturing industries.",
+            "crisis_type": "economic_crisis",
+            "severity_level": 7,
+            "affected_regions": ["North America", "Europe", "Asia Pacific"],
+            "key_variables": ["Inflation Rate", "Employment", "GDP Growth", "Market Volatility"]
+        }
+        
+        success, response = self.run_test(
+            "Create Complete Scenario",
+            "POST",
+            "scenarios",
+            200,
+            data=complete_scenario_data
+        )
+        
+        if not success or 'id' not in response:
+            print("❌ Failed to create scenario - stopping persistence tests")
+            return False
+            
+        created_scenario_id = response['id']
+        print(f"   ✅ Created scenario ID: {created_scenario_id}")
+        
+        # Verify all fields are present in creation response
+        print("\n🔍 Verifying creation response data integrity...")
+        required_fields = ['id', 'title', 'description', 'crisis_type', 'severity_level', 'affected_regions', 'key_variables', 'user_id', 'status', 'created_at', 'updated_at']
+        missing_fields = []
+        
+        for field in required_fields:
+            if field not in response:
+                missing_fields.append(field)
+            else:
+                print(f"   ✅ {field}: {response[field] if field not in ['description'] else str(response[field])[:50] + '...'}")
+        
+        if missing_fields:
+            print(f"   ❌ Missing fields in creation response: {missing_fields}")
+            return False
+        
+        # Verify data matches what was sent
+        print("\n🔍 Verifying data integrity in creation response...")
+        data_integrity_checks = [
+            ('title', complete_scenario_data['title']),
+            ('description', complete_scenario_data['description']),
+            ('crisis_type', complete_scenario_data['crisis_type']),
+            ('severity_level', complete_scenario_data['severity_level']),
+            ('affected_regions', complete_scenario_data['affected_regions']),
+            ('key_variables', complete_scenario_data['key_variables'])
+        ]
+        
+        for field, expected_value in data_integrity_checks:
+            if response.get(field) != expected_value:
+                print(f"   ❌ Data mismatch for {field}: expected {expected_value}, got {response.get(field)}")
+                return False
+            else:
+                print(f"   ✅ {field} matches expected value")
+        
+        # Test 2: Retrieve all scenarios and verify data persistence
+        print("\n🔍 Test 2: Retrieving all scenarios...")
+        success, scenarios_response = self.run_test(
+            "Get All Scenarios",
+            "GET",
+            "scenarios",
+            200
+        )
+        
+        if not success or not isinstance(scenarios_response, list):
+            print("❌ Failed to retrieve scenarios")
+            return False
+            
+        print(f"   ✅ Retrieved {len(scenarios_response)} scenarios")
+        
+        # Find our created scenario in the list
+        created_scenario = None
+        for scenario in scenarios_response:
+            if scenario.get('id') == created_scenario_id:
+                created_scenario = scenario
+                break
+        
+        if not created_scenario:
+            print(f"   ❌ Created scenario {created_scenario_id} not found in scenarios list")
+            return False
+        
+        print("   ✅ Created scenario found in scenarios list")
+        
+        # Verify all data is preserved in list retrieval
+        print("\n🔍 Verifying data persistence in list retrieval...")
+        for field, expected_value in data_integrity_checks:
+            if created_scenario.get(field) != expected_value:
+                print(f"   ❌ Data loss in list retrieval for {field}: expected {expected_value}, got {created_scenario.get(field)}")
+                return False
+            else:
+                print(f"   ✅ {field} preserved in list retrieval")
+        
+        # Test 3: Retrieve individual scenario by ID
+        print("\n🔍 Test 3: Retrieving individual scenario by ID...")
+        success, individual_response = self.run_test(
+            "Get Individual Scenario",
+            "GET",
+            f"scenarios/{created_scenario_id}",
+            200
+        )
+        
+        if not success or 'id' not in individual_response:
+            print("❌ Failed to retrieve individual scenario")
+            return False
+            
+        print(f"   ✅ Retrieved individual scenario: {individual_response.get('title')}")
+        
+        # Verify all data is preserved in individual retrieval
+        print("\n🔍 Verifying data persistence in individual retrieval...")
+        for field, expected_value in data_integrity_checks:
+            if individual_response.get(field) != expected_value:
+                print(f"   ❌ Data loss in individual retrieval for {field}: expected {expected_value}, got {individual_response.get(field)}")
+                return False
+            else:
+                print(f"   ✅ {field} preserved in individual retrieval")
+        
+        # Test 4: Array field preservation check
+        print("\n🔍 Test 4: Detailed array field preservation check...")
+        
+        # Check affected_regions array
+        expected_regions = complete_scenario_data['affected_regions']
+        actual_regions = individual_response.get('affected_regions', [])
+        
+        if len(actual_regions) != len(expected_regions):
+            print(f"   ❌ affected_regions length mismatch: expected {len(expected_regions)}, got {len(actual_regions)}")
+            return False
+        
+        for i, region in enumerate(expected_regions):
+            if i >= len(actual_regions) or actual_regions[i] != region:
+                print(f"   ❌ affected_regions[{i}] mismatch: expected '{region}', got '{actual_regions[i] if i < len(actual_regions) else 'MISSING'}'")
+                return False
+        
+        print(f"   ✅ affected_regions array preserved: {actual_regions}")
+        
+        # Check key_variables array
+        expected_variables = complete_scenario_data['key_variables']
+        actual_variables = individual_response.get('key_variables', [])
+        
+        if len(actual_variables) != len(expected_variables):
+            print(f"   ❌ key_variables length mismatch: expected {len(expected_variables)}, got {len(actual_variables)}")
+            return False
+        
+        for i, variable in enumerate(expected_variables):
+            if i >= len(actual_variables) or actual_variables[i] != variable:
+                print(f"   ❌ key_variables[{i}] mismatch: expected '{variable}', got '{actual_variables[i] if i < len(actual_variables) else 'MISSING'}'")
+                return False
+        
+        print(f"   ✅ key_variables array preserved: {actual_variables}")
+        
+        # Test 5: Description field completeness check
+        print("\n🔍 Test 5: Description field completeness check...")
+        expected_description = complete_scenario_data['description']
+        actual_description = individual_response.get('description', '')
+        
+        if len(actual_description) != len(expected_description):
+            print(f"   ❌ Description length mismatch: expected {len(expected_description)}, got {len(actual_description)}")
+            print(f"   Expected: {expected_description}")
+            print(f"   Actual: {actual_description}")
+            return False
+        
+        if actual_description != expected_description:
+            print(f"   ❌ Description content mismatch")
+            print(f"   Expected: {expected_description}")
+            print(f"   Actual: {actual_description}")
+            return False
+        
+        print(f"   ✅ Description field complete and intact ({len(actual_description)} characters)")
+        
+        # Test 6: Edge cases - Create scenarios with edge case data
+        print("\n🔍 Test 6: Edge case testing...")
+        
+        edge_cases = [
+            {
+                "name": "Empty Arrays",
+                "data": {
+                    "title": "Empty Arrays Test",
+                    "description": "Testing scenario with empty arrays",
+                    "crisis_type": "social_unrest",
+                    "severity_level": 5,
+                    "affected_regions": [],
+                    "key_variables": []
+                }
+            },
+            {
+                "name": "Long Description",
+                "data": {
+                    "title": "Long Description Test",
+                    "description": "A" * 1500 + " This is a very long description to test data persistence with large text fields. " + "B" * 1500,
+                    "crisis_type": "natural_disaster",
+                    "severity_level": 9,
+                    "affected_regions": ["Global"],
+                    "key_variables": ["Extensive Variable Name That Is Very Long"]
+                }
+            },
+            {
+                "name": "Special Characters",
+                "data": {
+                    "title": "Special Characters Test: àáâãäåæçèéêë",
+                    "description": "Testing with special characters: !@#$%^&*()_+-=[]{}|;':\",./<>? àáâãäåæçèéêëìíîïðñòóôõö÷øùúûüýþÿ",
+                    "crisis_type": "pandemic",
+                    "severity_level": 8,
+                    "affected_regions": ["Région Spéciale", "Área Específica", "特別地域"],
+                    "key_variables": ["Variável Especial", "変数", "переменная"]
+                }
+            },
+            {
+                "name": "Maximum Severity",
+                "data": {
+                    "title": "Maximum Severity Test",
+                    "description": "Testing maximum severity level scenario",
+                    "crisis_type": "cyber_attack",
+                    "severity_level": 10,
+                    "affected_regions": ["North America", "South America", "Europe", "Africa", "Asia", "Oceania", "Antarctica"],
+                    "key_variables": ["Critical Infrastructure", "Data Security", "Economic Impact", "Social Disruption", "Government Response"]
+                }
+            }
+        ]
+        
+        edge_case_ids = []
+        
+        for edge_case in edge_cases:
+            print(f"\n   Testing edge case: {edge_case['name']}")
+            
+            success, response = self.run_test(
+                f"Create Edge Case - {edge_case['name']}",
+                "POST",
+                "scenarios",
+                200,
+                data=edge_case['data']
+            )
+            
+            if success and 'id' in response:
+                edge_case_id = response['id']
+                edge_case_ids.append(edge_case_id)
+                print(f"     ✅ Created edge case scenario: {edge_case_id}")
+                
+                # Immediately retrieve and verify
+                success, verify_response = self.run_test(
+                    f"Verify Edge Case - {edge_case['name']}",
+                    "GET",
+                    f"scenarios/{edge_case_id}",
+                    200
+                )
+                
+                if success:
+                    # Verify data integrity for edge case
+                    for field, expected_value in edge_case['data'].items():
+                        if verify_response.get(field) != expected_value:
+                            print(f"     ❌ Edge case data mismatch for {field}")
+                            return False
+                    print(f"     ✅ Edge case data integrity verified")
+                else:
+                    print(f"     ❌ Failed to verify edge case scenario")
+                    return False
+            else:
+                print(f"     ❌ Failed to create edge case scenario")
+                return False
+        
+        # Test 7: Multiple scenario data persistence
+        print(f"\n🔍 Test 7: Multiple scenario data persistence check...")
+        
+        success, final_scenarios = self.run_test(
+            "Final Scenarios List Check",
+            "GET",
+            "scenarios",
+            200
+        )
+        
+        if success and isinstance(final_scenarios, list):
+            print(f"   ✅ Final scenario count: {len(final_scenarios)}")
+            
+            # Verify all our created scenarios are present
+            all_created_ids = [created_scenario_id] + edge_case_ids
+            found_scenarios = 0
+            
+            for scenario in final_scenarios:
+                if scenario.get('id') in all_created_ids:
+                    found_scenarios += 1
+            
+            if found_scenarios == len(all_created_ids):
+                print(f"   ✅ All {len(all_created_ids)} created scenarios found in final list")
+            else:
+                print(f"   ❌ Only {found_scenarios}/{len(all_created_ids)} created scenarios found in final list")
+                return False
+        else:
+            print("   ❌ Failed to get final scenarios list")
+            return False
+        
+        # Store the main scenario ID for cleanup
+        self.created_scenario_id = created_scenario_id
+        
+        print("\n🎉 COMPREHENSIVE SCENARIO DATA PERSISTENCE TESTING COMPLETED SUCCESSFULLY!")
+        print("   ✅ All data integrity checks passed")
+        print("   ✅ Array fields preserved correctly")
+        print("   ✅ Description field completeness verified")
+        print("   ✅ Edge cases handled properly")
+        print("   ✅ Multiple scenario persistence confirmed")
+        
+        return True
+
     def test_team_creation_comprehensive(self):
         """Run all team creation tests comprehensively"""
         print("\n📋 COMPREHENSIVE TEAM CREATION TESTING")
