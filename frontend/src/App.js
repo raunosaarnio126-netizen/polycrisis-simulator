@@ -2877,6 +2877,21 @@ const CompanyManagement = () => {
       document.getElementById(`user-${user.id}`)?.checked
     );
 
+    // Combine existing users emails with invited emails
+    const allMemberEmails = [
+      ...selectedUsers.map(user => user.email),
+      ...inviteEmails
+    ];
+
+    if (allMemberEmails.length === 0 && inviteEmails.length === 0) {
+      toast({
+        title: "No Team Members",
+        description: "Please select existing users or invite new members",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setLoading(true);
     try {
       const userResponse = await axios.get(`${API}/me`);
@@ -2884,7 +2899,7 @@ const CompanyManagement = () => {
         const teamData = {
           team_name: teamName,
           team_description: teamDescription,
-          team_members: selectedUsers.map(user => user.email),
+          team_members: allMemberEmails,
           team_roles: ['crisis_manager', 'analyst', 'coordinator']
         };
 
@@ -2892,21 +2907,62 @@ const CompanyManagement = () => {
         
         toast({ 
           title: "Team Created", 
-          description: `${teamName} has been created with ${selectedUsers.length} members!`,
+          description: `${teamName} has been created with ${allMemberEmails.length} members!`,
           duration: 4000
         });
 
         setShowTeamCreator(false);
+        // Reset form state
+        setInviteEmails([]);
+        setInviteEmail('');
       }
     } catch (error) {
+      console.error('Team creation error:', error);
+      let errorMessage = "Failed to create team";
+      
+      if (error.response?.data) {
+        if (typeof error.response.data === 'string') {
+          errorMessage = error.response.data;
+        } else if (error.response.data.detail) {
+          errorMessage = error.response.data.detail;
+        } else if (error.response.data.message) {
+          errorMessage = error.response.data.message;
+        }
+      }
+
       toast({ 
         title: "Team Creation Error", 
-        description: error.response?.data?.detail || "Failed to create team",
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {
       setLoading(false);
     }
+  };
+
+  const addInviteEmail = () => {
+    if (inviteEmail.trim() && inviteEmail.includes('@')) {
+      if (!inviteEmails.includes(inviteEmail.trim())) {
+        setInviteEmails([...inviteEmails, inviteEmail.trim()]);
+        setInviteEmail('');
+      } else {
+        toast({
+          title: "Duplicate Email",
+          description: "This email is already in the invite list",
+          variant: "destructive"
+        });
+      }
+    } else {
+      toast({
+        title: "Invalid Email",
+        description: "Please enter a valid email address",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const removeInviteEmail = (emailToRemove) => {
+    setInviteEmails(inviteEmails.filter(email => email !== emailToRemove));
   };
 
   const fetchAvailableUsers = async () => {
