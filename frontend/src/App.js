@@ -8986,6 +8986,11 @@ const AppContent = () => {
                   <span className="hidden xs:inline">Knowledge Base</span>
                   <span className="xs:hidden">Knowledge</span>
                 </TabsTrigger>
+                <TabsTrigger value="crisis-framework" className="flex items-center gap-1 px-2 sm:px-3 text-xs sm:text-sm whitespace-nowrap">
+                  <Shield className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <span className="hidden xs:inline">Crisis Framework</span>
+                  <span className="xs:hidden">Crisis</span>
+                </TabsTrigger>
               </TabsList>
             </div>
           </Tabs>
