@@ -2042,33 +2042,46 @@ Comprehensive Scenario Analysis & Crisis Management Platform
           <title>Crisis Game Book - ${scenarioTitle}</title>
           <meta charset="utf-8">
           <style>
+            * {
+              margin: 0;
+              padding: 0;
+              box-sizing: border-box;
+            }
             body { 
-              font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+              font-family: 'Arial', 'Helvetica', sans-serif; 
               margin: 0; 
-              padding: 40px;
+              padding: 30px;
               line-height: 1.6; 
               color: #333; 
               background: white;
+              font-size: 14px;
             }
             .header { 
               border-bottom: 3px solid #dc2626; 
-              padding-bottom: 30px; 
-              margin-bottom: 40px; 
+              padding-bottom: 20px; 
+              margin-bottom: 30px; 
               text-align: center;
+              page-break-after: avoid;
             }
             .title { 
-              font-size: 32px; 
+              font-size: 28px; 
               font-weight: bold; 
               color: #991b1b; 
-              margin-bottom: 10px; 
+              margin-bottom: 8px; 
+              line-height: 1.2;
             }
             .subtitle { 
               color: #6b7280; 
-              font-size: 18px; 
-              margin-bottom: 20px;
+              font-size: 16px; 
+              margin-bottom: 15px;
+              font-weight: 500;
+            }
+            .meta-info {
+              font-size: 12px;
+              color: #6b7280;
             }
             .section { 
-              margin-bottom: 40px; 
+              margin-bottom: 30px; 
               page-break-inside: avoid; 
               border: 1px solid #e5e7eb;
               border-radius: 8px;
@@ -2077,46 +2090,99 @@ Comprehensive Scenario Analysis & Crisis Management Platform
             .section-header {
               background: #dc2626;
               color: white;
-              padding: 15px 20px;
-              font-size: 20px;
+              padding: 12px 16px;
+              font-size: 18px;
               font-weight: bold;
               margin: 0;
             }
             .section-content {
               padding: 20px;
-              white-space: pre-wrap;
-              font-size: 14px;
               line-height: 1.8;
+              font-size: 14px;
+            }
+            .section-content p {
+              margin-bottom: 12px;
+            }
+            .section-content ul {
+              margin: 12px 0;
+              padding-left: 20px;
+            }
+            .section-content li {
+              margin-bottom: 6px;
             }
             .crisis-alert {
               background: #fef2f2;
               border: 2px solid #fca5a5;
               border-radius: 8px;
-              padding: 20px;
+              padding: 16px;
               margin: 20px 0;
               text-align: center;
             }
             .crisis-alert h3 {
               color: #dc2626;
-              font-size: 24px;
-              margin: 0 0 10px 0;
+              font-size: 20px;
+              margin: 0 0 8px 0;
+              font-weight: bold;
+            }
+            .crisis-alert p {
+              margin: 0;
+              font-size: 14px;
+            }
+            .content-block {
+              margin-bottom: 16px;
+              padding: 16px;
+              background: #f9fafb;
+              border-radius: 6px;
+              border-left: 4px solid #dc2626;
+            }
+            .content-block h4 {
+              font-size: 16px;
+              font-weight: bold;
+              margin-bottom: 8px;
+              color: #1f2937;
+            }
+            .formatted-text {
+              white-space: pre-wrap;
+              line-height: 1.7;
+              font-size: 14px;
+              color: #374151;
             }
             @media print { 
-              body { margin: 20px; font-size: 12px; }
-              .header { margin-bottom: 20px; }
-              .section { margin-bottom: 25px; page-break-inside: avoid; }
+              body { 
+                margin: 15px; 
+                font-size: 12px; 
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+              }
+              .header { margin-bottom: 15px; }
+              .section { 
+                margin-bottom: 20px; 
+                page-break-inside: avoid; 
+                border: 1px solid #ccc !important;
+              }
+              .section-header { 
+                background: #dc2626 !important; 
+                color: white !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+              }
+              .crisis-alert {
+                background: #f9f9f9 !important;
+                border: 1px solid #ccc !important;
+              }
             }
             @page { 
               margin: 2cm; 
               size: A4;
             }
             .footer {
-              margin-top: 40px;
-              padding-top: 20px;
+              margin-top: 30px;
+              padding-top: 15px;
               border-top: 2px solid #e5e7eb;
               text-align: center;
               color: #6b7280;
               font-size: 12px;
+              page-break-inside: avoid;
             }
           </style>
         </head>
@@ -2124,7 +2190,7 @@ Comprehensive Scenario Analysis & Crisis Management Platform
           <div class="header">
             <div class="title">🎯 Crisis Game Book</div>
             <div class="subtitle">${scenarioTitle}</div>
-            <div style="color: #6b7280; font-size: 14px;">
+            <div class="meta-info">
               Generated on ${currentDate} at ${currentTime}
             </div>
           </div>
@@ -2137,12 +2203,19 @@ Comprehensive Scenario Analysis & Crisis Management Platform
           <div class="section">
             <div class="section-header">📖 Game Book Content</div>
             <div class="section-content">
-              ${data.game_book_content || 'No game book content available'}
+              ${data.game_book_content ? `
+                <div class="formatted-text">${data.game_book_content.replace(/\n/g, '<br>')}</div>
+              ` : `
+                <div class="content-block">
+                  <h4>Game Book Generation</h4>
+                  <p>This crisis game book provides strategic decision-making scenarios and response frameworks for effective crisis management.</p>
+                </div>
+              `}
             </div>
           </div>
 
           <div class="footer">
-            <div>Generated by Polycrisis Simulator</div>
+            <div><strong>Generated by Polycrisis Simulator</strong></div>
             <div>Crisis Game Book - Strategic Response Framework</div>
           </div>
         </body>
