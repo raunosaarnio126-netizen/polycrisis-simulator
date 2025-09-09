@@ -543,6 +543,288 @@ async def create_scenario(scenario_data: ScenarioCreate, current_user: User = De
     await db.scenarios.insert_one(scenario.dict())
     return scenario
 
+# Scenario Adjusters - Fuzzy Logic Endpoints
+@api_router.post("/companies/{company_id}/scenario-adjustments", response_model=ScenarioAdjustment)
+async def create_scenario_adjustment(company_id: str, adjustment_data: ScenarioAdjustmentCreate, current_user: User = Depends(get_current_user)):
+    """Create a new scenario adjustment with fuzzy logic parameters"""
+    # Verify company access
+    company = await db.companies.find_one({"id": company_id})
+    if not company:
+        raise HTTPException(status_code=404, detail="Company not found")
+    
+    if current_user.company_id != company_id and company['created_by'] != current_user.id:
+        raise HTTPException(status_code=403, detail="Access denied")
+    
+    # Validate that opposing percentages sum to 100
+    pairs = [
+        (adjustment_data.economic_crisis_pct, adjustment_data.economic_stability_pct),
+        (adjustment_data.social_unrest_pct, adjustment_data.social_cohesion_pct),
+        (adjustment_data.environmental_degradation_pct, adjustment_data.environmental_resilience_pct),
+        (adjustment_data.political_instability_pct, adjustment_data.political_stability_pct),
+        (adjustment_data.technological_disruption_pct, adjustment_data.technological_advancement_pct)
+    ]
+    
+    for pair in pairs:
+        if abs(sum(pair) - 100.0) > 0.1:  # Allow small floating point errors
+            raise HTTPException(status_code=400, detail="Each opposing pair must sum to 100%")
+    
+    try:
+        # Generate AI analysis based on current settings
+        analysis = await generate_scenario_analysis(company, adjustment_data)
+        
+        scenario_adjustment = ScenarioAdjustment(
+            company_id=company_id,
+            created_by=current_user.id,
+            real_time_analysis=analysis['analysis'],
+            impact_summary=analysis['impact_summary'],
+            risk_level=analysis['risk_level'],
+            recommendations=analysis['recommendations'],
+            **adjustment_data.dict()
+        )
+        
+        await db.scenario_adjustments.insert_one(scenario_adjustment.dict())
+        return scenario_adjustment
+        
+    except Exception as e:
+        logging.error(f"Scenario adjustment creation error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to create scenario adjustment: {str(e)}")
+
+@api_router.get("/companies/{company_id}/scenario-adjustments", response_model=List[ScenarioAdjustment])
+async def get_scenario_adjustments(company_id: str, current_user: User = Depends(get_current_user)):
+    """Get all scenario adjustments for a company"""
+    # Verify company access
+    if current_user.company_id != company_id:
+        company = await db.companies.find_one({"id": company_id, "created_by": current_user.id})
+        if not company:
+            raise HTTPException(status_code=403, detail="Access denied")
+    
+    adjustments = await db.scenario_adjustments.find({"company_id": company_id}).to_list(1000)
+    return [ScenarioAdjustment(**adj) for adj in adjustments]
+
+@api_router.put("/companies/{company_id}/scenario-adjustments/{adjustment_id}", response_model=ScenarioAdjustment)
+async def update_scenario_adjustment(company_id: str, adjustment_id: str, adjustment_data: ScenarioAdjustmentCreate, current_user: User = Depends(get_current_user)):
+    """Update scenario adjustment and regenerate AI analysis"""
+    # Verify company access
+    if current_user.company_id != company_id:
+        company = await db.companies.find_one({"id": company_id, "created_by": current_user.id})
+        if not company:
+            raise HTTPException(status_code=403, detail="Access denied")
+    else:
+        company = await db.companies.find_one({"id": company_id})
+    
+    # Find existing adjustment
+    existing_adjustment = await db.scenario_adjustments.find_one({"id": adjustment_id, "company_id": company_id})
+    if not existing_adjustment:
+        raise HTTPException(status_code=404, detail="Scenario adjustment not found")
+    
+    # Validate percentages
+    pairs = [
+        (adjustment_data.economic_crisis_pct, adjustment_data.economic_stability_pct),
+        (adjustment_data.social_unrest_pct, adjustment_data.social_cohesion_pct),
+        (adjustment_data.environmental_degradation_pct, adjustment_data.environmental_resilience_pct),
+        (adjustment_data.political_instability_pct, adjustment_data.political_stability_pct),
+        (adjustment_data.technological_disruption_pct, adjustment_data.technological_advancement_pct)
+    ]
+    
+    for pair in pairs:
+        if abs(sum(pair) - 100.0) > 0.1:
+            raise HTTPException(status_code=400, detail="Each opposing pair must sum to 100%")
+    
+    try:
+        # Generate new AI analysis
+        analysis = await generate_scenario_analysis(company, adjustment_data)
+        
+        # Update the adjustment
+        update_data = {
+            **adjustment_data.dict(),
+            "real_time_analysis": analysis['analysis'],
+            "impact_summary": analysis['impact_summary'],
+            "risk_level": analysis['risk_level'],
+            "recommendations": analysis['recommendations'],
+            "updated_at": datetime.now(timezone.utc)
+        }
+        
+        await db.scenario_adjustments.update_one(
+            {"id": adjustment_id, "company_id": company_id},
+            {"$set": update_data}
+        )
+        
+        updated_adjustment = await db.scenario_adjustments.find_one({"id": adjustment_id})
+        return ScenarioAdjustment(**updated_adjustment)
+        
+    except Exception as e:
+        logging.error(f"Scenario adjustment update error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to update scenario adjustment: {str(e)}")
+
+@api_router.post("/companies/{company_id}/consensus", response_model=ConsensusSettings)
+async def create_consensus(company_id: str, consensus_data: ConsensusCreate, current_user: User = Depends(get_current_user)):
+    """Create consensus settings for team agreement on scenario adjustments"""
+    # Verify company access
+    if current_user.company_id != company_id:
+        company = await db.companies.find_one({"id": company_id, "created_by": current_user.id})
+        if not company:
+            raise HTTPException(status_code=403, detail="Access denied")
+    
+    # Verify adjustment exists
+    adjustment = await db.scenario_adjustments.find_one({"id": consensus_data.adjustment_id, "company_id": company_id})
+    if not adjustment:
+        raise HTTPException(status_code=404, detail="Scenario adjustment not found")
+    
+    # Get team size if team_id provided
+    total_members = 1
+    if consensus_data.team_id:
+        team = await db.teams.find_one({"id": consensus_data.team_id, "company_id": company_id})
+        if team:
+            total_members = len(team['team_members']) + 1  # +1 for team lead
+    
+    consensus = ConsensusSettings(
+        company_id=company_id,
+        team_id=consensus_data.team_id,
+        adjustment_id=consensus_data.adjustment_id,
+        consensus_name=consensus_data.consensus_name,
+        agreed_by=[current_user.id],  # Creator automatically agrees
+        total_team_members=total_members,
+        consensus_percentage=100.0 / total_members,
+        final_settings={
+            "economic_crisis_pct": adjustment['economic_crisis_pct'],
+            "economic_stability_pct": adjustment['economic_stability_pct'],
+            "social_unrest_pct": adjustment['social_unrest_pct'],
+            "social_cohesion_pct": adjustment['social_cohesion_pct'],
+            "environmental_degradation_pct": adjustment['environmental_degradation_pct'],
+            "environmental_resilience_pct": adjustment['environmental_resilience_pct'],
+            "political_instability_pct": adjustment['political_instability_pct'],
+            "political_stability_pct": adjustment['political_stability_pct'],
+            "technological_disruption_pct": adjustment['technological_disruption_pct'],
+            "technological_advancement_pct": adjustment['technological_advancement_pct']
+        }
+    )
+    
+    await db.consensus_settings.insert_one(consensus.dict())
+    return consensus
+
+@api_router.post("/companies/{company_id}/consensus/{consensus_id}/agree")
+async def agree_to_consensus(company_id: str, consensus_id: str, current_user: User = Depends(get_current_user)):
+    """User agrees to the consensus settings"""
+    # Verify company access
+    if current_user.company_id != company_id:
+        company = await db.companies.find_one({"id": company_id, "created_by": current_user.id})
+        if not company:
+            raise HTTPException(status_code=403, detail="Access denied")
+    
+    # Find consensus
+    consensus = await db.consensus_settings.find_one({"id": consensus_id, "company_id": company_id})
+    if not consensus:
+        raise HTTPException(status_code=404, detail="Consensus not found")
+    
+    # Add user to agreed list if not already there
+    if current_user.id not in consensus['agreed_by']:
+        agreed_by = consensus['agreed_by'] + [current_user.id]
+        consensus_percentage = (len(agreed_by) / consensus['total_team_members']) * 100
+        consensus_reached = consensus_percentage >= 75.0  # 75% threshold for consensus
+        
+        update_data = {
+            "agreed_by": agreed_by,
+            "consensus_percentage": consensus_percentage,
+            "consensus_reached": consensus_reached
+        }
+        
+        if consensus_reached and not consensus.get('finalized_at'):
+            update_data["finalized_at"] = datetime.now(timezone.utc)
+        
+        await db.consensus_settings.update_one(
+            {"id": consensus_id},
+            {"$set": update_data}
+        )
+    
+    return {"message": "Agreement recorded", "consensus_reached": consensus_reached}
+
+async def generate_scenario_analysis(company: dict, adjustment_data: ScenarioAdjustmentCreate) -> dict:
+    """Generate AI analysis based on SEPTE framework adjustments"""
+    chat = LlmChat(
+        api_key=EMERGENT_LLM_KEY,
+        session_id=f"scenario-adjustment-{company['id']}",
+        system_message="""You are an expert scenario analysis consultant specializing in SEPTE framework analysis (Social, Economic, Political, Technological, Environmental) for crisis management.
+
+Your role is to:
+1. Analyze fuzzy logic adjustments to scenario parameters
+2. Provide real-time impact assessments based on percentage changes
+3. Generate concise, actionable insights for scenario planning
+4. Assess overall risk levels and provide strategic recommendations
+
+Focus on short, clear analysis that immediately shows the impact of parameter changes."""
+    ).with_model("anthropic", "claude-3-7-sonnet-20250219")
+    
+    # Build SEPTE analysis prompt
+    analysis_prompt = f"""
+Analyze this scenario adjustment for {company['company_name']} ({company['industry']}):
+
+SEPTE Framework Settings:
+• Economic: {adjustment_data.economic_crisis_pct:.1f}% Crisis vs {adjustment_data.economic_stability_pct:.1f}% Stability
+• Social: {adjustment_data.social_unrest_pct:.1f}% Unrest vs {adjustment_data.social_cohesion_pct:.1f}% Cohesion  
+• Environmental: {adjustment_data.environmental_degradation_pct:.1f}% Degradation vs {adjustment_data.environmental_resilience_pct:.1f}% Resilience
+• Political: {adjustment_data.political_instability_pct:.1f}% Instability vs {adjustment_data.political_stability_pct:.1f}% Stability
+• Technological: {adjustment_data.technological_disruption_pct:.1f}% Disruption vs {adjustment_data.technological_advancement_pct:.1f}% Advancement
+
+Provide:
+1. **Immediate Impact Summary** (2-3 sentences on overall scenario implications)
+2. **Risk Level Assessment** (Low/Medium/High/Critical with reasoning)
+3. **Key Strategic Recommendations** (3-4 actionable items)
+
+Keep analysis concise and focused on decision-making implications.
+"""
+    
+    user_message = UserMessage(text=analysis_prompt)
+    analysis_content = await chat.send_message(user_message)
+    
+    # Parse analysis into components
+    lines = analysis_content.split('\n')
+    
+    # Extract impact summary (look for summary section)
+    impact_summary = ""
+    for i, line in enumerate(lines):
+        if "impact summary" in line.lower() or "immediate impact" in line.lower():
+            # Get next few lines
+            for j in range(i+1, min(i+4, len(lines))):
+                if lines[j].strip() and not lines[j].startswith('#'):
+                    impact_summary += lines[j].strip() + " "
+            break
+    
+    if not impact_summary:
+        impact_summary = analysis_content[:200] + "..."
+    
+    # Determine risk level based on SEPTE settings
+    crisis_avg = (
+        adjustment_data.economic_crisis_pct + 
+        adjustment_data.social_unrest_pct + 
+        adjustment_data.environmental_degradation_pct + 
+        adjustment_data.political_instability_pct + 
+        adjustment_data.technological_disruption_pct
+    ) / 5
+    
+    if crisis_avg >= 75:
+        risk_level = "critical"
+    elif crisis_avg >= 60:
+        risk_level = "high"
+    elif crisis_avg >= 40:
+        risk_level = "medium"
+    else:
+        risk_level = "low"
+    
+    # Extract recommendations
+    recommendations = [
+        "Monitor key SEPTE indicators for early warning signals",
+        "Develop contingency plans for high-risk scenario elements",
+        "Establish cross-functional response teams for identified vulnerabilities",
+        "Create scenario-specific communication and response protocols"
+    ]
+    
+    return {
+        "analysis": analysis_content,
+        "impact_summary": impact_summary.strip(),
+        "risk_level": risk_level,
+        "recommendations": recommendations
+    }
+
 @api_router.get("/scenarios", response_model=List[Scenario])
 async def get_scenarios(current_user: User = Depends(get_current_user)):
     scenarios = await db.scenarios.find({"user_id": current_user.id}).to_list(1000)
