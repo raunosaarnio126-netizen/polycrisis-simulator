@@ -2651,6 +2651,11 @@ const CompanyManagement = () => {
   const [showCreateCompany, setShowCreateCompany] = useState(false);
   const [showRapidAnalysis, setShowRapidAnalysis] = useState(false);
   const [rapidAnalysisData, setRapidAnalysisData] = useState(null);
+  const [showCompanyInsights, setShowCompanyInsights] = useState(false);
+  const [companyInsightsData, setCompanyInsightsData] = useState(null);
+  const [showDocumentAnalysis, setShowDocumentAnalysis] = useState(false);
+  const [showTeamCreator, setShowTeamCreator] = useState(false);
+  const [availableUsers, setAvailableUsers] = useState([]);
   const [companyData, setCompanyData] = useState({
     company_name: '',
     industry: '',
