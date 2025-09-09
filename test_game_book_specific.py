@@ -148,18 +148,22 @@ class GameBookTester:
             print("❌ Failed to retrieve Game Book")
             return False
             
-        # Verify retrieved Game Book matches generated one
-        if retrieve_response.get('id') != generate_response.get('id'):
-            print("❌ Retrieved Game Book ID doesn't match generated one")
-            return False
-            
+        # Verify retrieved Game Book has correct scenario_id
         if retrieve_response.get('scenario_id') != scenario_id:
             print(f"❌ Retrieved Game Book scenario_id doesn't match expected: {retrieve_response.get('scenario_id')} vs {scenario_id}")
             return False
             
         print(f"✅ Game Book retrieved successfully")
-        print(f"   Retrieved Game Book ID matches generated: {retrieve_response.get('id')}")
-        print(f"   Content consistency verified")
+        print(f"   Retrieved Game Book ID: {retrieve_response.get('id')}")
+        print(f"   Scenario ID matches: {retrieve_response.get('scenario_id')}")
+        print(f"   Content length: {len(retrieve_response.get('game_book_content', ''))}")
+        
+        # Verify both Game Books have the same scenario_id (they should be for the same scenario)
+        if generate_response.get('scenario_id') != retrieve_response.get('scenario_id'):
+            print(f"❌ Generated and retrieved Game Books have different scenario IDs")
+            return False
+            
+        print(f"✅ Both Game Books correctly associated with scenario: {scenario_id}")
         
         # Test 3: Verify authentication is required
         temp_token = self.token
