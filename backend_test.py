@@ -1768,17 +1768,11 @@ class PolycrisisAPITester:
 
     def test_crisis_strategy_unknown_crisis_type(self):
         """Test Crisis Strategy endpoint with unknown crisis type"""
-        crisis_data = {
-            "crisis_type": "alien_invasion",  # Unknown crisis type
-            "severity_level": 5
-        }
-        
         success, response = self.run_test(
             "Crisis Strategy - Unknown Crisis Type",
             "POST",
-            "knowledge-topology/crisis-strategy",
-            200,  # Should still work but use default specializations
-            data=crisis_data
+            "knowledge-topology/crisis-strategy?crisis_type=alien_invasion&severity_level=5",
+            200  # Should still work but use default specializations
         )
         
         if success:
