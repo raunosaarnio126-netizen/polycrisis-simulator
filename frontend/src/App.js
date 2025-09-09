@@ -1066,7 +1066,15 @@ const ScenarioManagement = ({ onScenarioSelect }) => {
   // Multi-document state management
   const [openDocuments, setOpenDocuments] = useState([]);
   const [activeDocument, setActiveDocument] = useState(null);
-  const [showMultiDocView, setShowMultiDocView] = useState(false);
+  const [showAmendDialog, setShowAmendDialog] = useState(false);
+  const [amendingScenario, setAmendingScenario] = useState(null);
+  const [amendFormData, setAmendFormData] = useState({
+    affected_regions: '',
+    key_variables: '',
+    additional_context: '',
+    stakeholders: '',
+    timeline: ''
+  });
   const [showAddSourceDialog, setShowAddSourceDialog] = useState(null);
   const [newSourceData, setNewSourceData] = useState({
     source_type: '',
