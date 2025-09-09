@@ -2679,6 +2679,24 @@ Comprehensive Scenario Analysis & Crisis Management Platform
                     <Timer className="w-4 h-4 meta-icon" />
                     <span>Created: {new Date(scenario.created_at).toLocaleDateString()}</span>
                   </div>
+                  {/* Debug Info Button */}
+                  <div className="meta-item">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        console.log('Full Scenario Data:', scenario);
+                        toast({
+                          title: "Scenario Debug Info",
+                          description: `Check browser console for full scenario data. Description length: ${scenario.description?.length || 0} chars`,
+                          duration: 5000
+                        });
+                      }}
+                      className="text-xs px-2 py-1 h-6"
+                    >
+                      🔍 Debug
+                    </Button>
+                  </div>
                 </div>
 
                 <div className="action-buttons">
