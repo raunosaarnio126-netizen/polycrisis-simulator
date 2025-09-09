@@ -2538,6 +2538,193 @@ Comprehensive Scenario Analysis & Crisis Management Platform
     }
   };
 
+  // Multi-document management functions
+  const openDocumentInPanel = async (scenario, documentType) => {
+    const documentId = `${scenario.id}-${documentType}`;
+    
+    // Check if document is already open
+    const existingDoc = openDocuments.find(doc => doc.id === documentId);
+    if (existingDoc) {
+      setActiveDocument(documentId);
+      return;
+    }
+
+    setGeneratingImplementation(true);
+    try {
+      let documentData = null;
+      let documentTitle = '';
+      
+      // Fetch document data based on type
+      switch (documentType) {
+        case 'game-book':
+          try {
+            const response = await axios.get(`${API}/scenarios/${scenario.id}/gamebook`);
+            documentData = response.data;
+            documentTitle = 'Crisis Game Book';
+          } catch (error) {
+            if (error.response?.status === 404) {
+              const response = await axios.post(`${API}/scenarios/${scenario.id}/gamebook`);
+              documentData = response.data;
+              documentTitle = 'Crisis Game Book';
+            } else throw error;
+          }
+          break;
+          
+        case 'action-plan':
+          try {
+            const response = await axios.get(`${API}/scenarios/${scenario.id}/action-plan`);
+            documentData = response.data;
+            documentTitle = 'Action Plan';
+          } catch (error) {
+            if (error.response?.status === 404) {
+              const response = await axios.post(`${API}/scenarios/${scenario.id}/action-plan`);
+              documentData = response.data;
+              documentTitle = 'Action Plan';
+            } else throw error;
+          }
+          break;
+          
+        case 'strategy':
+          try {
+            const response = await axios.get(`${API}/scenarios/${scenario.id}/strategy-implementation`);
+            documentData = response.data;
+            documentTitle = 'Implementation Strategy';
+          } catch (error) {
+            if (error.response?.status === 404) {
+              const response = await axios.post(`${API}/scenarios/${scenario.id}/strategy-implementation`);
+              documentData = response.data;
+              documentTitle = 'Implementation Strategy';
+            } else throw error;
+          }
+          break;
+          
+        case 'monitors':
+          try {
+            const response = await axios.get(`${API}/scenarios/${scenario.id}/monitor-agents`);
+            documentData = response.data;
+            documentTitle = 'AI Monitor Agents';
+          } catch (error) {
+            if (error.response?.status === 404) {
+              const response = await axios.post(`${API}/scenarios/${scenario.id}/monitor-agents`);
+              documentData = response.data;
+              documentTitle = 'AI Monitor Agents';
+            } else throw error;
+          }
+          break;
+          
+        case 'systems':
+          try {
+            const response = await axios.get(`${API}/scenarios/${scenario.id}/complex-systems`);
+            documentData = response.data;
+            documentTitle = 'Complex Adaptive Systems';
+          } catch (error) {
+            if (error.response?.status === 404) {
+              const response = await axios.post(`${API}/scenarios/${scenario.id}/complex-systems`);
+              documentData = response.data;
+              documentTitle = 'Complex Adaptive Systems';
+            } else throw error;
+          }
+          break;
+          
+        case 'learning':
+          try {
+            const response = await axios.get(`${API}/scenarios/${scenario.id}/learning-insights`);
+            documentData = response.data;
+            documentTitle = 'AI Learning Insights';
+          } catch (error) {
+            if (error.response?.status === 404) {
+              const response = await axios.post(`${API}/scenarios/${scenario.id}/learning-insights`);
+              documentData = response.data;
+              documentTitle = 'AI Learning Insights';
+            } else throw error;
+          }
+          break;
+          
+        case 'sources':
+          try {
+            const response = await axios.get(`${API}/scenarios/${scenario.id}/monitoring-sources`);
+            documentData = response.data;
+            documentTitle = 'Smart Sources';
+          } catch (error) {
+            if (error.response?.status === 404) {
+              const response = await axios.post(`${API}/scenarios/${scenario.id}/smart-suggestions`);
+              documentData = response.data;
+              documentTitle = 'Smart Sources';
+            } else throw error;
+          }
+          break;
+          
+        case 'dashboard':
+          try {
+            const response = await axios.get(`${API}/scenarios/${scenario.id}/monitoring-dashboard`);
+            documentData = response.data;
+            documentTitle = 'Analytics Dashboard';
+          } catch (error) {
+            if (error.response?.status === 404) {
+              const response = await axios.post(`${API}/scenarios/${scenario.id}/dashboard`);
+              documentData = response.data;
+              documentTitle = 'Analytics Dashboard';
+            } else throw error;
+          }
+          break;
+          
+        default:
+          throw new Error(`Unknown document type: ${documentType}`);
+      }
+
+      // Add document to open documents
+      const newDocument = {
+        id: documentId,
+        scenario: scenario,
+        type: documentType,
+        title: documentTitle,
+        data: documentData,
+        timestamp: new Date().toISOString()
+      };
+      
+      setOpenDocuments(prev => [...prev, newDocument]);
+      setActiveDocument(documentId);
+      setShowMultiDocView(true);
+      
+      toast({
+        title: "Document Opened",
+        description: `${documentTitle} opened in side panel`,
+        duration: 3000
+      });
+      
+    } catch (error) {
+      console.error('Failed to open document:', error);
+      toast({
+        title: "Error",
+        description: `Failed to open ${documentType}. Please try again.`,
+        variant: "destructive"
+      });
+    } finally {
+      setGeneratingImplementation(false);
+    }
+  };
+
+  const closeDocument = (documentId) => {
+    setOpenDocuments(prev => prev.filter(doc => doc.id !== documentId));
+    
+    // If closing active document, switch to another or close multi-view
+    if (activeDocument === documentId) {
+      const remaining = openDocuments.filter(doc => doc.id !== documentId);
+      if (remaining.length > 0) {
+        setActiveDocument(remaining[0].id);
+      } else {
+        setActiveDocument(null);
+        setShowMultiDocView(false);
+      }
+    }
+  };
+
+  const closeAllDocuments = () => {
+    setOpenDocuments([]);
+    setActiveDocument(null);
+    setShowMultiDocView(false);
+  };
+
   const filteredAndSortedScenarios = scenarios
     .filter(scenario => {
       if (filterStatus !== 'all' && scenario.status !== filterStatus) return false;
