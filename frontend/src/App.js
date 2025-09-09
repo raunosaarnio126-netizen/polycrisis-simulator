@@ -44,7 +44,9 @@ const AuthProvider = ({ children }) => {
       setUser(response.data);
     } catch (error) {
       console.error('Failed to fetch user profile:', error);
-      logout();
+      // Don't logout on profile fetch failure - allow user to continue using the app
+      // The user can still access the dashboard with just the token
+      console.warn('Profile fetch failed but user remains authenticated');
     }
   };
 
