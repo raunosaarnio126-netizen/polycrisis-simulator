@@ -2347,6 +2347,31 @@ def main():
     print("   Testing Enhanced Team Management...")
     tester.test_team_management_enhanced()
 
+    print("\n🎯 Testing FUZZY LOGIC SCENARIO ADJUSTERS...")
+    print("   Testing Scenario Adjustment Creation with SEPTE Framework...")
+    tester.test_create_scenario_adjustment()
+    
+    print("   Testing SEPTE Percentage Validation...")
+    tester.test_scenario_adjustment_percentage_validation()
+    
+    print("   Testing Scenario Adjustments Retrieval...")
+    tester.test_get_scenario_adjustments()
+    
+    print("   Testing Scenario Adjustment Updates...")
+    tester.test_update_scenario_adjustment()
+    
+    print("   Testing Consensus Settings Creation...")
+    tester.test_create_consensus_settings()
+    
+    print("   Testing Consensus Agreement...")
+    tester.test_agree_to_consensus()
+    
+    print("   Testing Access Control for Scenario Adjustments...")
+    tester.test_scenario_adjustment_access_control()
+    
+    print("   Testing AI Analysis Integration with Claude Sonnet 4...")
+    tester.test_ai_analysis_integration()
+
     print("\n👑 Testing SaaS Admin Platform Features...")
     print("   Testing Admin System Initialization...")
     tester.test_admin_initialize()
