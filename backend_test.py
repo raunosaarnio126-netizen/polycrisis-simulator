@@ -2219,6 +2219,399 @@ startxref
             print(f"   ❌ Failed to create extreme scenario for AI analysis")
             return False
 
+    # ========== TEAM CREATION FUNCTIONALITY TESTING ==========
+    
+    def test_team_creation_with_email_list(self):
+        """Test Team Creation with Email List - Mixed existing and new emails"""
+        if not hasattr(self, 'company_id') or not self.company_id:
+            print("❌ No company ID available for team creation with email list")
+            return False
+            
+        # Create test data with mixed email list (existing and new)
+        team_data = {
+            "team_name": "Crisis Response Team Beta",
+            "team_description": "Testing team creation with email list functionality",
+            "team_members": [
+                "existing.user@company.com",  # Simulate existing user
+                "new.invite1@company.com",    # New invite
+                "new.invite2@company.com",    # New invite
+                "another.existing@company.com" # Another existing user
+            ],
+            "team_roles": ["crisis_manager", "analyst", "coordinator", "observer"]
+        }
+        
+        success, response = self.run_test(
+            "Team Creation with Email List",
+            "POST",
+            f"companies/{self.company_id}/teams",
+            200,
+            data=team_data
+        )
+        
+        if success and 'id' in response:
+            self.email_team_id = response['id']
+            print(f"   Created team ID: {self.email_team_id}")
+            print(f"   Team name: {response.get('team_name', 'N/A')}")
+            print(f"   Team description: {response.get('team_description', 'N/A')}")
+            print(f"   Team members count: {len(response.get('team_members', []))}")
+            print(f"   Team roles: {response.get('team_roles', [])}")
+            print(f"   Team lead: {response.get('team_lead', 'N/A')}")
+            print(f"   Access level: {response.get('access_level', 'N/A')}")
+            
+            # Verify team_members field contains email addresses as expected
+            team_members = response.get('team_members', [])
+            if team_members:
+                print(f"   Team members stored: {team_members}")
+                # Check if emails are properly stored
+                for email in team_data['team_members']:
+                    if email in team_members:
+                        print(f"   ✅ Email {email} properly stored")
+                    else:
+                        print(f"   ❌ Email {email} not found in stored team members")
+            
+            return True
+        return False
+
+    def test_team_creation_edge_cases(self):
+        """Test Team Creation Edge Cases"""
+        if not hasattr(self, 'company_id') or not self.company_id:
+            print("❌ No company ID available for edge case testing")
+            return False
+            
+        edge_case_results = []
+        
+        # Test 1: Empty team_members list
+        print(f"\n   🔍 Testing empty team_members list...")
+        empty_team_data = {
+            "team_name": "Empty Team Test",
+            "team_description": "Testing empty team members list",
+            "team_members": [],
+            "team_roles": []
+        }
+        
+        success, response = self.run_test(
+            "Empty Team Members List",
+            "POST",
+            f"companies/{self.company_id}/teams",
+            200,  # Assuming empty list is allowed
+            data=empty_team_data
+        )
+        edge_case_results.append(("Empty team_members", success))
+        
+        # Test 2: Duplicate emails in team_members list
+        print(f"\n   🔍 Testing duplicate emails...")
+        duplicate_team_data = {
+            "team_name": "Duplicate Email Test",
+            "team_description": "Testing duplicate emails in team members",
+            "team_members": [
+                "duplicate@company.com",
+                "unique1@company.com", 
+                "duplicate@company.com",  # Duplicate
+                "unique2@company.com"
+            ],
+            "team_roles": ["crisis_manager", "analyst"]
+        }
+        
+        success, response = self.run_test(
+            "Duplicate Emails in Team Members",
+            "POST",
+            f"companies/{self.company_id}/teams",
+            200,  # Should handle duplicates gracefully
+            data=duplicate_team_data
+        )
+        edge_case_results.append(("Duplicate emails", success))
+        
+        # Test 3: Invalid email formats
+        print(f"\n   🔍 Testing invalid email formats...")
+        invalid_email_data = {
+            "team_name": "Invalid Email Test",
+            "team_description": "Testing invalid email formats",
+            "team_members": [
+                "valid@company.com",
+                "invalid-email",  # Invalid format
+                "another@invalid",  # Invalid format
+                "also.valid@company.com"
+            ],
+            "team_roles": ["analyst"]
+        }
+        
+        success, response = self.run_test(
+            "Invalid Email Formats",
+            "POST",
+            f"companies/{self.company_id}/teams",
+            422,  # Should reject invalid emails with validation error
+            data=invalid_email_data
+        )
+        edge_case_results.append(("Invalid email formats", success))
+        
+        # Test 4: Very long team_members list
+        print(f"\n   🔍 Testing very long team_members list...")
+        long_email_list = [f"user{i}@company.com" for i in range(50)]  # 50 emails
+        long_team_data = {
+            "team_name": "Large Team Test",
+            "team_description": "Testing very long team members list",
+            "team_members": long_email_list,
+            "team_roles": ["crisis_manager", "analyst", "coordinator"]
+        }
+        
+        success, response = self.run_test(
+            "Very Long Team Members List",
+            "POST",
+            f"companies/{self.company_id}/teams",
+            200,  # Should handle large lists
+            data=long_team_data
+        )
+        edge_case_results.append(("Long team_members list", success))
+        
+        # Summary of edge case results
+        print(f"\n   📊 Edge Case Test Results:")
+        passed_edge_cases = 0
+        for test_name, result in edge_case_results:
+            status = "✅ PASSED" if result else "❌ FAILED"
+            print(f"   - {test_name}: {status}")
+            if result:
+                passed_edge_cases += 1
+        
+        print(f"   Edge cases passed: {passed_edge_cases}/{len(edge_case_results)}")
+        return passed_edge_cases > 0
+
+    def test_team_creation_access_control(self):
+        """Test Team Creation Access Control"""
+        if not hasattr(self, 'company_id') or not self.company_id:
+            print("❌ No company ID available for access control testing")
+            return False
+            
+        # Test 1: Valid access (current user is company member/creator)
+        print(f"\n   🔍 Testing valid access...")
+        valid_team_data = {
+            "team_name": "Access Control Valid Team",
+            "team_description": "Testing valid access control",
+            "team_members": ["member1@company.com", "member2@company.com"],
+            "team_roles": ["crisis_manager", "analyst"]
+        }
+        
+        success, response = self.run_test(
+            "Valid Access Control",
+            "POST",
+            f"companies/{self.company_id}/teams",
+            200,
+            data=valid_team_data
+        )
+        
+        if success:
+            print(f"   ✅ Valid access test passed")
+        else:
+            print(f"   ❌ Valid access test failed")
+        
+        # Test 2: Invalid access (try to access non-existent company)
+        print(f"\n   🔍 Testing invalid access with non-existent company...")
+        fake_company_id = "non-existent-company-id"
+        
+        invalid_success, invalid_response = self.run_test(
+            "Invalid Access Control - Non-existent Company",
+            "POST",
+            f"companies/{fake_company_id}/teams",
+            403,  # Should return 403 Forbidden
+            data=valid_team_data
+        )
+        
+        if invalid_success:
+            print(f"   ✅ Invalid access properly rejected")
+        else:
+            print(f"   ❌ Invalid access not properly rejected")
+        
+        # Test 3: Test without authentication token
+        print(f"\n   🔍 Testing access without authentication...")
+        original_token = self.token
+        self.token = None  # Remove token temporarily
+        
+        no_auth_success, no_auth_response = self.run_test(
+            "No Authentication Access Control",
+            "POST",
+            f"companies/{self.company_id}/teams",
+            401,  # Should return 401 Unauthorized
+            data=valid_team_data
+        )
+        
+        self.token = original_token  # Restore token
+        
+        if no_auth_success:
+            print(f"   ✅ No authentication properly rejected")
+        else:
+            print(f"   ❌ No authentication not properly rejected")
+        
+        access_tests_passed = sum([success, invalid_success, no_auth_success])
+        print(f"   📊 Access control tests passed: {access_tests_passed}/3")
+        
+        return access_tests_passed >= 2  # At least 2 out of 3 should pass
+
+    def test_team_data_structure_verification(self):
+        """Test Team Data Structure Verification"""
+        if not hasattr(self, 'company_id') or not self.company_id:
+            print("❌ No company ID available for data structure verification")
+            return False
+            
+        # Create a comprehensive team for structure verification
+        comprehensive_team_data = {
+            "team_name": "Data Structure Verification Team",
+            "team_description": "Comprehensive team for verifying all data structure fields",
+            "team_members": [
+                "lead@company.com",
+                "analyst1@company.com", 
+                "coordinator@company.com",
+                "observer@company.com"
+            ],
+            "team_roles": ["crisis_manager", "analyst", "coordinator", "observer"]
+        }
+        
+        success, response = self.run_test(
+            "Team Data Structure Verification",
+            "POST",
+            f"companies/{self.company_id}/teams",
+            200,
+            data=comprehensive_team_data
+        )
+        
+        if not success or 'id' not in response:
+            print("   ❌ Failed to create team for structure verification")
+            return False
+        
+        # Verify all required Team model fields are present
+        required_fields = [
+            'id', 'company_id', 'team_name', 'team_description', 
+            'team_lead', 'team_members', 'access_level', 'team_roles', 
+            'active_scenarios', 'created_at'
+        ]
+        
+        structure_verification_results = []
+        
+        print(f"   🔍 Verifying Team model structure...")
+        for field in required_fields:
+            if field in response:
+                field_value = response[field]
+                print(f"   ✅ {field}: {type(field_value).__name__} = {field_value}")
+                structure_verification_results.append(True)
+            else:
+                print(f"   ❌ Missing field: {field}")
+                structure_verification_results.append(False)
+        
+        # Verify specific field types and values
+        print(f"\n   🔍 Verifying field types and values...")
+        
+        # Check team_name
+        if response.get('team_name') == comprehensive_team_data['team_name']:
+            print(f"   ✅ team_name correctly set")
+        else:
+            print(f"   ❌ team_name mismatch")
+        
+        # Check team_description  
+        if response.get('team_description') == comprehensive_team_data['team_description']:
+            print(f"   ✅ team_description correctly set")
+        else:
+            print(f"   ❌ team_description mismatch")
+        
+        # Check team_lead (should be current user ID)
+        if response.get('team_lead') == self.user_id:
+            print(f"   ✅ team_lead correctly set to current user")
+        else:
+            print(f"   ❌ team_lead not set to current user")
+        
+        # Check team_members (should contain email addresses)
+        team_members = response.get('team_members', [])
+        if isinstance(team_members, list) and len(team_members) == len(comprehensive_team_data['team_members']):
+            print(f"   ✅ team_members list has correct length")
+            # Check if emails are stored (implementation may convert to user IDs)
+            for email in comprehensive_team_data['team_members']:
+                if email in team_members:
+                    print(f"   ✅ Email {email} found in team_members")
+                else:
+                    print(f"   ⚠️  Email {email} not found (may be converted to user ID)")
+        else:
+            print(f"   ❌ team_members list length mismatch")
+        
+        # Check team_roles
+        team_roles = response.get('team_roles', [])
+        if team_roles == comprehensive_team_data['team_roles']:
+            print(f"   ✅ team_roles correctly set")
+        else:
+            print(f"   ❌ team_roles mismatch")
+        
+        # Check access_level (should have default value)
+        if response.get('access_level') == 'standard':
+            print(f"   ✅ access_level has correct default value")
+        else:
+            print(f"   ❌ access_level incorrect")
+        
+        # Check active_scenarios (should be empty list initially)
+        if response.get('active_scenarios') == []:
+            print(f"   ✅ active_scenarios correctly initialized as empty")
+        else:
+            print(f"   ❌ active_scenarios not properly initialized")
+        
+        # Check created_at (should be a valid datetime string)
+        created_at = response.get('created_at')
+        if created_at and isinstance(created_at, str):
+            print(f"   ✅ created_at field present and is string")
+        else:
+            print(f"   ❌ created_at field missing or wrong type")
+        
+        passed_verifications = sum(structure_verification_results)
+        total_verifications = len(structure_verification_results)
+        
+        print(f"\n   📊 Structure verification: {passed_verifications}/{total_verifications} fields verified")
+        
+        # Store team ID for potential cleanup
+        self.structure_team_id = response.get('id')
+        
+        return passed_verifications >= (total_verifications * 0.8)  # 80% pass rate
+
+    def test_team_creation_comprehensive(self):
+        """Run all team creation tests comprehensively"""
+        print("\n📋 COMPREHENSIVE TEAM CREATION TESTING")
+        print("-" * 60)
+        
+        test_results = []
+        
+        # Test 1: Team Creation with Email List
+        print(f"\n🔍 Test 1: Team Creation with Email List")
+        result1 = self.test_team_creation_with_email_list()
+        test_results.append(("Email List Creation", result1))
+        
+        # Test 2: Edge Cases
+        print(f"\n🔍 Test 2: Edge Cases Testing")
+        result2 = self.test_team_creation_edge_cases()
+        test_results.append(("Edge Cases", result2))
+        
+        # Test 3: Access Control
+        print(f"\n🔍 Test 3: Access Control Testing")
+        result3 = self.test_team_creation_access_control()
+        test_results.append(("Access Control", result3))
+        
+        # Test 4: Data Structure Verification
+        print(f"\n🔍 Test 4: Data Structure Verification")
+        result4 = self.test_team_data_structure_verification()
+        test_results.append(("Data Structure", result4))
+        
+        # Summary
+        print(f"\n📊 TEAM CREATION TEST SUMMARY")
+        print("-" * 40)
+        passed_tests = 0
+        for test_name, result in test_results:
+            status = "✅ PASSED" if result else "❌ FAILED"
+            print(f"   {test_name}: {status}")
+            if result:
+                passed_tests += 1
+        
+        success_rate = (passed_tests / len(test_results)) * 100
+        print(f"\n   Overall Success Rate: {passed_tests}/{len(test_results)} ({success_rate:.1f}%)")
+        
+        if success_rate >= 75:
+            print(f"   🎉 Team creation functionality is working well!")
+        else:
+            print(f"   ⚠️  Team creation functionality needs attention.")
+        
+        return passed_tests >= 3  # At least 3 out of 4 tests should pass
+
 def main():
     print("🚀 Starting Polycrisis Simulator API Tests")
     print("=" * 50)
