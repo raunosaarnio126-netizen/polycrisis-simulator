@@ -1075,6 +1075,7 @@ const ScenarioManagement = ({ onScenarioSelect }) => {
     stakeholders: '',
     timeline: ''
   });
+  const [showMultiDocView, setShowMultiDocView] = useState(false);
   const [showAddSourceDialog, setShowAddSourceDialog] = useState(null);
   const [newSourceData, setNewSourceData] = useState({
     source_type: '',
