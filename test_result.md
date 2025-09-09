@@ -101,3 +101,102 @@
 #====================================================================================================
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
+
+user_problem_statement: |
+  Make the remaining three action buttons in the Company Management section functional:
+  1. "Generate Company Insights" - Enhanced comprehensive analysis with financial analysis, market research, risk assessment, website analyze button, and print option for full analysis
+  2. "Analyze Documents" - Support PDF & DOCX file upload and AI analysis
+  3. "Create Team" - Add team members directly from existing users
+
+backend:
+  - task: "Enhanced Company Insights API endpoint"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Rapid analysis endpoint already exists with multiple analysis types. Need to enhance frontend to utilize all types and add print functionality"
+
+  - task: "Document Analysis with File Upload"
+    implemented: false
+    working: "NA"
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Basic document upload exists but need to add file upload capability for PDF/DOCX files"
+
+  - task: "Team Creation API"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Team creation endpoints already exist. Need to add endpoint to get existing users for team member selection"
+
+frontend:
+  - task: "Company Insights Dialog with Print Feature"
+    implemented: false
+    working: "NA"
+    file: "/app/frontend/src/App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Need to create comprehensive dialog with all analysis types, website analyze button, and print functionality"
+
+  - task: "Document Analysis Dialog with File Upload"
+    implemented: false
+    working: "NA"
+    file: "/app/frontend/src/App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Need to create dialog with file picker for PDF/DOCX upload and analysis display"
+
+  - task: "Team Creation Dialog"
+    implemented: false
+    working: "NA"
+    file: "/app/frontend/src/App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Need to create dialog to select existing users and create teams"
+
+metadata:
+  created_by: "main_agent"
+  version: "1.0"
+  test_sequence: 0
+  run_ui: false
+
+test_plan:
+  current_focus:
+    - "Company Insights Dialog with Print Feature"
+    - "Document Analysis Dialog with File Upload"
+    - "Team Creation Dialog"
+  stuck_tasks: []
+  test_all: false
+  test_priority: "high_first"
+
+agent_communication:
+  - agent: "main"
+    message: "Starting implementation of three action buttons in Company Management section. Backend APIs partially exist, focusing on frontend dialogs and enhanced functionality."
