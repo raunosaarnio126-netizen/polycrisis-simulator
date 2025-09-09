@@ -3845,19 +3845,26 @@ const AppContent = () => {
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <header className="bg-white border-b shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center gap-3">
-              <Brain className="w-8 h-8 text-blue-600" />
-              <h1 className="text-xl font-bold text-gray-900">Polycrisis Simulator</h1>
+        <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8">
+          <div className="flex justify-between items-center h-14 sm:h-16">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <Brain className="w-6 h-6 sm:w-8 sm:h-8 text-blue-600" />
+              <h1 className="text-lg sm:text-xl font-bold text-gray-900 truncate">
+                <span className="hidden sm:inline">Polycrisis Simulator</span>
+                <span className="sm:hidden">Polycrisis</span>
+              </h1>
             </div>
             
-            <div className="flex items-center gap-4">
-              <div className="text-sm text-gray-600">
+            <div className="flex items-center gap-2 sm:gap-4">
+              <div className="text-xs sm:text-sm text-gray-600 hidden xs:block">
                 Welcome, <span className="font-semibold">{user?.username}</span>
               </div>
-              <Button variant="outline" size="sm" onClick={logout}>
-                Logout
+              <div className="text-xs sm:text-sm text-gray-600 xs:hidden">
+                <span className="font-semibold">{user?.username}</span>
+              </div>
+              <Button variant="outline" size="sm" onClick={logout} className="text-xs sm:text-sm px-2 sm:px-3">
+                <span className="hidden sm:inline">Logout</span>
+                <span className="sm:hidden">Exit</span>
               </Button>
             </div>
           </div>
