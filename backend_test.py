@@ -3891,38 +3891,70 @@ def main():
     tester.test_admin_dashboard_stats()
 
     print("\n🧠 Testing KNOWLEDGE TOPOLOGY ENDPOINTS...")
-    print("   Testing Knowledge Topology Summary...")
-    tester.test_knowledge_topology_summary()
     
-    print("   Testing Knowledge Sources - No Filter...")
-    tester.test_knowledge_sources_no_filter()
+    # Login with test credentials from review request
+    print("   Logging in with test credentials (test@example.com / password123)...")
+    test_login_data = {
+        "email": "test@example.com",
+        "password": "password123"
+    }
     
-    print("   Testing Knowledge Sources - Priority Filters...")
-    tester.test_knowledge_sources_priority_filter()
+    # Store original token
+    original_token = tester.token
     
-    print("   Testing Knowledge Sources - API Filter...")
-    tester.test_knowledge_sources_api_filter()
+    login_success, login_response = tester.run_test(
+        "Login with Test Credentials for Knowledge Topology",
+        "POST",
+        "login",
+        200,
+        data=test_login_data
+    )
     
-    print("   Testing Knowledge Sources - Specialization Filters...")
-    tester.test_knowledge_sources_specialization_filter()
-    
-    print("   Testing Crisis Strategy - Economic Crisis (Severity 8)...")
-    tester.test_crisis_strategy_economic_crisis()
-    
-    print("   Testing Crisis Strategy - Cyber Attack (Severity 6)...")
-    tester.test_crisis_strategy_cyber_attack()
-    
-    print("   Testing Crisis Strategy - Pandemic (Severity 9)...")
-    tester.test_crisis_strategy_pandemic()
-    
-    print("   Testing Crisis Strategy - Invalid Severity...")
-    tester.test_crisis_strategy_invalid_severity()
-    
-    print("   Testing Crisis Strategy - Unknown Crisis Type...")
-    tester.test_crisis_strategy_unknown_crisis_type()
-    
-    print("   Testing Knowledge Topology Authentication...")
-    tester.test_knowledge_topology_authentication()
+    if login_success and 'access_token' in login_response:
+        tester.token = login_response['access_token']
+        print(f"   ✅ Successfully logged in with test credentials")
+        
+        print("   Testing Knowledge Topology Summary...")
+        tester.test_knowledge_topology_summary()
+        
+        print("   Testing Knowledge Sources - No Filter...")
+        tester.test_knowledge_sources_no_filter()
+        
+        print("   Testing Knowledge Sources - Priority Filters...")
+        tester.test_knowledge_sources_priority_filter()
+        
+        print("   Testing Knowledge Sources - API Filter...")
+        tester.test_knowledge_sources_api_filter()
+        
+        print("   Testing Knowledge Sources - Specialization Filters...")
+        tester.test_knowledge_sources_specialization_filter()
+        
+        print("   Testing Crisis Strategy - Economic Crisis (Severity 8)...")
+        tester.test_crisis_strategy_economic_crisis()
+        
+        print("   Testing Crisis Strategy - Cyber Attack (Severity 6)...")
+        tester.test_crisis_strategy_cyber_attack()
+        
+        print("   Testing Crisis Strategy - Pandemic (Severity 9)...")
+        tester.test_crisis_strategy_pandemic()
+        
+        print("   Testing Crisis Strategy - Invalid Severity...")
+        tester.test_crisis_strategy_invalid_severity()
+        
+        print("   Testing Crisis Strategy - Unknown Crisis Type...")
+        tester.test_crisis_strategy_unknown_crisis_type()
+        
+        print("   Testing Knowledge Topology Authentication...")
+        tester.test_knowledge_topology_authentication()
+        
+        # Restore original token
+        tester.token = original_token
+        print(f"   ✅ Restored original authentication token")
+        
+    else:
+        print(f"   ❌ Failed to login with test credentials, skipping Knowledge Topology tests")
+        # Restore original token anyway
+        tester.token = original_token
 
     print("\n🗑️ Testing Scenario Deletion...")
     tester.test_delete_scenario()
