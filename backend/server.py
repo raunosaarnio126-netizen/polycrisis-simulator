@@ -3073,3 +3073,239 @@ logger = logging.getLogger(__name__)
 @app.on_event("shutdown")
 async def shutdown_db_client():
     client.close()
+
+# Knowledge Topology Models
+class KnowledgeSourceResponse(BaseModel):
+    name: str
+    full_name: str
+    type: str
+    specialization: List[str]
+    url: str
+    api_availability: bool
+    content_types: List[str]
+    update_frequency: str
+    credibility_score: float
+
+class CrisisInsightStrategy(BaseModel):
+    crisis_type: str
+    severity_level: int
+    recommended_sources: List[Dict]
+    recommended_access_levels: List[str]
+    total_sources: int
+    api_sources: int
+    average_credibility: float
+
+class TopologySummary(BaseModel):
+    total_categories: int
+    total_sources: int
+    api_enabled_sources: int
+    average_credibility: float
+    categories: Dict
+    implementation_phases: int
+    access_tiers: List[str]
+
+# Knowledge Topology Endpoints
+@api_router.get("/knowledge-topology/summary", response_model=TopologySummary)
+async def get_topology_summary(current_user: User = Depends(get_current_user)):
+    """Get comprehensive summary of knowledge topology"""
+    try:
+        topology_file = Path(__file__).parent.parent / "knowledge_topology.json"
+        
+        if not topology_file.exists():
+            raise HTTPException(status_code=404, detail="Knowledge topology not found")
+        
+        with open(topology_file, 'r') as f:
+            data = json.load(f)
+        
+        topology = data['knowledge_topology']['topology']
+        integration_framework = data['knowledge_topology']['integration_framework']
+        implementation_roadmap = data['knowledge_topology']['implementation_roadmap']
+        
+        total_sources = 0
+        api_sources = 0
+        total_credibility = 0
+        categories_summary = {}
+        
+        for cat_name, category in topology.items():
+            sources = category['sources']
+            cat_api_count = sum(1 for s in sources if s['api_availability'])
+            cat_avg_credibility = sum(s['credibility_score'] for s in sources) / len(sources)
+            
+            categories_summary[cat_name] = {
+                'name': category['category'],
+                'source_count': len(sources),
+                'api_sources': cat_api_count,
+                'average_credibility': round(cat_avg_credibility, 2),
+                'priority': category['priority'],
+                'access_level': category['access_level']
+            }
+            
+            total_sources += len(sources)
+            api_sources += cat_api_count
+            total_credibility += sum(s['credibility_score'] for s in sources)
+        
+        return TopologySummary(
+            total_categories=len(topology),
+            total_sources=total_sources,
+            api_enabled_sources=api_sources,
+            average_credibility=round(total_credibility / total_sources, 2) if total_sources > 0 else 0,
+            categories=categories_summary,
+            implementation_phases=len(implementation_roadmap),
+            access_tiers=list(integration_framework['access_tiers'].keys())
+        )
+        
+    except Exception as e:
+        logging.error(f"Knowledge topology summary error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to get topology summary: {str(e)}")
+
+@api_router.get("/knowledge-topology/sources")
+async def get_knowledge_sources(
+    priority: Optional[str] = None,
+    specialization: Optional[str] = None,
+    api_only: bool = False,
+    current_user: User = Depends(get_current_user)
+):
+    """Get knowledge sources with optional filtering"""
+    try:
+        topology_file = Path(__file__).parent.parent / "knowledge_topology.json"
+        
+        if not topology_file.exists():
+            raise HTTPException(status_code=404, detail="Knowledge topology not found")
+        
+        with open(topology_file, 'r') as f:
+            data = json.load(f)
+        
+        topology = data['knowledge_topology']['topology']
+        
+        sources = []
+        for category in topology.values():
+            # Filter by priority
+            if priority and category['priority'] != priority:
+                continue
+                
+            for source in category['sources']:
+                # Filter by API availability
+                if api_only and not source['api_availability']:
+                    continue
+                
+                # Filter by specialization
+                if specialization:
+                    source_specs = [s.lower() for s in source['specialization']]
+                    if specialization.lower() not in source_specs:
+                        continue
+                
+                sources.append(KnowledgeSourceResponse(**source))
+        
+        # Sort by credibility score
+        sources.sort(key=lambda x: x.credibility_score, reverse=True)
+        
+        return sources
+        
+    except Exception as e:
+        logging.error(f"Knowledge sources error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to get knowledge sources: {str(e)}")
+
+@api_router.post("/knowledge-topology/crisis-strategy", response_model=CrisisInsightStrategy)
+async def generate_crisis_insight_strategy(
+    crisis_type: str,
+    severity_level: int,
+    current_user: User = Depends(get_current_user)
+):
+    """Generate knowledge sourcing strategy for a specific crisis"""
+    try:
+        if not 1 <= severity_level <= 10:
+            raise HTTPException(status_code=400, detail="Severity level must be between 1 and 10")
+        
+        topology_file = Path(__file__).parent.parent / "knowledge_topology.json"
+        
+        if not topology_file.exists():
+            raise HTTPException(status_code=404, detail="Knowledge topology not found")
+        
+        with open(topology_file, 'r') as f:
+            data = json.load(f)
+        
+        topology = data['knowledge_topology']['topology']
+        
+        # Map crisis types to relevant specializations
+        crisis_specialization_map = {
+            'economic_crisis': ['strategy', 'financial_analytics', 'risk_assessment', 'market_analysis'],
+            'natural_disaster': ['crisis_management', 'emergency_response', 'risk_management'],
+            'cyber_attack': ['technology_strategy', 'digital_transformation', 'cybersecurity'],
+            'pandemic': ['healthcare', 'behavioral_economics', 'policy_design', 'crisis_communication'],
+            'geopolitical_crisis': ['geopolitical_risk', 'strategic_forecasting', 'government_relations'],
+            'supply_chain_disruption': ['operations', 'logistics', 'risk_management'],
+            'climate_change': ['environmental_strategy', 'sustainability', 'adaptation_planning']
+        }
+        
+        relevant_specializations = crisis_specialization_map.get(crisis_type, ['crisis_management', 'strategy'])
+        
+        # Get recommended sources
+        recommended_sources = []
+        for category in topology.values():
+            for source in category['sources']:
+                source_specs = [s.lower() for s in source['specialization']]
+                if any(spec.lower() in source_specs for spec in relevant_specializations):
+                    source_with_priority = source.copy()
+                    source_with_priority['category_priority'] = category['priority']
+                    recommended_sources.append(source_with_priority)
+        
+        # Remove duplicates and sort by relevance
+        unique_sources = []
+        seen = set()
+        for source in recommended_sources:
+            if source['name'] not in seen:
+                unique_sources.append(source)
+                seen.add(source['name'])
+        
+        # Sort by credibility score and priority
+        priority_weights = {'high': 3, 'medium': 2, 'low': 1}
+        
+        def source_score(source):
+            priority_weight = priority_weights.get(source['category_priority'], 2)
+            return source['credibility_score'] * priority_weight
+        
+        unique_sources.sort(key=source_score, reverse=True)
+        
+        # Build strategy based on severity
+        if severity_level >= 8:  # Critical crisis
+            strategy_sources = unique_sources[:8]
+            access_levels = ['exclusive', 'enterprise', 'premium']
+        elif severity_level >= 6:  # Major crisis
+            strategy_sources = unique_sources[:6]
+            access_levels = ['enterprise', 'premium', 'subscription']
+        elif severity_level >= 4:  # Moderate crisis
+            strategy_sources = unique_sources[:4]
+            access_levels = ['premium', 'subscription', 'freemium']
+        else:  # Minor crisis
+            strategy_sources = unique_sources[:3]
+            access_levels = ['subscription', 'freemium', 'public']
+        
+        formatted_sources = [
+            {
+                'name': source['name'],
+                'full_name': source['full_name'],
+                'credibility_score': source['credibility_score'],
+                'specialization': source['specialization'],
+                'api_available': source['api_availability'],
+                'url': source['url'],
+                'type': source['type']
+            }
+            for source in strategy_sources
+        ]
+        
+        return CrisisInsightStrategy(
+            crisis_type=crisis_type,
+            severity_level=severity_level,
+            recommended_sources=formatted_sources,
+            recommended_access_levels=access_levels,
+            total_sources=len(strategy_sources),
+            api_sources=len([s for s in strategy_sources if s['api_availability']]),
+            average_credibility=sum(s['credibility_score'] for s in strategy_sources) / len(strategy_sources) if strategy_sources else 0
+        )
+        
+    except Exception as e:
+        logging.error(f"Crisis insight strategy error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to generate crisis strategy: {str(e)}")
+
+# Include the API router in the main app
+app.include_router(api_router)
