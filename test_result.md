@@ -250,6 +250,18 @@ backend:
         agent: "testing"
         comment: "POST /api/companies/{company_id}/consensus/{consensus_id}/agree endpoint working correctly after bug fix. User agreement to consensus recorded properly. Consensus percentage calculation working. 75% threshold for consensus reached implemented. Duplicate agreement prevention working. Fixed UnboundLocalError in consensus_reached variable."
 
+  - task: "Scenario Creation and Retrieval Data Persistence"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "COMPREHENSIVE SCENARIO DATA PERSISTENCE TESTING COMPLETED: 15/15 tests passed (100% success rate). ✅ CRITICAL TESTS PASSED: 1) POST /api/scenarios - Complete scenario creation with all fields (title, description, crisis_type, severity_level, affected_regions, key_variables) working perfectly. UUID generation correct. 2) GET /api/scenarios - All scenarios retrieval working, all fields preserved correctly. 3) GET /api/scenarios/{id} - Individual scenario retrieval working, no data truncation or missing fields. 4) Array field preservation - affected_regions and key_variables arrays preserved correctly in all operations. 5) Description field completeness - Long descriptions (239+ characters) preserved without truncation. 6) Edge cases - Empty arrays, very long descriptions (3000+ chars), special characters (àáâãäåæçèéêë, 特別地域, переменная), maximum severity level (10), large region lists (7 regions) all handled correctly. 7) Multiple scenario persistence - All created scenarios found in final list. ✅ DATA INTEGRITY VERIFIED: All fields match exactly between creation and retrieval operations. MongoDB serialization/deserialization working correctly. No data loss detected. CONCLUSION: Scenario creation and retrieval functionality is production-ready and handles all specified requirements from review request including data persistence, array preservation, and edge cases."
+
 frontend:
   - task: "Company Insights Dialog with Print Feature"
     implemented: false
