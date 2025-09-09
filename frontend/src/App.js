@@ -4614,7 +4614,7 @@ const ScenarioAdjusters = () => {
                   max="100"
                   value={septeValues.economic_crisis_pct}
                   onChange={(e) => handleSliderChange('economic_crisis_pct', parseInt(e.target.value))}
-                  className="w-full h-2 bg-gradient-to-r from-red-200 to-green-200 rounded-lg appearance-none cursor-pointer slider"
+                  className="w-full septe-slider economic-slider"
                 />
                 <div className="flex justify-between text-xs text-gray-500">
                   <span>Crisis</span>
