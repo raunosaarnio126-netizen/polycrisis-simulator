@@ -1446,7 +1446,7 @@ const ScenarioManagement = ({ onScenarioSelect }) => {
       
       // Try to fetch all available implementations for this scenario
       try {
-        const gameBookResponse = await axios.get(`${API}/scenarios/${scenario.id}/gamebook`);
+        const gameBookResponse = await axios.get(`${API}/scenarios/${scenario.id}/game-book`);
         reportSections.push({
           title: "Crisis Game Book",
           type: "gamebook",
