@@ -3866,44 +3866,54 @@ const AppContent = () => {
 
       {/* Navigation */}
       <nav className="bg-white border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8">
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="h-12 bg-transparent">
-              <TabsTrigger value="dashboard" className="flex items-center gap-2">
-                <TrendingUp className="w-4 h-4" />
-                Dashboard
-              </TabsTrigger>
-              {user?.email === 'rauno.saarnio@xr-presence.com' && (
-                <TabsTrigger value="admin" className="flex items-center gap-2">
-                  <Crown className="w-4 h-4" />
-                  Admin
+            <div className="overflow-x-auto scrollbar-hide">
+              <TabsList className="h-12 bg-transparent min-w-max flex-nowrap">
+                <TabsTrigger value="dashboard" className="flex items-center gap-1 px-2 sm:px-3 text-xs sm:text-sm whitespace-nowrap">
+                  <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <span className="hidden xs:inline">Dashboard</span>
+                  <span className="xs:hidden">Dash</span>
                 </TabsTrigger>
-              )}
-              <TabsTrigger value="company" className="flex items-center gap-2">
-                <Building2 className="w-4 h-4" />
-                Company
-              </TabsTrigger>
-              <TabsTrigger value="documents" className="flex items-center gap-2">
-                <FileText className="w-4 h-4" />
-                Documents
-              </TabsTrigger>
-              <TabsTrigger value="avatars" className="flex items-center gap-2">
-                <Brain className="w-4 h-4" />
-                AI Avatars
-              </TabsTrigger>
-              <TabsTrigger value="create" className="flex items-center gap-2">
-                <Plus className="w-4 h-4" />
-                Create Scenario
-              </TabsTrigger>
-              <TabsTrigger value="scenarios" className="flex items-center gap-2">
-                <Globe className="w-4 h-4" />
-                Scenarios
-              </TabsTrigger>
-              <TabsTrigger value="ai-genie" className="flex items-center gap-2">
-                <MessageSquare className="w-4 h-4" />
-                AI Genie
-              </TabsTrigger>
-            </TabsList>
+                {user?.email === 'rauno.saarnio@xr-presence.com' && (
+                  <TabsTrigger value="admin" className="flex items-center gap-1 px-2 sm:px-3 text-xs sm:text-sm whitespace-nowrap">
+                    <Crown className="w-3 h-3 sm:w-4 sm:h-4" />
+                    <span className="hidden xs:inline">Admin</span>
+                    <span className="xs:hidden">Admin</span>
+                  </TabsTrigger>
+                )}
+                <TabsTrigger value="company" className="flex items-center gap-1 px-2 sm:px-3 text-xs sm:text-sm whitespace-nowrap">
+                  <Building2 className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <span className="hidden xs:inline">Company</span>
+                  <span className="xs:hidden">Co</span>
+                </TabsTrigger>
+                <TabsTrigger value="documents" className="flex items-center gap-1 px-2 sm:px-3 text-xs sm:text-sm whitespace-nowrap">
+                  <FileText className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <span className="hidden xs:inline">Documents</span>
+                  <span className="xs:hidden">Docs</span>
+                </TabsTrigger>
+                <TabsTrigger value="avatars" className="flex items-center gap-1 px-2 sm:px-3 text-xs sm:text-sm whitespace-nowrap">
+                  <Brain className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <span className="hidden xs:inline">AI Avatars</span>
+                  <span className="xs:hidden">AI</span>
+                </TabsTrigger>
+                <TabsTrigger value="create" className="flex items-center gap-1 px-2 sm:px-3 text-xs sm:text-sm whitespace-nowrap">
+                  <Plus className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <span className="hidden sm:inline">Create Scenario</span>
+                  <span className="sm:hidden">Create</span>
+                </TabsTrigger>
+                <TabsTrigger value="scenarios" className="flex items-center gap-1 px-2 sm:px-3 text-xs sm:text-sm whitespace-nowrap">
+                  <Globe className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <span className="hidden xs:inline">Scenarios</span>
+                  <span className="xs:hidden">Scen</span>
+                </TabsTrigger>
+                <TabsTrigger value="ai-genie" className="flex items-center gap-1 px-2 sm:px-3 text-xs sm:text-sm whitespace-nowrap">
+                  <MessageSquare className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <span className="hidden xs:inline">AI Genie</span>
+                  <span className="xs:hidden">Genie</span>
+                </TabsTrigger>
+              </TabsList>
+            </div>
           </Tabs>
         </div>
       </nav>
