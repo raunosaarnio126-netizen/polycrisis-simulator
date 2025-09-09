@@ -177,17 +177,11 @@ class KnowledgeTopologyTester:
 
     def test_crisis_strategy_economic_crisis(self):
         """Test Crisis Strategy endpoint - Economic Crisis (severity 8)"""
-        crisis_data = {
-            "crisis_type": "economic_crisis",
-            "severity_level": 8
-        }
-        
         success, response = self.run_test(
             "Crisis Strategy - Economic Crisis (Severity 8)",
             "POST",
-            "knowledge-topology/crisis-strategy",
-            200,
-            data=crisis_data
+            "knowledge-topology/crisis-strategy?crisis_type=economic_crisis&severity_level=8",
+            200
         )
         
         if success:
@@ -234,17 +228,11 @@ class KnowledgeTopologyTester:
 
     def test_crisis_strategy_cyber_attack(self):
         """Test Crisis Strategy endpoint - Cyber Attack (severity 6)"""
-        crisis_data = {
-            "crisis_type": "cyber_attack",
-            "severity_level": 6
-        }
-        
         success, response = self.run_test(
             "Crisis Strategy - Cyber Attack (Severity 6)",
             "POST",
-            "knowledge-topology/crisis-strategy",
-            200,
-            data=crisis_data
+            "knowledge-topology/crisis-strategy?crisis_type=cyber_attack&severity_level=6",
+            200
         )
         
         if success:
@@ -273,17 +261,11 @@ class KnowledgeTopologyTester:
 
     def test_crisis_strategy_pandemic(self):
         """Test Crisis Strategy endpoint - Pandemic (severity 9)"""
-        crisis_data = {
-            "crisis_type": "pandemic",
-            "severity_level": 9
-        }
-        
         success, response = self.run_test(
             "Crisis Strategy - Pandemic (Severity 9)",
             "POST",
-            "knowledge-topology/crisis-strategy",
-            200,
-            data=crisis_data
+            "knowledge-topology/crisis-strategy?crisis_type=pandemic&severity_level=9",
+            200
         )
         
         if success:
