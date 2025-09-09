@@ -3162,18 +3162,15 @@ const CompanyManagement = () => {
         
         <Card 
           className="cursor-pointer hover:shadow-lg transition-all hover:scale-105 border-2 hover:border-green-300"
-          onClick={() => {
-            toast({ 
-              title: "Team Management", 
-              description: "Feature coming soon - Create and manage crisis response teams",
-              duration: 3000
-            });
+          onClick={async () => {
+            await fetchAvailableUsers();
+            setShowTeamCreator(true);
           }}
         >
           <CardContent className="p-4 sm:p-6 text-center">
             <Users2 className="w-6 h-6 sm:w-8 sm:h-8 text-green-600 mx-auto mb-2" />
-            <h3 className="font-semibold text-gray-900 text-sm sm:text-base">Manage Teams</h3>
-            <p className="text-xs sm:text-sm text-gray-600">Create crisis response teams</p>
+            <h3 className="font-semibold text-gray-900 text-sm sm:text-base">Create Team</h3>
+            <p className="text-xs sm:text-sm text-gray-600">Add existing users to teams</p>
           </CardContent>
         </Card>
         
