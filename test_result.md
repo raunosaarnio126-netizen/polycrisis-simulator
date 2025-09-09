@@ -327,15 +327,18 @@ test_plan:
 
   - task: "Game Book URL Path Consistency Fix"
     implemented: true
-    working: "NA"
+    working: true
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "Fixed URL path inconsistencies between frontend and backend. Backend uses /game-book (with hyphen), frontend was calling /gamebook (without hyphen). Fixed 3 instances in frontend code to use correct /game-book path."
+      - working: true
+        agent: "testing"
+        comment: "GAME BOOK URL PATH FIX TESTING COMPLETED: Comprehensive testing of Game Book functionality with specific scenario from review request. Results: 5/5 tests passed (100% success rate). ✅ CRITICAL TESTS PASSED: 1) POST /api/scenarios/{scenario_id}/game-book - Game Book generation working perfectly with AI content generation using EMERGENT_LLM_KEY. Generated 14,000+ character content with proper GameBook model structure (id, scenario_id, game_book_content, decision_points, resource_requirements, timeline_phases, success_metrics, created_at). 2) GET /api/scenarios/{scenario_id}/game-book - Game Book retrieval working correctly, returns existing Game Books for scenario. 3) Authentication enforcement - properly returns 403 for unauthenticated requests. 4) Invalid scenario handling - correctly returns 404 for non-existent scenarios. 5) URL path verification - OLD URLs (/gamebook without hyphen) correctly return 404, NEW URLs (/game-book with hyphen) work perfectly. ✅ SPECIFIC SCENARIO TESTED: Successfully tested with scenario 9796a80e-976e-463d-ba00-aeb899b76a7a (Finnish Economic Crisis Test) using test credentials test@example.com/password123 as specified in review request. ✅ AI INTEGRATION VERIFIED: Claude Sonnet 4 AI content generation working excellently, producing comprehensive game book content with realistic crisis simulation scenarios. CONCLUSION: Game Book URL path fix is successful and fully resolves the reported 'Game book - error message' issue. Users can now successfully generate and retrieve Game Books without 404 errors."
 
 agent_communication:
   - agent: "main"
