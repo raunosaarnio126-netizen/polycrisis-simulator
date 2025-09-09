@@ -311,6 +311,18 @@ frontend:
         agent: "main"
         comment: "Complete SEPTE framework interface with 5 interactive sliders, real-time AI analysis, consensus features, and saved adjustments management. Ready for testing."
 
+  - task: "Crisis Management Framework Frontend Interface"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "testing"
+        comment: "Crisis Management Framework frontend interface implemented with comprehensive tabs: Overview (statistics cards), Crisis Factors (category/priority filtering), Monitoring Tasks (priority filtering), Scenario Assessment (dropdown selection), and Assessment Results. Navigation integration complete with Crisis Framework tab in main navigation. Ready for comprehensive testing."
+
 metadata:
   created_by: "main_agent"
   version: "1.0"
