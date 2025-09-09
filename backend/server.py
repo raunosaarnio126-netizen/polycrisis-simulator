@@ -3539,5 +3539,350 @@ async def assess_scenario_crisis_factors(
         logging.error(f"Scenario assessment error: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to assess scenario: {str(e)}")
 
+# Polycrisis Enhancement Models
+class TemporalDynamics(BaseModel):
+    timescale: str
+    duration: str
+    focus: str
+    key_metrics: List[str]
+    typical_stakeholders: List[str]
+    decision_types: List[str]
+
+class CrossDomainInteraction(BaseModel):
+    from_domain: str
+    to_domain: str
+    interaction_strength: str
+    mechanism: str
+    example: str
+
+class StakeholderType(BaseModel):
+    name: str
+    subtypes: List[str]
+    primary_objectives: List[str]
+    resources: List[str]
+    constraints: List[str]
+    decision_making_style: str
+
+class AdvancedMonitoringTask(BaseModel):
+    task: str
+    description: str
+    priority: str
+    frequency: str
+    indicators: List[Dict]
+
+class PolycrisisEnhancementSummary(BaseModel):
+    total_enhancements: int
+    temporal_timescales: int
+    cross_domain_interactions: int
+    stakeholder_types: int
+    advanced_monitoring_tasks: int
+    cultural_dimensions: int
+
+# Polycrisis Enhancement Endpoints
+@api_router.get("/polycrisis-enhancements/summary", response_model=PolycrisisEnhancementSummary)
+async def get_polycrisis_enhancements_summary(current_user: User = Depends(get_current_user)):
+    """Get comprehensive summary of polycrisis enhancements"""
+    try:
+        enhancements_file = Path(__file__).parent.parent / "polycrisis_enhancements.json"
+        
+        if not enhancements_file.exists():
+            raise HTTPException(status_code=404, detail="Polycrisis enhancements not found")
+        
+        with open(enhancements_file, 'r') as f:
+            data = json.load(f)
+        
+        enhancements = data['polycrisis_enhancements']
+        
+        # Count temporal timescales
+        temporal_timescales = len(enhancements['enhancement_categories']['temporal_dynamics']['timescales'])
+        
+        # Count cross-domain interactions
+        cross_domain_interactions = len(enhancements['enhancement_categories']['cross_domain_impacts']['interaction_matrices'])
+        
+        # Count stakeholder types
+        stakeholder_types = len(enhancements['enhancement_categories']['stakeholder_interactions']['stakeholder_types'])
+        
+        # Count advanced monitoring tasks
+        advanced_monitoring_tasks = len(enhancements['advanced_monitoring_tasks'])
+        
+        # Count cultural dimensions
+        cultural_dimensions = len(enhancements['enhancement_categories']['cultural_regional_variations']['cultural_dimensions'])
+        
+        return PolycrisisEnhancementSummary(
+            total_enhancements=5,  # 5 main enhancement categories
+            temporal_timescales=temporal_timescales,
+            cross_domain_interactions=cross_domain_interactions,
+            stakeholder_types=stakeholder_types,
+            advanced_monitoring_tasks=advanced_monitoring_tasks,
+            cultural_dimensions=cultural_dimensions
+        )
+        
+    except Exception as e:
+        logging.error(f"Polycrisis enhancements summary error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to get enhancements summary: {str(e)}")
+
+@api_router.get("/polycrisis-enhancements/temporal-dynamics")
+async def get_temporal_dynamics(current_user: User = Depends(get_current_user)):
+    """Get temporal dynamics modeling information"""
+    try:
+        enhancements_file = Path(__file__).parent.parent / "polycrisis_enhancements.json"
+        
+        if not enhancements_file.exists():
+            raise HTTPException(status_code=404, detail="Polycrisis enhancements not found")
+        
+        with open(enhancements_file, 'r') as f:
+            data = json.load(f)
+        
+        temporal_dynamics = data['polycrisis_enhancements']['enhancement_categories']['temporal_dynamics']
+        
+        return {
+            'category': temporal_dynamics['category'],
+            'description': temporal_dynamics['description'],
+            'priority': temporal_dynamics['priority'],
+            'timescales': temporal_dynamics['timescales'],
+            'cascade_mechanisms': temporal_dynamics['cascade_mechanisms']
+        }
+        
+    except Exception as e:
+        logging.error(f"Temporal dynamics error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to get temporal dynamics: {str(e)}")
+
+@api_router.get("/polycrisis-enhancements/cross-domain-impacts")
+async def get_cross_domain_impacts(current_user: User = Depends(get_current_user)):
+    """Get cross-domain impact assessment information"""
+    try:
+        enhancements_file = Path(__file__).parent.parent / "polycrisis_enhancements.json"
+        
+        if not enhancements_file.exists():
+            raise HTTPException(status_code=404, detail="Polycrisis enhancements not found")
+        
+        with open(enhancements_file, 'r') as f:
+            data = json.load(f)
+        
+        cross_domain = data['polycrisis_enhancements']['enhancement_categories']['cross_domain_impacts']
+        
+        return {
+            'category': cross_domain['category'],
+            'description': cross_domain['description'],
+            'domains': cross_domain['domains'],
+            'interaction_matrices': cross_domain['interaction_matrices'],
+            'feedback_loops': cross_domain['feedback_loops']
+        }
+        
+    except Exception as e:
+        logging.error(f"Cross-domain impacts error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to get cross-domain impacts: {str(e)}")
+
+@api_router.get("/polycrisis-enhancements/stakeholder-interactions")
+async def get_stakeholder_interactions(current_user: User = Depends(get_current_user)):
+    """Get advanced stakeholder interaction modeling information"""
+    try:
+        enhancements_file = Path(__file__).parent.parent / "polycrisis_enhancements.json"
+        
+        if not enhancements_file.exists():
+            raise HTTPException(status_code=404, detail="Polycrisis enhancements not found")
+        
+        with open(enhancements_file, 'r') as f:
+            data = json.load(f)
+        
+        stakeholder_interactions = data['polycrisis_enhancements']['enhancement_categories']['stakeholder_interactions']
+        
+        return {
+            'category': stakeholder_interactions['category'],
+            'description': stakeholder_interactions['description'],
+            'stakeholder_types': stakeholder_interactions['stakeholder_types'],
+            'interaction_mechanisms': stakeholder_interactions['interaction_mechanisms'],
+            'network_effects': stakeholder_interactions['network_effects']
+        }
+        
+    except Exception as e:
+        logging.error(f"Stakeholder interactions error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to get stakeholder interactions: {str(e)}")
+
+@api_router.get("/polycrisis-enhancements/uncertainty-quantification")
+async def get_uncertainty_quantification(current_user: User = Depends(get_current_user)):
+    """Get uncertainty quantification methods and approaches"""
+    try:
+        enhancements_file = Path(__file__).parent.parent / "polycrisis_enhancements.json"
+        
+        if not enhancements_file.exists():
+            raise HTTPException(status_code=404, detail="Polycrisis enhancements not found")
+        
+        with open(enhancements_file, 'r') as f:
+            data = json.load(f)
+        
+        uncertainty = data['polycrisis_enhancements']['enhancement_categories']['uncertainty_quantification']
+        
+        return {
+            'category': uncertainty['category'],
+            'description': uncertainty['description'],
+            'uncertainty_types': uncertainty['uncertainty_types'],
+            'quantification_methods': uncertainty['quantification_methods'],
+            'communication_strategies': uncertainty['communication_strategies']
+        }
+        
+    except Exception as e:
+        logging.error(f"Uncertainty quantification error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to get uncertainty quantification: {str(e)}")
+
+@api_router.get("/polycrisis-enhancements/cultural-variations")
+async def get_cultural_variations(current_user: User = Depends(get_current_user)):
+    """Get cultural and regional variation modeling information"""
+    try:
+        enhancements_file = Path(__file__).parent.parent / "polycrisis_enhancements.json"
+        
+        if not enhancements_file.exists():
+            raise HTTPException(status_code=404, detail="Polycrisis enhancements not found")
+        
+        with open(enhancements_file, 'r') as f:
+            data = json.load(f)
+        
+        cultural = data['polycrisis_enhancements']['enhancement_categories']['cultural_regional_variations']
+        
+        return {
+            'category': cultural['category'],
+            'description': cultural['description'],
+            'cultural_dimensions': cultural['cultural_dimensions'],
+            'regional_factors': cultural['regional_factors'],
+            'response_variation_models': cultural['response_variation_models']
+        }
+        
+    except Exception as e:
+        logging.error(f"Cultural variations error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to get cultural variations: {str(e)}")
+
+@api_router.get("/polycrisis-enhancements/advanced-monitoring")
+async def get_advanced_monitoring_tasks(
+    priority: Optional[str] = None,
+    current_user: User = Depends(get_current_user)
+):
+    """Get advanced monitoring tasks for enhanced polycrisis management"""
+    try:
+        enhancements_file = Path(__file__).parent.parent / "polycrisis_enhancements.json"
+        
+        if not enhancements_file.exists():
+            raise HTTPException(status_code=404, detail="Polycrisis enhancements not found")
+        
+        with open(enhancements_file, 'r') as f:
+            data = json.load(f)
+        
+        monitoring_tasks = data['polycrisis_enhancements']['advanced_monitoring_tasks']
+        
+        # Filter by priority if specified
+        filtered_tasks = {}
+        for task_name, task_data in monitoring_tasks.items():
+            if priority and task_data.get('priority') != priority:
+                continue
+            
+            task_with_key = task_data.copy()
+            task_with_key['task_key'] = task_name
+            filtered_tasks[task_name] = task_with_key
+        
+        return filtered_tasks
+        
+    except Exception as e:
+        logging.error(f"Advanced monitoring tasks error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to get advanced monitoring tasks: {str(e)}")
+
+@api_router.post("/polycrisis-enhancements/scenario-enhancement")
+async def enhance_scenario_with_polycrisis_factors(
+    scenario_id: str,
+    enhancement_types: List[str] = None,
+    current_user: User = Depends(get_current_user)
+):
+    """Enhance a scenario with advanced polycrisis modeling factors"""
+    try:
+        # Get the scenario
+        scenario = await db.scenarios.find_one({"id": scenario_id, "user_id": current_user.id})
+        if not scenario:
+            raise HTTPException(status_code=404, detail="Scenario not found")
+        
+        enhancements_file = Path(__file__).parent.parent / "polycrisis_enhancements.json"
+        
+        if not enhancements_file.exists():
+            raise HTTPException(status_code=404, detail="Polycrisis enhancements not found")
+        
+        with open(enhancements_file, 'r') as f:
+            data = json.load(f)
+        
+        enhancements = data['polycrisis_enhancements']['enhancement_categories']
+        
+        # Default to all enhancement types if none specified
+        if not enhancement_types:
+            enhancement_types = ['temporal_dynamics', 'cross_domain_impacts', 'stakeholder_interactions', 'uncertainty_quantification']
+        
+        # Generate enhanced scenario analysis
+        enhanced_analysis = {
+            'scenario_id': scenario_id,
+            'scenario_title': scenario.get('title'),
+            'crisis_type': scenario.get('crisis_type'),
+            'severity_level': scenario.get('severity_level'),
+            'enhancement_timestamp': datetime.now(timezone.utc).isoformat(),
+            'enhancements_applied': enhancement_types,
+            'enhanced_factors': {}
+        }
+        
+        # Apply temporal dynamics enhancement
+        if 'temporal_dynamics' in enhancement_types:
+            temporal = enhancements['temporal_dynamics']
+            enhanced_analysis['enhanced_factors']['temporal_dynamics'] = {
+                'relevant_timescales': [
+                    ts for ts in temporal['timescales'] 
+                    if scenario.get('severity_level', 5) >= 7 or ts['name'] in ['Immediate Response', 'Short-term Impact']
+                ],
+                'cascade_mechanisms': temporal['cascade_mechanisms'],
+                'recommendation': 'Implement multi-timescale monitoring for comprehensive crisis evolution tracking'
+            }
+        
+        # Apply cross-domain impacts enhancement
+        if 'cross_domain_impacts' in enhancement_types:
+            cross_domain = enhancements['cross_domain_impacts']
+            # Map crisis type to relevant domain interactions
+            crisis_domain_map = {
+                'economic_crisis': ['economic', 'social'],
+                'natural_disaster': ['environmental', 'social', 'economic'],
+                'cyber_attack': ['technological', 'economic'],
+                'pandemic': ['social', 'economic', 'environmental']
+            }
+            
+            relevant_domains = crisis_domain_map.get(scenario.get('crisis_type'), ['economic', 'social'])
+            relevant_interactions = [
+                interaction for interaction in cross_domain['interaction_matrices']
+                if interaction['from_domain'] in relevant_domains or interaction['to_domain'] in relevant_domains
+            ]
+            
+            enhanced_analysis['enhanced_factors']['cross_domain_impacts'] = {
+                'relevant_domains': relevant_domains,
+                'key_interactions': relevant_interactions,
+                'feedback_loops': cross_domain['feedback_loops'],
+                'recommendation': 'Monitor cross-domain spillover effects and feedback loops'
+            }
+        
+        # Apply stakeholder interactions enhancement
+        if 'stakeholder_interactions' in enhancement_types:
+            stakeholders = enhancements['stakeholder_interactions']
+            enhanced_analysis['enhanced_factors']['stakeholder_interactions'] = {
+                'key_stakeholder_types': stakeholders['stakeholder_types'],
+                'interaction_mechanisms': stakeholders['interaction_mechanisms'],
+                'network_effects_to_monitor': stakeholders['network_effects'],
+                'recommendation': 'Model stakeholder behavior patterns and cooperation/competition dynamics'
+            }
+        
+        # Apply uncertainty quantification enhancement
+        if 'uncertainty_quantification' in enhancement_types:
+            uncertainty = enhancements['uncertainty_quantification']
+            enhanced_analysis['enhanced_factors']['uncertainty_quantification'] = {
+                'uncertainty_types_present': uncertainty['uncertainty_types'],
+                'recommended_methods': uncertainty['quantification_methods'],
+                'communication_strategies': uncertainty['communication_strategies'],
+                'recommendation': 'Implement probabilistic ranges instead of point predictions'
+            }
+        
+        return enhanced_analysis
+        
+    except Exception as e:
+        logging.error(f"Scenario enhancement error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to enhance scenario: {str(e)}")
+
 # Include the API router in the main app
 app.include_router(api_router)
