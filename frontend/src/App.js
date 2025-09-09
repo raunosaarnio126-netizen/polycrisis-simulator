@@ -9041,6 +9041,10 @@ const AppContent = () => {
           <TabsContent value="knowledge-topology">
             <KnowledgeTopology />
           </TabsContent>
+          
+          <TabsContent value="crisis-framework">
+            <CrisisManagementFramework />
+          </TabsContent>
         </Tabs>
       </main>
     </div>
