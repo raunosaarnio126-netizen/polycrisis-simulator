@@ -2924,36 +2924,105 @@ const CompanyManagement = () => {
       )}
 
       {/* Quick Actions */}
-      <div className="grid md:grid-cols-4 gap-4">
-        <Card className="cursor-pointer hover:shadow-lg transition-shadow">
-          <CardContent className="p-6 text-center">
-            <Upload className="w-8 h-8 text-blue-600 mx-auto mb-2" />
-            <h3 className="font-semibold text-gray-900">Upload Documents</h3>
-            <p className="text-sm text-gray-600">Business plans & strategy docs</p>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <Card 
+          className="cursor-pointer hover:shadow-lg transition-all hover:scale-105 border-2 hover:border-blue-300"
+          onClick={() => {
+            // Navigate to Documents tab
+            const documentsTab = document.querySelector('[role="tab"][value="documents"]');
+            if (documentsTab) {
+              documentsTab.click();
+            }
+            toast({ title: "Navigating to Documents", description: "Upload and analyze your business documents" });
+          }}
+        >
+          <CardContent className="p-4 sm:p-6 text-center">
+            <Upload className="w-6 h-6 sm:w-8 sm:h-8 text-blue-600 mx-auto mb-2" />
+            <h3 className="font-semibold text-gray-900 text-sm sm:text-base">Upload Documents</h3>
+            <p className="text-xs sm:text-sm text-gray-600">Business plans & strategy docs</p>
           </CardContent>
         </Card>
         
-        <Card className="cursor-pointer hover:shadow-lg transition-shadow">
-          <CardContent className="p-6 text-center">
-            <Users2 className="w-8 h-8 text-green-600 mx-auto mb-2" />
-            <h3 className="font-semibold text-gray-900">Manage Teams</h3>
-            <p className="text-sm text-gray-600">Create crisis response teams</p>
+        <Card 
+          className="cursor-pointer hover:shadow-lg transition-all hover:scale-105 border-2 hover:border-green-300"
+          onClick={() => {
+            toast({ 
+              title: "Team Management", 
+              description: "Feature coming soon - Create and manage crisis response teams",
+              duration: 3000
+            });
+          }}
+        >
+          <CardContent className="p-4 sm:p-6 text-center">
+            <Users2 className="w-6 h-6 sm:w-8 sm:h-8 text-green-600 mx-auto mb-2" />
+            <h3 className="font-semibold text-gray-900 text-sm sm:text-base">Manage Teams</h3>
+            <p className="text-xs sm:text-sm text-gray-600">Create crisis response teams</p>
           </CardContent>
         </Card>
         
-        <Card className="cursor-pointer hover:shadow-lg transition-shadow">
-          <CardContent className="p-6 text-center">
-            <Zap className="w-8 h-8 text-purple-600 mx-auto mb-2" />
-            <h3 className="font-semibold text-gray-900">Rapid Analysis</h3>
-            <p className="text-sm text-gray-600">AI-powered business insights</p>
+        <Card 
+          className="cursor-pointer hover:shadow-lg transition-all hover:scale-105 border-2 hover:border-purple-300"
+          onClick={async () => {
+            try {
+              // Get current user and company
+              const userResponse = await axios.get(`${API}/me`);
+              if (userResponse.data.company_id) {
+                // Generate rapid analysis
+                setLoading(true);
+                const analysisResponse = await axios.post(`${API}/companies/${userResponse.data.company_id}/rapid-analysis?analysis_type=vulnerability_assessment`);
+                
+                toast({ 
+                  title: "Rapid Analysis Complete", 
+                  description: "AI-powered vulnerability assessment generated successfully!",
+                  duration: 4000
+                });
+                
+                // You could open a dialog here to show the analysis
+                console.log('Analysis result:', analysisResponse.data);
+              } else {
+                toast({ 
+                  title: "Company Required", 
+                  description: "Please complete your company profile first",
+                  variant: "destructive"
+                });
+              }
+            } catch (error) {
+              toast({ 
+                title: "Analysis Error", 
+                description: "Failed to generate rapid analysis. Please try again.",
+                variant: "destructive"
+              });
+            } finally {
+              setLoading(false);
+            }
+          }}
+        >
+          <CardContent className="p-4 sm:p-6 text-center">
+            <Zap className="w-6 h-6 sm:w-8 sm:h-8 text-purple-600 mx-auto mb-2" />
+            <h3 className="font-semibold text-gray-900 text-sm sm:text-base">Rapid Analysis</h3>
+            <p className="text-xs sm:text-sm text-gray-600">AI-powered business insights</p>
           </CardContent>
         </Card>
         
-        <Card className="cursor-pointer hover:shadow-lg transition-shadow">
-          <CardContent className="p-6 text-center">
-            <BarChart className="w-8 h-8 text-orange-600 mx-auto mb-2" />
-            <h3 className="font-semibold text-gray-900">Company Scenarios</h3>
-            <p className="text-sm text-gray-600">Tailored crisis scenarios</p>
+        <Card 
+          className="cursor-pointer hover:shadow-lg transition-all hover:scale-105 border-2 hover:border-orange-300"
+          onClick={() => {
+            // Navigate to Create Scenario tab
+            const createTab = document.querySelector('[role="tab"][value="create"]');
+            if (createTab) {
+              createTab.click();
+            }
+            toast({ 
+              title: "Create Company Scenarios", 
+              description: "Build crisis scenarios tailored to your company profile",
+              duration: 3000
+            });
+          }}
+        >
+          <CardContent className="p-4 sm:p-6 text-center">
+            <BarChart className="w-6 h-6 sm:w-8 sm:h-8 text-orange-600 mx-auto mb-2" />
+            <h3 className="font-semibold text-gray-900 text-sm sm:text-base">Company Scenarios</h3>
+            <p className="text-xs sm:text-sm text-gray-600">Tailored crisis scenarios</p>
           </CardContent>
         </Card>
       </div>
