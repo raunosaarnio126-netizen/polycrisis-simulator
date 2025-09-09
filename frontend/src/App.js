@@ -4467,6 +4467,10 @@ const AppContent = () => {
             <ScenarioManagement onScenarioSelect={setSelectedScenario} />
           </TabsContent>
           
+          <TabsContent value="scenario-adjusters">
+            <ScenarioAdjusters />
+          </TabsContent>
+          
           <TabsContent value="ai-genie">
             <AIGenie selectedScenario={selectedScenario} />
           </TabsContent>
