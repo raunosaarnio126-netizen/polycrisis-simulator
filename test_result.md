@@ -147,6 +147,18 @@ backend:
       - working: true
         agent: "main"
         comment: "Team creation endpoints already exist. Need to add endpoint to get existing users for team member selection"
+
+  - task: "Fuzzy Logic Scenario Adjusters API"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "All fuzzy logic endpoints working perfectly. SEPTE framework validation, AI analysis generation with Claude Sonnet 4, consensus management - all tested and working. 14/15 tests passed."
       - working: true
         agent: "testing"
         comment: "Team management endpoints fully functional. POST /api/companies/{company_id}/teams creates teams with email lists. GET /api/companies/{company_id}/teams retrieves teams. GET /api/companies/{company_id}/users returns company users with proper access control. All endpoints working correctly."
