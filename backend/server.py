@@ -16,6 +16,8 @@ from emergentintegrations.llm.chat import LlmChat, UserMessage
 import PyPDF2
 from docx import Document
 import io
+import json
+from pathlib import Path
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
