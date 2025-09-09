@@ -4418,6 +4418,11 @@ const AppContent = () => {
                   <span className="hidden xs:inline">Scenarios</span>
                   <span className="xs:hidden">Scen</span>
                 </TabsTrigger>
+                <TabsTrigger value="scenario-adjusters" className="flex items-center gap-1 px-2 sm:px-3 text-xs sm:text-sm whitespace-nowrap">
+                  <Layers className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <span className="hidden xs:inline">Scenario Adjusters</span>
+                  <span className="xs:hidden">Adjusters</span>
+                </TabsTrigger>
                 <TabsTrigger value="ai-genie" className="flex items-center gap-1 px-2 sm:px-3 text-xs sm:text-sm whitespace-nowrap">
                   <MessageSquare className="w-3 h-3 sm:w-4 sm:h-4" />
                   <span className="hidden xs:inline">AI Genie</span>
