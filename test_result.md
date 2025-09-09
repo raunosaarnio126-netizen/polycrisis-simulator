@@ -319,7 +319,7 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Knowledge Topology Endpoints"
+    - "Crisis Management Framework Endpoints"
   stuck_tasks: 
     - "Document Analysis with File Upload"
   test_all: false
