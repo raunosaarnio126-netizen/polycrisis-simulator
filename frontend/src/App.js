@@ -3390,7 +3390,7 @@ const AdminDashboard = () => {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="grid md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {aiAvatars.map(avatar => (
               <div key={avatar.id} className="flex items-center justify-between p-4 border rounded-lg">
                 <div className="flex items-center gap-3">
