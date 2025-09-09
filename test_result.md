@@ -262,6 +262,18 @@ backend:
         agent: "testing"
         comment: "COMPREHENSIVE SCENARIO DATA PERSISTENCE TESTING COMPLETED: 15/15 tests passed (100% success rate). ✅ CRITICAL TESTS PASSED: 1) POST /api/scenarios - Complete scenario creation with all fields (title, description, crisis_type, severity_level, affected_regions, key_variables) working perfectly. UUID generation correct. 2) GET /api/scenarios - All scenarios retrieval working, all fields preserved correctly. 3) GET /api/scenarios/{id} - Individual scenario retrieval working, no data truncation or missing fields. 4) Array field preservation - affected_regions and key_variables arrays preserved correctly in all operations. 5) Description field completeness - Long descriptions (239+ characters) preserved without truncation. 6) Edge cases - Empty arrays, very long descriptions (3000+ chars), special characters (àáâãäåæçèéêë, 特別地域, переменная), maximum severity level (10), large region lists (7 regions) all handled correctly. 7) Multiple scenario persistence - All created scenarios found in final list. ✅ DATA INTEGRITY VERIFIED: All fields match exactly between creation and retrieval operations. MongoDB serialization/deserialization working correctly. No data loss detected. CONCLUSION: Scenario creation and retrieval functionality is production-ready and handles all specified requirements from review request including data persistence, array preservation, and edge cases."
 
+  - task: "Scenario Amendment Functionality (PATCH /api/scenarios/{id}/amend)"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "SCENARIO AMENDMENT FUNCTIONALITY TESTING COMPLETED SUCCESSFULLY: 8/8 tests passed (100% success rate). ✅ CRITICAL TESTS PASSED: 1) PATCH /api/scenarios/{scenario_id}/amend endpoint accepts partial data without validation errors - tested with scenario ID 9796a80e-976e-463d-ba00-aeb899b76a7a using test credentials test@example.com/password123. 2) Only provided fields are updated in database - verified affected_regions, key_variables, additional_context, stakeholders, timeline fields updated correctly while title, description, crisis_type, severity_level remained unchanged. 3) Response returns complete updated scenario with new fields - all required fields present in response including new Scenario model fields (additional_context, stakeholders, timeline). 4) GET /api/scenarios reflects amendments - verified updated scenario data persists correctly in database and retrieval operations. 5) Partial amendments work correctly - tested updating only some fields (affected_regions, additional_context) while others remain unchanged. 6) Authentication properly enforced - returns 403 for unauthenticated requests. 7) Invalid scenario ID handling - returns 404 for non-existent scenarios. 8) Empty amendment data handled gracefully - accepts empty payload without errors. ✅ SOLUTION VERIFICATION: The original PUT endpoint validation issue has been resolved. New ScenarioAmendment model with optional fields allows partial updates. PATCH endpoint only updates provided fields, solving the 'update failed' issue. All test data from review request (Finland, Sweden, Estonia regions; GDP Growth, Employment Rate, Trade Balance variables; Nordic Council stakeholders; 6-12 months timeline) processed correctly. CONCLUSION: Scenario amendment functionality is production-ready and fully resolves the reported 'update failed' issue."
+
 frontend:
   - task: "Company Insights Dialog with Print Feature"
     implemented: false
