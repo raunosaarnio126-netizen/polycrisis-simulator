@@ -2230,33 +2230,46 @@ Comprehensive Scenario Analysis & Crisis Management Platform
           <title>Action Plan - ${scenarioTitle}</title>
           <meta charset="utf-8">
           <style>
+            * {
+              margin: 0;
+              padding: 0;
+              box-sizing: border-box;
+            }
             body { 
-              font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+              font-family: 'Arial', 'Helvetica', sans-serif; 
               margin: 0; 
-              padding: 40px;
+              padding: 30px;
               line-height: 1.6; 
               color: #333; 
               background: white;
+              font-size: 14px;
             }
             .header { 
               border-bottom: 3px solid #059669; 
-              padding-bottom: 30px; 
-              margin-bottom: 40px; 
+              padding-bottom: 20px; 
+              margin-bottom: 30px; 
               text-align: center;
+              page-break-after: avoid;
             }
             .title { 
-              font-size: 32px; 
+              font-size: 28px; 
               font-weight: bold; 
               color: #047857; 
-              margin-bottom: 10px; 
+              margin-bottom: 8px; 
+              line-height: 1.2;
             }
             .subtitle { 
               color: #6b7280; 
-              font-size: 18px; 
-              margin-bottom: 20px;
+              font-size: 16px; 
+              margin-bottom: 15px;
+              font-weight: 500;
+            }
+            .meta-info {
+              font-size: 12px;
+              color: #6b7280;
             }
             .section { 
-              margin-bottom: 40px; 
+              margin-bottom: 25px; 
               page-break-inside: avoid; 
               border: 1px solid #e5e7eb;
               border-radius: 8px;
@@ -2265,53 +2278,89 @@ Comprehensive Scenario Analysis & Crisis Management Platform
             .section-header {
               background: #059669;
               color: white;
-              padding: 15px 20px;
-              font-size: 20px;
+              padding: 12px 16px;
+              font-size: 18px;
               font-weight: bold;
               margin: 0;
             }
+            .section-urgent { background: #dc2626; }
+            .section-medium { background: #f59e0b; }
+            .section-long { background: #059669; }
+            
             .action-item {
               background: white;
-              border: 1px solid #d1d5db;
-              padding: 15px;
-              margin: 10px 20px;
-              border-radius: 6px;
               border-left: 4px solid #059669;
+              padding: 12px 16px;
+              margin: 8px 16px;
+              border-radius: 4px;
+              page-break-inside: avoid;
             }
+            .action-urgent { border-left-color: #dc2626; }
+            .action-medium { border-left-color: #f59e0b; }
+            .action-long { border-left-color: #059669; }
+            
             .action-header {
               font-weight: bold;
-              font-size: 16px;
-              color: #047857;
-              margin-bottom: 8px;
+              font-size: 15px;
+              color: #1f2937;
+              margin-bottom: 6px;
+              line-height: 1.3;
             }
             .action-meta {
-              font-size: 12px;
+              font-size: 11px;
               color: #6b7280;
-              margin-bottom: 8px;
+              margin-bottom: 6px;
+              font-style: italic;
             }
             .action-description {
-              font-size: 14px;
+              font-size: 13px;
               line-height: 1.6;
+              color: #374151;
             }
-            .priority-high { border-left-color: #dc2626; }
-            .priority-medium { border-left-color: #f59e0b; }
-            .priority-low { border-left-color: #059669; }
+            .no-actions {
+              padding: 16px;
+              text-align: center;
+              color: #6b7280;
+              font-style: italic;
+            }
             @media print { 
-              body { margin: 20px; font-size: 12px; }
-              .header { margin-bottom: 20px; }
-              .section { margin-bottom: 25px; page-break-inside: avoid; }
+              body { 
+                margin: 15px; 
+                font-size: 12px; 
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+              }
+              .header { margin-bottom: 15px; }
+              .section { 
+                margin-bottom: 15px; 
+                page-break-inside: avoid; 
+                border: 1px solid #ccc !important;
+              }
+              .section-header { 
+                color: white !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+              }
+              .section-urgent { background: #dc2626 !important; }
+              .section-medium { background: #f59e0b !important; }
+              .section-long { background: #059669 !important; }
+              .action-item {
+                border: 1px solid #ddd;
+                margin: 5px 10px;
+              }
             }
             @page { 
               margin: 2cm; 
               size: A4;
             }
             .footer {
-              margin-top: 40px;
-              padding-top: 20px;
+              margin-top: 30px;
+              padding-top: 15px;
               border-top: 2px solid #e5e7eb;
               text-align: center;
               color: #6b7280;
               font-size: 12px;
+              page-break-inside: avoid;
             }
           </style>
         </head>
@@ -2319,46 +2368,46 @@ Comprehensive Scenario Analysis & Crisis Management Platform
           <div class="header">
             <div class="title">✅ Action Plan</div>
             <div class="subtitle">${scenarioTitle}</div>
-            <div style="color: #6b7280; font-size: 14px;">
+            <div class="meta-info">
               Generated on ${currentDate} at ${currentTime}
             </div>
           </div>
 
           <div class="section">
-            <div class="section-header">🚨 Immediate Actions (0-24h)</div>
-            ${data.immediate_actions ? data.immediate_actions.map(action => `
-              <div class="action-item priority-high">
-                <div class="action-header">${action.action}</div>
-                <div class="action-meta">Priority: ${action.priority} | Timeline: ${action.timeline}</div>
-                <div class="action-description">${action.description}</div>
+            <div class="section-header section-urgent">🚨 Immediate Actions (0-24h)</div>
+            ${data.immediate_actions && data.immediate_actions.length > 0 ? data.immediate_actions.map(action => `
+              <div class="action-item action-urgent">
+                <div class="action-header">${action.action || 'Action Item'}</div>
+                <div class="action-meta">Priority: ${action.priority || 'High'} | Timeline: ${action.timeline || '0-24h'}</div>
+                <div class="action-description">${action.description || 'No description provided'}</div>
               </div>
-            `).join('') : '<div style="padding: 20px;">No immediate actions defined</div>'}
+            `).join('') : '<div class="no-actions">No immediate actions defined</div>'}
           </div>
 
           <div class="section">
-            <div class="section-header">⏰ Short-term Actions (1-30d)</div>
-            ${data.short_term_actions ? data.short_term_actions.map(action => `
-              <div class="action-item priority-medium">
-                <div class="action-header">${action.action}</div>
-                <div class="action-meta">Priority: ${action.priority} | Timeline: ${action.timeline}</div>
-                <div class="action-description">${action.description}</div>
+            <div class="section-header section-medium">⏰ Short-term Actions (1-30d)</div>
+            ${data.short_term_actions && data.short_term_actions.length > 0 ? data.short_term_actions.map(action => `
+              <div class="action-item action-medium">
+                <div class="action-header">${action.action || 'Action Item'}</div>
+                <div class="action-meta">Priority: ${action.priority || 'Medium'} | Timeline: ${action.timeline || '1-30d'}</div>
+                <div class="action-description">${action.description || 'No description provided'}</div>
               </div>
-            `).join('') : '<div style="padding: 20px;">No short-term actions defined</div>'}
+            `).join('') : '<div class="no-actions">No short-term actions defined</div>'}
           </div>
 
           <div class="section">
-            <div class="section-header">📅 Long-term Actions (1-12m)</div>
-            ${data.long_term_actions ? data.long_term_actions.map(action => `
-              <div class="action-item priority-low">
-                <div class="action-header">${action.action}</div>
-                <div class="action-meta">Priority: ${action.priority} | Timeline: ${action.timeline}</div>
-                <div class="action-description">${action.description}</div>
+            <div class="section-header section-long">📅 Long-term Actions (1-12m)</div>
+            ${data.long_term_actions && data.long_term_actions.length > 0 ? data.long_term_actions.map(action => `
+              <div class="action-item action-long">
+                <div class="action-header">${action.action || 'Action Item'}</div>
+                <div class="action-meta">Priority: ${action.priority || 'Low'} | Timeline: ${action.timeline || '1-12m'}</div>
+                <div class="action-description">${action.description || 'No description provided'}</div>
               </div>
-            `).join('') : '<div style="padding: 20px;">No long-term actions defined</div>'}
+            `).join('') : '<div class="no-actions">No long-term actions defined</div>'}
           </div>
 
           <div class="footer">
-            <div>Generated by Polycrisis Simulator</div>
+            <div><strong>Generated by Polycrisis Simulator</strong></div>
             <div>Crisis Action Plan - Strategic Implementation Guide</div>
           </div>
         </body>
