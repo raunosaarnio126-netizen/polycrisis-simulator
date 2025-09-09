@@ -375,16 +375,16 @@ const AdvancedDashboard = () => {
         </Card>
         
         <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
-          <CardContent className="p-6">
+          <CardContent className="p-3 sm:p-4 lg:p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-green-600 font-medium">Adaptive Learning</p>
-                <p className="text-3xl font-bold text-green-900">
+                <p className="text-xs sm:text-sm text-green-600 font-medium">Adaptive Learning</p>
+                <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-green-900">
                   {advancedAnalytics.adaptive_learning_active ? 'ON' : 'OFF'}
                 </p>
                 <p className="text-xs text-green-700">{advancedAnalytics.learning_insights_generated || 0} insights</p>
               </div>
-              <Brain className="w-10 h-10 text-green-500" />
+              <Brain className="w-6 h-6 sm:w-8 sm:h-8 lg:w-10 lg:h-10 text-green-500" />
             </div>
           </CardContent>
         </Card>
