@@ -3,7 +3,7 @@ import json
 
 def test_strategic_implementation_endpoints():
     """Quick test of Strategic Implementation API endpoints"""
-    base_url = "https://polycrisis-ai.preview.emergentagent.com/api"
+    base_url = "https://crisis-adapt.preview.emergentagent.com/api"
     
     print("🚀 Quick Strategic Implementation API Test")
     print("=" * 50)
