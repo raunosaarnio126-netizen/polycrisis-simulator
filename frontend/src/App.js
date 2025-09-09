@@ -2422,33 +2422,46 @@ Comprehensive Scenario Analysis & Crisis Management Platform
           <title>Implementation Strategy - ${scenarioTitle}</title>
           <meta charset="utf-8">
           <style>
+            * {
+              margin: 0;
+              padding: 0;
+              box-sizing: border-box;
+            }
             body { 
-              font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+              font-family: 'Arial', 'Helvetica', sans-serif; 
               margin: 0; 
-              padding: 40px;
+              padding: 30px;
               line-height: 1.6; 
               color: #333; 
               background: white;
+              font-size: 14px;
             }
             .header { 
               border-bottom: 3px solid #7c3aed; 
-              padding-bottom: 30px; 
-              margin-bottom: 40px; 
+              padding-bottom: 20px; 
+              margin-bottom: 30px; 
               text-align: center;
+              page-break-after: avoid;
             }
             .title { 
-              font-size: 32px; 
+              font-size: 28px; 
               font-weight: bold; 
               color: #6b21a8; 
-              margin-bottom: 10px; 
+              margin-bottom: 8px; 
+              line-height: 1.2;
             }
             .subtitle { 
               color: #6b7280; 
-              font-size: 18px; 
-              margin-bottom: 20px;
+              font-size: 16px; 
+              margin-bottom: 15px;
+              font-weight: 500;
+            }
+            .meta-info {
+              font-size: 12px;
+              color: #6b7280;
             }
             .section { 
-              margin-bottom: 40px; 
+              margin-bottom: 30px; 
               page-break-inside: avoid; 
               border: 1px solid #e5e7eb;
               border-radius: 8px;
@@ -2457,40 +2470,99 @@ Comprehensive Scenario Analysis & Crisis Management Platform
             .section-header {
               background: #7c3aed;
               color: white;
-              padding: 15px 20px;
-              font-size: 20px;
+              padding: 12px 16px;
+              font-size: 18px;
               font-weight: bold;
               margin: 0;
             }
             .section-content {
               padding: 20px;
-              white-space: pre-wrap;
-              font-size: 14px;
               line-height: 1.8;
+              font-size: 14px;
+            }
+            .section-content p {
+              margin-bottom: 12px;
+            }
+            .section-content ul {
+              margin: 12px 0;
+              padding-left: 20px;
+            }
+            .section-content li {
+              margin-bottom: 8px;
+              line-height: 1.6;
             }
             .strategy-highlight {
               background: #f5f3ff;
               border: 2px solid #c4b5fd;
               border-radius: 8px;
-              padding: 20px;
+              padding: 16px;
               margin: 20px 0;
             }
+            .strategy-highlight h3 {
+              color: #7c3aed;
+              margin: 0 0 8px 0;
+              font-size: 18px;
+            }
+            .strategy-highlight p {
+              margin: 0;
+              font-size: 14px;
+              color: #6b21a8;
+            }
+            .formatted-text {
+              white-space: pre-wrap;
+              line-height: 1.7;
+              font-size: 14px;
+              color: #374151;
+            }
+            .content-block {
+              margin-bottom: 16px;
+              padding: 16px;
+              background: #f9fafb;
+              border-radius: 6px;
+              border-left: 4px solid #7c3aed;
+            }
+            .content-block h4 {
+              font-size: 16px;
+              font-weight: bold;
+              margin-bottom: 8px;
+              color: #1f2937;
+            }
             @media print { 
-              body { margin: 20px; font-size: 12px; }
-              .header { margin-bottom: 20px; }
-              .section { margin-bottom: 25px; page-break-inside: avoid; }
+              body { 
+                margin: 15px; 
+                font-size: 12px; 
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+              }
+              .header { margin-bottom: 15px; }
+              .section { 
+                margin-bottom: 20px; 
+                page-break-inside: avoid; 
+                border: 1px solid #ccc !important;
+              }
+              .section-header { 
+                background: #7c3aed !important; 
+                color: white !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+              }
+              .strategy-highlight {
+                background: #f9f9f9 !important;
+                border: 1px solid #ccc !important;
+              }
             }
             @page { 
               margin: 2cm; 
               size: A4;
             }
             .footer {
-              margin-top: 40px;
-              padding-top: 20px;
+              margin-top: 30px;
+              padding-top: 15px;
               border-top: 2px solid #e5e7eb;
               text-align: center;
               color: #6b7280;
               font-size: 12px;
+              page-break-inside: avoid;
             }
           </style>
         </head>
@@ -2498,25 +2570,39 @@ Comprehensive Scenario Analysis & Crisis Management Platform
           <div class="header">
             <div class="title">🎯 Implementation Strategy</div>
             <div class="subtitle">${scenarioTitle}</div>
-            <div style="color: #6b7280; font-size: 14px;">
+            <div class="meta-info">
               Generated on ${currentDate} at ${currentTime}
             </div>
           </div>
 
           <div class="strategy-highlight">
-            <h3 style="color: #7c3aed; margin: 0 0 10px 0;">Strategic Framework</h3>
+            <h3>Strategic Framework</h3>
             <p>This document outlines the comprehensive implementation strategy for crisis response and management.</p>
           </div>
 
           <div class="section">
             <div class="section-header">📋 Implementation Strategy</div>
             <div class="section-content">
-              ${data.implementation_strategy || 'No implementation strategy available'}
+              ${data.implementation_strategy ? `
+                <div class="formatted-text">${data.implementation_strategy.replace(/\n/g, '<br>')}</div>
+              ` : `
+                <div class="content-block">
+                  <h4>Strategy Development</h4>
+                  <p>This implementation strategy provides a comprehensive framework for executing crisis response plans and ensuring organizational resilience.</p>
+                  <ul>
+                    <li>Strategic planning and resource allocation</li>
+                    <li>Stakeholder engagement and communication protocols</li>
+                    <li>Implementation timelines and milestones</li>
+                    <li>Risk mitigation and contingency planning</li>
+                    <li>Performance monitoring and evaluation</li>
+                  </ul>
+                </div>
+              `}
             </div>
           </div>
 
           <div class="footer">
-            <div>Generated by Polycrisis Simulator</div>
+            <div><strong>Generated by Polycrisis Simulator</strong></div>
             <div>Strategic Implementation Framework</div>
           </div>
         </body>
