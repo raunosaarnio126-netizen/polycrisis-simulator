@@ -390,14 +390,14 @@ const AdvancedDashboard = () => {
         </Card>
         
         <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200">
-          <CardContent className="p-6">
+          <CardContent className="p-3 sm:p-4 lg:p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-orange-600 font-medium">Complex Systems</p>
-                <p className="text-3xl font-bold text-orange-900">{advancedAnalytics.complex_systems_analyzed || 0}</p>
+                <p className="text-xs sm:text-sm text-orange-600 font-medium">Complex Systems</p>
+                <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-orange-900">{advancedAnalytics.complex_systems_analyzed || 0}</p>
                 <p className="text-xs text-orange-700">Analyzed systems</p>
               </div>
-              <Network className="w-10 h-10 text-orange-500" />
+              <Network className="w-6 h-6 sm:w-8 sm:h-8 lg:w-10 lg:h-10 text-orange-500" />
             </div>
           </CardContent>
         </Card>
