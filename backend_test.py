@@ -1754,17 +1754,11 @@ class PolycrisisAPITester:
 
     def test_crisis_strategy_invalid_severity(self):
         """Test Crisis Strategy endpoint with invalid severity level"""
-        crisis_data = {
-            "crisis_type": "economic_crisis",
-            "severity_level": 15  # Invalid - should be 1-10
-        }
-        
         success, response = self.run_test(
             "Crisis Strategy - Invalid Severity Level",
             "POST",
-            "knowledge-topology/crisis-strategy",
-            400,  # Should return 400 Bad Request
-            data=crisis_data
+            "knowledge-topology/crisis-strategy?crisis_type=economic_crisis&severity_level=15",
+            400  # Should return 400 Bad Request
         )
         
         if success:
