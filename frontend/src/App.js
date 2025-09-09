@@ -1724,7 +1724,7 @@ const ScenarioManagement = ({ onScenarioSelect }) => {
                 <p className="text-gray-700">{selectedScenario.description}</p>
               </div>
               
-              <div className="grid md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <h4 className="font-semibold text-gray-900 mb-2">Affected Regions</h4>
                   <div className="space-y-1">
