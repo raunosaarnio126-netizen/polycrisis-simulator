@@ -3961,6 +3961,120 @@ Comprehensive Scenario Analysis & Crisis Management Platform
           </DialogContent>
         </Dialog>
       )}
+
+      {/* Multi-Document Side-by-Side Interface */}
+      {showMultiDocView && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg shadow-2xl w-full max-w-[95vw] h-[90vh] flex flex-col">
+            {/* Header */}
+            <div className="flex items-center justify-between p-4 border-b bg-gray-50">
+              <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                <Layers className="w-6 h-6 text-blue-600" />
+                Multi-Document View
+              </h2>
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-600">
+                  {openDocuments.length} document{openDocuments.length !== 1 ? 's' : ''} open
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={closeAllDocuments}
+                  className="text-red-600 hover:text-red-700"
+                >
+                  <X className="w-4 h-4 mr-1" />
+                  Close All
+                </Button>
+              </div>
+            </div>
+
+            {/* Document Tabs */}
+            <div className="flex border-b bg-gray-50 overflow-x-auto">
+              {openDocuments.map((doc) => (
+                <button
+                  key={doc.id}
+                  onClick={() => setActiveDocument(doc.id)}
+                  className={`flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
+                    activeDocument === doc.id
+                      ? 'border-blue-500 text-blue-700 bg-white'
+                      : 'border-transparent text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                  }`}
+                >
+                  {doc.type === 'game-book' && <BookOpen className="w-4 h-4" />}
+                  {doc.type === 'action-plan' && <CheckSquare className="w-4 h-4" />}
+                  {doc.type === 'strategy' && <Target className="w-4 h-4" />}
+                  {doc.type === 'monitors' && <Monitor className="w-4 h-4" />}
+                  {doc.type === 'systems' && <Network className="w-4 h-4" />}
+                  {doc.type === 'learning' && <Brain className="w-4 h-4" />}
+                  {doc.type === 'sources' && <Lightbulb className="w-4 h-4" />}
+                  {doc.type === 'dashboard' && <BarChart className="w-4 h-4" />}
+                  <span className="max-w-32 truncate">{doc.title}</span>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      closeDocument(doc.id);
+                    }}
+                    className="text-gray-400 hover:text-red-500 ml-1"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </button>
+              ))}
+            </div>
+
+            {/* Document Grid Layout */}
+            <div className="flex-1 overflow-hidden">
+              {openDocuments.length === 1 && (
+                <div className="h-full p-6 overflow-y-auto">
+                  {renderDocumentContent(openDocuments[0])}
+                </div>
+              )}
+              
+              {openDocuments.length === 2 && (
+                <div className="flex h-full">
+                  <div className="flex-1 p-6 overflow-y-auto border-r">
+                    {renderDocumentContent(openDocuments[0])}
+                  </div>
+                  <div className="flex-1 p-6 overflow-y-auto">
+                    {renderDocumentContent(openDocuments[1])}
+                  </div>
+                </div>
+              )}
+              
+              {openDocuments.length === 3 && (
+                <div className="flex h-full">
+                  <div className="flex-1 p-4 overflow-y-auto border-r">
+                    {renderDocumentContent(openDocuments[0])}
+                  </div>
+                  <div className="flex flex-col flex-1">
+                    <div className="flex-1 p-4 overflow-y-auto border-b">
+                      {renderDocumentContent(openDocuments[1])}
+                    </div>
+                    <div className="flex-1 p-4 overflow-y-auto">
+                      {renderDocumentContent(openDocuments[2])}
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              {openDocuments.length >= 4 && (
+                <div className="grid grid-cols-2 h-full">
+                  {openDocuments.slice(0, 4).map((doc, index) => (
+                    <div
+                      key={doc.id}
+                      className={`p-4 overflow-y-auto ${
+                        index % 2 === 0 ? 'border-r' : ''
+                      } ${index < 2 ? 'border-b' : ''}`}
+                    >
+                      {renderDocumentContent(doc)}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
