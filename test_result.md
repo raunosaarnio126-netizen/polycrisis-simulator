@@ -346,7 +346,7 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Crisis Management Framework Frontend Interface"
+    - "Scenario Amendment Functionality (PATCH /api/scenarios/{id}/amend)"
   stuck_tasks: 
     - "Document Analysis with File Upload"
   test_all: false
