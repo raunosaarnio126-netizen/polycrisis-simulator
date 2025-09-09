@@ -53,6 +53,65 @@ class User(BaseModel):
     phone: Optional[str] = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
+# Scenario Adjusters - Fuzzy Logic Models
+class ScenarioAdjustment(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    company_id: str
+    scenario_id: Optional[str] = None  # Link to existing scenario
+    adjustment_name: str
+    # SEPTE Framework percentages (each pair should sum to 100)
+    economic_crisis_pct: float = 50.0  # vs economic_stability_pct
+    economic_stability_pct: float = 50.0
+    social_unrest_pct: float = 50.0  # vs social_cohesion_pct  
+    social_cohesion_pct: float = 50.0
+    environmental_degradation_pct: float = 50.0  # vs environmental_resilience_pct
+    environmental_resilience_pct: float = 50.0
+    political_instability_pct: float = 50.0  # vs political_stability_pct
+    political_stability_pct: float = 50.0
+    technological_disruption_pct: float = 50.0  # vs technological_advancement_pct
+    technological_advancement_pct: float = 50.0
+    # AI Analysis Results
+    real_time_analysis: str
+    impact_summary: str
+    risk_level: str = "medium"  # "low", "medium", "high", "critical"
+    recommendations: List[str] = []
+    created_by: str
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class ScenarioAdjustmentCreate(BaseModel):
+    adjustment_name: str
+    scenario_id: Optional[str] = None
+    economic_crisis_pct: float = 50.0
+    economic_stability_pct: float = 50.0
+    social_unrest_pct: float = 50.0
+    social_cohesion_pct: float = 50.0
+    environmental_degradation_pct: float = 50.0
+    environmental_resilience_pct: float = 50.0
+    political_instability_pct: float = 50.0
+    political_stability_pct: float = 50.0
+    technological_disruption_pct: float = 50.0
+    technological_advancement_pct: float = 50.0
+
+class ConsensusSettings(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    company_id: str
+    team_id: Optional[str] = None
+    adjustment_id: str
+    consensus_name: str
+    agreed_by: List[str] = []  # List of user IDs who agreed
+    total_team_members: int
+    consensus_reached: bool = False
+    consensus_percentage: float = 0.0  # Percentage of team that agreed
+    final_settings: dict  # Store the agreed SEPTE settings
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    finalized_at: Optional[datetime] = None
+
+class ConsensusCreate(BaseModel):
+    adjustment_id: str
+    consensus_name: str
+    team_id: Optional[str] = None
+
 class UserCreate(BaseModel):
     email: str
     username: str
