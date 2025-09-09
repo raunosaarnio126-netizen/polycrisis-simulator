@@ -3170,14 +3170,7 @@ Comprehensive Scenario Analysis & Crisis Management Platform
               <div className="flex gap-3 pt-4 border-t">
                 <Button 
                   onClick={() => {
-                    // Create downloadable content
-                    const content = JSON.stringify(implementationView.data, null, 2);
-                    const blob = new Blob([content], { type: 'application/json' });
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `${implementationView.type}-${implementationView.scenario.title}.json`;
-                    a.click();
+                    downloadImplementationAsPDF(implementationView);
                   }}
                   className="flex-1"
                 >
