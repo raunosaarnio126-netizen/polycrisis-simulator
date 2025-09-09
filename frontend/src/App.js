@@ -4636,7 +4636,7 @@ const ScenarioAdjusters = () => {
                   max="100"
                   value={septeValues.social_unrest_pct}
                   onChange={(e) => handleSliderChange('social_unrest_pct', parseInt(e.target.value))}
-                  className="w-full h-2 bg-gradient-to-r from-orange-200 to-blue-200 rounded-lg appearance-none cursor-pointer slider"
+                  className="w-full septe-slider social-slider"
                 />
                 <div className="flex justify-between text-xs text-gray-500">
                   <span>Unrest</span>
