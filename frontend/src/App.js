@@ -7596,6 +7596,11 @@ const AppContent = () => {
                   <span className="hidden xs:inline">AI Genie</span>
                   <span className="xs:hidden">Genie</span>
                 </TabsTrigger>
+                <TabsTrigger value="knowledge-topology" className="flex items-center gap-1 px-2 sm:px-3 text-xs sm:text-sm whitespace-nowrap">
+                  <Network className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <span className="hidden xs:inline">Knowledge Base</span>
+                  <span className="xs:hidden">Knowledge</span>
+                </TabsTrigger>
               </TabsList>
             </div>
           </Tabs>
