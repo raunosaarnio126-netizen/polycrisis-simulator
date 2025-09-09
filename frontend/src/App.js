@@ -2147,7 +2147,20 @@ Comprehensive Scenario Analysis & Crisis Management Platform
                       }}
                       className="text-red-600 hover:text-red-700 hover:bg-red-50"
                     >
-                      <AlertTriangle className="w-3 h-3" />
+                      <Trash2 className="w-3 h-3 mr-1" />
+                      Delete
+                    </Button>
+                    
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => generateComprehensivePDFReport(scenario)}
+                      disabled={loading}
+                      className="bg-purple-50 hover:bg-purple-100 text-purple-700 border-purple-200"
+                      title="Generate comprehensive PDF report with all sections"
+                    >
+                      <FileText className="w-3 h-3 mr-1" />
+                      Print All PDF
                     </Button>
                   </div>
                   
