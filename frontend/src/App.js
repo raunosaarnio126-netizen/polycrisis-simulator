@@ -2656,6 +2656,8 @@ const CompanyManagement = () => {
   const [showDocumentAnalysis, setShowDocumentAnalysis] = useState(false);
   const [showTeamCreator, setShowTeamCreator] = useState(false);
   const [availableUsers, setAvailableUsers] = useState([]);
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteEmails, setInviteEmails] = useState([]);
   const [companyData, setCompanyData] = useState({
     company_name: '',
     industry: '',
