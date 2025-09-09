@@ -1748,7 +1748,7 @@ const ScenarioManagement = ({ onScenarioSelect }) => {
                 </div>
               </div>
 
-              <div className="grid md:grid-cols-2 gap-4 text-sm text-gray-600">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm text-gray-600">
                 <div>
                   <span className="font-medium">Created:</span> {new Date(selectedScenario.created_at).toLocaleString()}
                 </div>
