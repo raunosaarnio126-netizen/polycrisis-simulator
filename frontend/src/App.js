@@ -2704,6 +2704,221 @@ const CompanyManagement = () => {
     }
   };
 
+  const generateInsights = async (analysisType) => {
+    setLoading(true);
+    try {
+      const userResponse = await axios.get(`${API}/me`);
+      if (userResponse.data.company_id) {
+        const response = await axios.post(`${API}/companies/${userResponse.data.company_id}/rapid-analysis?analysis_type=${analysisType}`);
+        setCompanyInsightsData(response.data);
+        toast({ 
+          title: "Analysis Complete", 
+          description: "Company insights generated successfully!",
+          duration: 4000
+        });
+      }
+    } catch (error) {
+      toast({ 
+        title: "Analysis Error", 
+        description: "Failed to generate insights. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const analyzeWebsite = async () => {
+    if (!company?.website_url) {
+      toast({ 
+        title: "No Website", 
+        description: "Please add a website URL to your company profile first",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    setLoading(true);
+    try {
+      const response = await axios.post(`${API}/companies/${company.id}/rapid-analysis?analysis_type=competitive_analysis`);
+      setCompanyInsightsData({
+        ...response.data,
+        analysis_title: `Website Analysis - ${company.company_name}`,
+        analysis_content: `Website Analysis for ${company.website_url}\n\n${response.data.analysis_content}`
+      });
+      toast({ 
+        title: "Website Analysis Complete", 
+        description: "Your website has been analyzed successfully!",
+        duration: 4000
+      });
+    } catch (error) {
+      toast({ 
+        title: "Analysis Error", 
+        description: "Failed to analyze website. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const printAnalysis = () => {
+    if (!companyInsightsData) return;
+    
+    const printWindow = window.open('', '_blank');
+    const printContent = `
+      <html>
+        <head>
+          <title>${companyInsightsData.analysis_title}</title>
+          <style>
+            body { font-family: Arial, sans-serif; margin: 40px; line-height: 1.6; }
+            .header { border-bottom: 2px solid #333; padding-bottom: 20px; margin-bottom: 30px; }
+            .title { font-size: 24px; font-weight: bold; color: #333; }
+            .subtitle { color: #666; margin-top: 5px; }
+            .content { white-space: pre-line; margin-bottom: 30px; }
+            .section { margin-bottom: 25px; }
+            .section-title { font-size: 18px; font-weight: bold; margin-bottom: 10px; color: #333; }
+            .list-item { margin-bottom: 8px; padding-left: 20px; position: relative; }
+            .list-item:before { content: "•"; position: absolute; left: 0; color: #666; }
+            @media print { body { margin: 20px; } }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <div class="title">${companyInsightsData.analysis_title}</div>
+            <div class="subtitle">Generated on ${new Date().toLocaleDateString()}</div>
+          </div>
+          <div class="content">${companyInsightsData.analysis_content}</div>
+          <div class="section">
+            <div class="section-title">Key Findings</div>
+            ${companyInsightsData.key_findings.map(finding => `<div class="list-item">${finding}</div>`).join('')}
+          </div>
+          <div class="section">
+            <div class="section-title">Recommendations</div>
+            ${companyInsightsData.recommendations.map(rec => `<div class="list-item">${rec}</div>`).join('')}
+          </div>
+        </body>
+      </html>
+    `;
+    
+    printWindow.document.write(printContent);
+    printWindow.document.close();
+    printWindow.focus();
+    printWindow.print();
+    printWindow.close();
+  };
+
+  const handleFileUpload = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    if (!file.name.toLowerCase().endsWith('.pdf') && !file.name.toLowerCase().endsWith('.docx')) {
+      toast({ 
+        title: "Invalid File Type", 
+        description: "Please upload only PDF or DOCX files",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) { // 10MB limit
+      toast({ 
+        title: "File Too Large", 
+        description: "Please upload files smaller than 10MB",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const userResponse = await axios.get(`${API}/me`);
+      if (userResponse.data.company_id) {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('document_type', 'business_plan');
+
+        const response = await axios.post(`${API}/companies/${userResponse.data.company_id}/documents/upload`, formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        });
+
+        toast({ 
+          title: "Document Analyzed", 
+          description: `${file.name} has been uploaded and analyzed successfully!`,
+          duration: 4000
+        });
+
+        setShowDocumentAnalysis(false);
+        // Refresh documents list if needed
+      }
+    } catch (error) {
+      toast({ 
+        title: "Upload Error", 
+        description: error.response?.data?.detail || "Failed to upload and analyze document",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCreateTeam = async (event) => {
+    event.preventDefault();
+    const formData = new FormData(event.target);
+    const teamName = formData.get('team-name');
+    const teamDescription = formData.get('team-description');
+    
+    // Get selected users
+    const selectedUsers = availableUsers.filter(user => 
+      document.getElementById(`user-${user.id}`)?.checked
+    );
+
+    setLoading(true);
+    try {
+      const userResponse = await axios.get(`${API}/me`);
+      if (userResponse.data.company_id) {
+        const teamData = {
+          team_name: teamName,
+          team_description: teamDescription,
+          team_members: selectedUsers.map(user => user.email),
+          team_roles: ['crisis_manager', 'analyst', 'coordinator']
+        };
+
+        const response = await axios.post(`${API}/companies/${userResponse.data.company_id}/teams`, teamData);
+        
+        toast({ 
+          title: "Team Created", 
+          description: `${teamName} has been created with ${selectedUsers.length} members!`,
+          duration: 4000
+        });
+
+        setShowTeamCreator(false);
+      }
+    } catch (error) {
+      toast({ 
+        title: "Team Creation Error", 
+        description: error.response?.data?.detail || "Failed to create team",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchAvailableUsers = async () => {
+    try {
+      const userResponse = await axios.get(`${API}/me`);
+      if (userResponse.data.company_id) {
+        const response = await axios.get(`${API}/companies/${userResponse.data.company_id}/users`);
+        setAvailableUsers(response.data.filter(user => user.id !== userResponse.data.id)); // Exclude current user
+      }
+    } catch (error) {
+      console.error('Failed to fetch available users:', error);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
