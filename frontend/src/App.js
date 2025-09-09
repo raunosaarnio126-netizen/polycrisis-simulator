@@ -3233,12 +3233,12 @@ Comprehensive Scenario Analysis & Crisis Management Platform
       switch (documentType) {
         case 'game-book':
           try {
-            const response = await axios.get(`${API}/scenarios/${scenario.id}/gamebook`);
+            const response = await axios.get(`${API}/scenarios/${scenario.id}/game-book`);
             documentData = response.data;
             documentTitle = 'Crisis Game Book';
           } catch (error) {
             if (error.response?.status === 404) {
-              const response = await axios.post(`${API}/scenarios/${scenario.id}/gamebook`);
+              const response = await axios.post(`${API}/scenarios/${scenario.id}/game-book`);
               documentData = response.data;
               documentTitle = 'Crisis Game Book';
             } else throw error;
