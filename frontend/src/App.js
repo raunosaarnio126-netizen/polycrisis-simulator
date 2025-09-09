@@ -1968,6 +1968,571 @@ Comprehensive Scenario Analysis & Crisis Management Platform
     }
   };
 
+  const downloadImplementationAsPDF = (implementationView) => {
+    if (!implementationView) {
+      toast({
+        title: "No Content Available",
+        description: "Please generate content before downloading",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      const documentTitle = implementationView.type.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase());
+      const scenarioTitle = implementationView.scenario.title;
+      const currentDate = new Date().toLocaleDateString();
+      const currentTime = new Date().toLocaleTimeString();
+
+      // Generate PDF content based on implementation type
+      let pdfContent = '';
+      
+      if (implementationView.type === 'game-book') {
+        pdfContent = generateGameBookPDF(implementationView.data, scenarioTitle, currentDate, currentTime);
+      } else if (implementationView.type === 'action-plan') {
+        pdfContent = generateActionPlanPDF(implementationView.data, scenarioTitle, currentDate, currentTime);
+      } else if (implementationView.type === 'strategy-implementation') {
+        pdfContent = generateStrategyPDF(implementationView.data, scenarioTitle, currentDate, currentTime);
+      } else {
+        // Generic implementation content
+        pdfContent = generateGenericImplementationPDF(implementationView, currentDate, currentTime);
+      }
+
+      // Try to open print dialog for PDF
+      const printWindow = window.open('', '_blank');
+      
+      if (!printWindow) {
+        // Fallback to text download if popup blocked
+        downloadImplementationAsText(implementationView);
+        return;
+      }
+      
+      printWindow.document.write(pdfContent);
+      printWindow.document.close();
+      
+      printWindow.onload = () => {
+        printWindow.focus();
+        setTimeout(() => {
+          printWindow.print();
+        }, 500);
+      };
+
+      toast({
+        title: "PDF Generated",
+        description: `${documentTitle} opened for printing/PDF export`,
+        duration: 4000
+      });
+
+    } catch (error) {
+      console.error('PDF generation failed:', error);
+      // Fallback to text download
+      downloadImplementationAsText(implementationView);
+    }
+  };
+
+  const generateGameBookPDF = (data, scenarioTitle, currentDate, currentTime) => {
+    return `
+      <html>
+        <head>
+          <title>Crisis Game Book - ${scenarioTitle}</title>
+          <meta charset="utf-8">
+          <style>
+            body { 
+              font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+              margin: 0; 
+              padding: 40px;
+              line-height: 1.6; 
+              color: #333; 
+              background: white;
+            }
+            .header { 
+              border-bottom: 3px solid #dc2626; 
+              padding-bottom: 30px; 
+              margin-bottom: 40px; 
+              text-align: center;
+            }
+            .title { 
+              font-size: 32px; 
+              font-weight: bold; 
+              color: #991b1b; 
+              margin-bottom: 10px; 
+            }
+            .subtitle { 
+              color: #6b7280; 
+              font-size: 18px; 
+              margin-bottom: 20px;
+            }
+            .section { 
+              margin-bottom: 40px; 
+              page-break-inside: avoid; 
+              border: 1px solid #e5e7eb;
+              border-radius: 8px;
+              overflow: hidden;
+            }
+            .section-header {
+              background: #dc2626;
+              color: white;
+              padding: 15px 20px;
+              font-size: 20px;
+              font-weight: bold;
+              margin: 0;
+            }
+            .section-content {
+              padding: 20px;
+              white-space: pre-wrap;
+              font-size: 14px;
+              line-height: 1.8;
+            }
+            .crisis-alert {
+              background: #fef2f2;
+              border: 2px solid #fca5a5;
+              border-radius: 8px;
+              padding: 20px;
+              margin: 20px 0;
+              text-align: center;
+            }
+            .crisis-alert h3 {
+              color: #dc2626;
+              font-size: 24px;
+              margin: 0 0 10px 0;
+            }
+            @media print { 
+              body { margin: 20px; font-size: 12px; }
+              .header { margin-bottom: 20px; }
+              .section { margin-bottom: 25px; page-break-inside: avoid; }
+            }
+            @page { 
+              margin: 2cm; 
+              size: A4;
+            }
+            .footer {
+              margin-top: 40px;
+              padding-top: 20px;
+              border-top: 2px solid #e5e7eb;
+              text-align: center;
+              color: #6b7280;
+              font-size: 12px;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <div class="title">🎯 Crisis Game Book</div>
+            <div class="subtitle">${scenarioTitle}</div>
+            <div style="color: #6b7280; font-size: 14px;">
+              Generated on ${currentDate} at ${currentTime}
+            </div>
+          </div>
+
+          <div class="crisis-alert">
+            <h3>⚠️ CRISIS RESPONSE PLAYBOOK</h3>
+            <p>This document contains critical response procedures and decision-making frameworks for crisis management.</p>
+          </div>
+
+          <div class="section">
+            <div class="section-header">📖 Game Book Content</div>
+            <div class="section-content">
+              ${data.game_book_content || 'No game book content available'}
+            </div>
+          </div>
+
+          <div class="footer">
+            <div>Generated by Polycrisis Simulator</div>
+            <div>Crisis Game Book - Strategic Response Framework</div>
+          </div>
+        </body>
+      </html>
+    `;
+  };
+
+  const generateActionPlanPDF = (data, scenarioTitle, currentDate, currentTime) => {
+    return `
+      <html>
+        <head>
+          <title>Action Plan - ${scenarioTitle}</title>
+          <meta charset="utf-8">
+          <style>
+            body { 
+              font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+              margin: 0; 
+              padding: 40px;
+              line-height: 1.6; 
+              color: #333; 
+              background: white;
+            }
+            .header { 
+              border-bottom: 3px solid #059669; 
+              padding-bottom: 30px; 
+              margin-bottom: 40px; 
+              text-align: center;
+            }
+            .title { 
+              font-size: 32px; 
+              font-weight: bold; 
+              color: #047857; 
+              margin-bottom: 10px; 
+            }
+            .subtitle { 
+              color: #6b7280; 
+              font-size: 18px; 
+              margin-bottom: 20px;
+            }
+            .section { 
+              margin-bottom: 40px; 
+              page-break-inside: avoid; 
+              border: 1px solid #e5e7eb;
+              border-radius: 8px;
+              overflow: hidden;
+            }
+            .section-header {
+              background: #059669;
+              color: white;
+              padding: 15px 20px;
+              font-size: 20px;
+              font-weight: bold;
+              margin: 0;
+            }
+            .action-item {
+              background: white;
+              border: 1px solid #d1d5db;
+              padding: 15px;
+              margin: 10px 20px;
+              border-radius: 6px;
+              border-left: 4px solid #059669;
+            }
+            .action-header {
+              font-weight: bold;
+              font-size: 16px;
+              color: #047857;
+              margin-bottom: 8px;
+            }
+            .action-meta {
+              font-size: 12px;
+              color: #6b7280;
+              margin-bottom: 8px;
+            }
+            .action-description {
+              font-size: 14px;
+              line-height: 1.6;
+            }
+            .priority-high { border-left-color: #dc2626; }
+            .priority-medium { border-left-color: #f59e0b; }
+            .priority-low { border-left-color: #059669; }
+            @media print { 
+              body { margin: 20px; font-size: 12px; }
+              .header { margin-bottom: 20px; }
+              .section { margin-bottom: 25px; page-break-inside: avoid; }
+            }
+            @page { 
+              margin: 2cm; 
+              size: A4;
+            }
+            .footer {
+              margin-top: 40px;
+              padding-top: 20px;
+              border-top: 2px solid #e5e7eb;
+              text-align: center;
+              color: #6b7280;
+              font-size: 12px;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <div class="title">✅ Action Plan</div>
+            <div class="subtitle">${scenarioTitle}</div>
+            <div style="color: #6b7280; font-size: 14px;">
+              Generated on ${currentDate} at ${currentTime}
+            </div>
+          </div>
+
+          <div class="section">
+            <div class="section-header">🚨 Immediate Actions (0-24h)</div>
+            ${data.immediate_actions ? data.immediate_actions.map(action => `
+              <div class="action-item priority-high">
+                <div class="action-header">${action.action}</div>
+                <div class="action-meta">Priority: ${action.priority} | Timeline: ${action.timeline}</div>
+                <div class="action-description">${action.description}</div>
+              </div>
+            `).join('') : '<div style="padding: 20px;">No immediate actions defined</div>'}
+          </div>
+
+          <div class="section">
+            <div class="section-header">⏰ Short-term Actions (1-30d)</div>
+            ${data.short_term_actions ? data.short_term_actions.map(action => `
+              <div class="action-item priority-medium">
+                <div class="action-header">${action.action}</div>
+                <div class="action-meta">Priority: ${action.priority} | Timeline: ${action.timeline}</div>
+                <div class="action-description">${action.description}</div>
+              </div>
+            `).join('') : '<div style="padding: 20px;">No short-term actions defined</div>'}
+          </div>
+
+          <div class="section">
+            <div class="section-header">📅 Long-term Actions (1-12m)</div>
+            ${data.long_term_actions ? data.long_term_actions.map(action => `
+              <div class="action-item priority-low">
+                <div class="action-header">${action.action}</div>
+                <div class="action-meta">Priority: ${action.priority} | Timeline: ${action.timeline}</div>
+                <div class="action-description">${action.description}</div>
+              </div>
+            `).join('') : '<div style="padding: 20px;">No long-term actions defined</div>'}
+          </div>
+
+          <div class="footer">
+            <div>Generated by Polycrisis Simulator</div>
+            <div>Crisis Action Plan - Strategic Implementation Guide</div>
+          </div>
+        </body>
+      </html>
+    `;
+  };
+
+  const generateStrategyPDF = (data, scenarioTitle, currentDate, currentTime) => {
+    return `
+      <html>
+        <head>
+          <title>Implementation Strategy - ${scenarioTitle}</title>
+          <meta charset="utf-8">
+          <style>
+            body { 
+              font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+              margin: 0; 
+              padding: 40px;
+              line-height: 1.6; 
+              color: #333; 
+              background: white;
+            }
+            .header { 
+              border-bottom: 3px solid #7c3aed; 
+              padding-bottom: 30px; 
+              margin-bottom: 40px; 
+              text-align: center;
+            }
+            .title { 
+              font-size: 32px; 
+              font-weight: bold; 
+              color: #6b21a8; 
+              margin-bottom: 10px; 
+            }
+            .subtitle { 
+              color: #6b7280; 
+              font-size: 18px; 
+              margin-bottom: 20px;
+            }
+            .section { 
+              margin-bottom: 40px; 
+              page-break-inside: avoid; 
+              border: 1px solid #e5e7eb;
+              border-radius: 8px;
+              overflow: hidden;
+            }
+            .section-header {
+              background: #7c3aed;
+              color: white;
+              padding: 15px 20px;
+              font-size: 20px;
+              font-weight: bold;
+              margin: 0;
+            }
+            .section-content {
+              padding: 20px;
+              white-space: pre-wrap;
+              font-size: 14px;
+              line-height: 1.8;
+            }
+            .strategy-highlight {
+              background: #f5f3ff;
+              border: 2px solid #c4b5fd;
+              border-radius: 8px;
+              padding: 20px;
+              margin: 20px 0;
+            }
+            @media print { 
+              body { margin: 20px; font-size: 12px; }
+              .header { margin-bottom: 20px; }
+              .section { margin-bottom: 25px; page-break-inside: avoid; }
+            }
+            @page { 
+              margin: 2cm; 
+              size: A4;
+            }
+            .footer {
+              margin-top: 40px;
+              padding-top: 20px;
+              border-top: 2px solid #e5e7eb;
+              text-align: center;
+              color: #6b7280;
+              font-size: 12px;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <div class="title">🎯 Implementation Strategy</div>
+            <div class="subtitle">${scenarioTitle}</div>
+            <div style="color: #6b7280; font-size: 14px;">
+              Generated on ${currentDate} at ${currentTime}
+            </div>
+          </div>
+
+          <div class="strategy-highlight">
+            <h3 style="color: #7c3aed; margin: 0 0 10px 0;">Strategic Framework</h3>
+            <p>This document outlines the comprehensive implementation strategy for crisis response and management.</p>
+          </div>
+
+          <div class="section">
+            <div class="section-header">📋 Implementation Strategy</div>
+            <div class="section-content">
+              ${data.implementation_strategy || 'No implementation strategy available'}
+            </div>
+          </div>
+
+          <div class="footer">
+            <div>Generated by Polycrisis Simulator</div>
+            <div>Strategic Implementation Framework</div>
+          </div>
+        </body>
+      </html>
+    `;
+  };
+
+  const generateGenericImplementationPDF = (implementationView, currentDate, currentTime) => {
+    const documentTitle = implementationView.type.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase());
+    const data = implementationView.data;
+    
+    return `
+      <html>
+        <head>
+          <title>${documentTitle} - ${implementationView.scenario.title}</title>
+          <meta charset="utf-8">
+          <style>
+            body { 
+              font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+              margin: 0; 
+              padding: 40px;
+              line-height: 1.6; 
+              color: #333; 
+              background: white;
+            }
+            .header { 
+              border-bottom: 3px solid #3b82f6; 
+              padding-bottom: 30px; 
+              margin-bottom: 40px; 
+              text-align: center;
+            }
+            .title { 
+              font-size: 32px; 
+              font-weight: bold; 
+              color: #1e40af; 
+              margin-bottom: 10px; 
+            }
+            .subtitle { 
+              color: #6b7280; 
+              font-size: 18px; 
+              margin-bottom: 20px;
+            }
+            .section { 
+              margin-bottom: 40px; 
+              page-break-inside: avoid; 
+              border: 1px solid #e5e7eb;
+              border-radius: 8px;
+              overflow: hidden;
+            }
+            .section-header {
+              background: #3b82f6;
+              color: white;
+              padding: 15px 20px;
+              font-size: 20px;
+              font-weight: bold;
+              margin: 0;
+            }
+            .section-content {
+              padding: 20px;
+              white-space: pre-wrap;
+              font-size: 14px;
+              line-height: 1.8;
+            }
+            @media print { 
+              body { margin: 20px; font-size: 12px; }
+              .header { margin-bottom: 20px; }
+              .section { margin-bottom: 25px; page-break-inside: avoid; }
+            }
+            @page { 
+              margin: 2cm; 
+              size: A4;
+            }
+            .footer {
+              margin-top: 40px;
+              padding-top: 20px;
+              border-top: 2px solid #e5e7eb;
+              text-align: center;
+              color: #6b7280;
+              font-size: 12px;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <div class="title">${documentTitle}</div>
+            <div class="subtitle">${implementationView.scenario.title}</div>
+            <div style="color: #6b7280; font-size: 14px;">
+              Generated on ${currentDate} at ${currentTime}
+            </div>
+          </div>
+
+          <div class="section">
+            <div class="section-header">📄 Content</div>
+            <div class="section-content">
+              ${JSON.stringify(data, null, 2)}
+            </div>
+          </div>
+
+          <div class="footer">
+            <div>Generated by Polycrisis Simulator</div>
+            <div>${documentTitle} Document</div>
+          </div>
+        </body>
+      </html>
+    `;
+  };
+
+  const downloadImplementationAsText = (implementationView) => {
+    try {
+      const documentTitle = implementationView.type.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase());
+      const content = JSON.stringify(implementationView.data, null, 2);
+      const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+      
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = url;
+      a.download = `${implementationView.type}-${implementationView.scenario.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_${Date.now()}.txt`;
+      
+      document.body.appendChild(a);
+      a.click();
+      
+      setTimeout(() => {
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+      }, 100);
+
+      toast({
+        title: "Fallback Download",
+        description: `${documentTitle} downloaded as text file`,
+        duration: 3000
+      });
+
+    } catch (error) {
+      console.error('Text download failed:', error);
+      toast({
+        title: "Download Failed",
+        description: "Failed to download document",
+        variant: "destructive"
+      });
+    }
+  };
+
   const filteredAndSortedScenarios = scenarios
     .filter(scenario => {
       if (filterStatus !== 'all' && scenario.status !== filterStatus) return false;
