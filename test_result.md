@@ -331,7 +331,7 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Crisis Management Framework Endpoints"
+    - "Crisis Management Framework Frontend Interface"
   stuck_tasks: 
     - "Document Analysis with File Upload"
   test_all: false
