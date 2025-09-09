@@ -1038,6 +1038,11 @@ const ScenarioManagement = ({ onScenarioSelect }) => {
   const [smartSuggestions, setSmartSuggestions] = useState({});
   const [monitoringDashboard, setMonitoringDashboard] = useState({});
   const [showMonitoringDialog, setShowMonitoringDialog] = useState(null);
+  
+  // Multi-document state management
+  const [openDocuments, setOpenDocuments] = useState([]);
+  const [activeDocument, setActiveDocument] = useState(null);
+  const [showMultiDocView, setShowMultiDocView] = useState(false);
   const [showAddSourceDialog, setShowAddSourceDialog] = useState(null);
   const [newSourceData, setNewSourceData] = useState({
     source_type: '',
