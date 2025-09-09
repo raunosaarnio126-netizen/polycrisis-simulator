@@ -735,6 +735,9 @@ async def agree_to_consensus(company_id: str, consensus_id: str, current_user: U
             {"id": consensus_id},
             {"$set": update_data}
         )
+    else:
+        # User already agreed, get current consensus status
+        consensus_reached = consensus.get('consensus_reached', False)
     
     return {"message": "Agreement recorded", "consensus_reached": consensus_reached}
 
