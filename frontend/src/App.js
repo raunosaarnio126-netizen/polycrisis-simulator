@@ -3784,7 +3784,7 @@ const AvatarCompetenceManager = () => {
                 />
               </div>
 
-              <div className="grid md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="competence_type">Competence Type</Label>
                   <Select value={newCompetence.competence_type} onValueChange={(value) => setNewCompetence({...newCompetence, competence_type: value})}>
