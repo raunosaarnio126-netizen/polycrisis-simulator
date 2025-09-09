@@ -3307,5 +3307,237 @@ async def generate_crisis_insight_strategy(
         logging.error(f"Crisis insight strategy error: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to generate crisis strategy: {str(e)}")
 
+# Crisis Management Framework Models
+class CrisisFactor(BaseModel):
+    name: str
+    description: str
+    metrics: List[str]
+    impact_scale: str
+    monitoring_frequency: str
+    data_sources: List[str]
+
+class MonitoringTask(BaseModel):
+    task: str
+    description: str
+    priority: str
+    frequency: str
+    metrics_tracked: List[str]
+    alert_thresholds: Dict
+
+class CrisisFrameworkSummary(BaseModel):
+    total_factors: int
+    total_monitoring_tasks: int
+    high_priority_factors: int
+    real_time_monitoring: int
+    categories: List[str]
+
+# Crisis Management Framework Endpoints
+@api_router.get("/crisis-framework/summary", response_model=CrisisFrameworkSummary)
+async def get_crisis_framework_summary(current_user: User = Depends(get_current_user)):
+    """Get comprehensive summary of crisis management framework"""
+    try:
+        framework_file = Path(__file__).parent.parent / "crisis_management_framework.json"
+        
+        if not framework_file.exists():
+            raise HTTPException(status_code=404, detail="Crisis management framework not found")
+        
+        with open(framework_file, 'r') as f:
+            data = json.load(f)
+        
+        framework = data['crisis_management_framework']
+        crisis_factors = framework['crisis_factors']
+        monitoring_tasks = framework['monitoring_tasks']
+        
+        # Count factors and tasks
+        total_factors = 0
+        high_priority_factors = 0
+        categories = []
+        
+        for category_name, category in crisis_factors.items():
+            categories.append(category['category'])
+            factors_count = len(category['factors'])
+            total_factors += factors_count
+            
+            if category.get('priority') == 'high':
+                high_priority_factors += factors_count
+        
+        # Count real-time monitoring tasks
+        real_time_monitoring = 0
+        total_monitoring_tasks = len(monitoring_tasks)
+        
+        for task_name, task in monitoring_tasks.items():
+            if task.get('frequency') == 'real_time':
+                real_time_monitoring += 1
+        
+        return CrisisFrameworkSummary(
+            total_factors=total_factors,
+            total_monitoring_tasks=total_monitoring_tasks,
+            high_priority_factors=high_priority_factors,
+            real_time_monitoring=real_time_monitoring,
+            categories=categories
+        )
+        
+    except Exception as e:
+        logging.error(f"Crisis framework summary error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to get framework summary: {str(e)}")
+
+@api_router.get("/crisis-framework/factors")
+async def get_crisis_factors(
+    category: Optional[str] = None,
+    priority: Optional[str] = None,
+    current_user: User = Depends(get_current_user)
+):
+    """Get crisis factors with optional filtering"""
+    try:
+        framework_file = Path(__file__).parent.parent / "crisis_management_framework.json"
+        
+        if not framework_file.exists():
+            raise HTTPException(status_code=404, detail="Crisis management framework not found")
+        
+        with open(framework_file, 'r') as f:
+            data = json.load(f)
+        
+        crisis_factors = data['crisis_management_framework']['crisis_factors']
+        
+        factors = []
+        for category_name, category_data in crisis_factors.items():
+            # Apply category filter
+            if category and category_name != category:
+                continue
+            
+            # Apply priority filter
+            if priority and category_data.get('priority') != priority:
+                continue
+            
+            for factor in category_data['factors']:
+                factor_with_category = factor.copy()
+                factor_with_category['category'] = category_data['category']
+                factor_with_category['category_key'] = category_name
+                factor_with_category['priority'] = category_data['priority']
+                factors.append(factor_with_category)
+        
+        return factors
+        
+    except Exception as e:
+        logging.error(f"Crisis factors error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to get crisis factors: {str(e)}")
+
+@api_router.get("/crisis-framework/monitoring-tasks")
+async def get_monitoring_tasks(
+    priority: Optional[str] = None,
+    frequency: Optional[str] = None,
+    current_user: User = Depends(get_current_user)
+):
+    """Get monitoring tasks with optional filtering"""
+    try:
+        framework_file = Path(__file__).parent.parent / "crisis_management_framework.json"
+        
+        if not framework_file.exists():
+            raise HTTPException(status_code=404, detail="Crisis management framework not found")
+        
+        with open(framework_file, 'r') as f:
+            data = json.load(f)
+        
+        monitoring_tasks = data['crisis_management_framework']['monitoring_tasks']
+        
+        tasks = []
+        for task_name, task_data in monitoring_tasks.items():
+            # Apply priority filter
+            if priority and task_data.get('priority') != priority:
+                continue
+            
+            # Apply frequency filter
+            if frequency and task_data.get('frequency') != frequency:
+                continue
+            
+            task_with_key = task_data.copy()
+            task_with_key['task_key'] = task_name
+            tasks.append(task_with_key)
+        
+        return tasks
+        
+    except Exception as e:
+        logging.error(f"Monitoring tasks error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to get monitoring tasks: {str(e)}")
+
+@api_router.post("/crisis-framework/scenario-assessment")
+async def assess_scenario_crisis_factors(
+    scenario_id: str,
+    current_user: User = Depends(get_current_user)
+):
+    """Assess a scenario against crisis management factors"""
+    try:
+        # Get the scenario
+        scenario = await db.scenarios.find_one({"id": scenario_id, "user_id": current_user.id})
+        if not scenario:
+            raise HTTPException(status_code=404, detail="Scenario not found")
+        
+        framework_file = Path(__file__).parent.parent / "crisis_management_framework.json"
+        
+        if not framework_file.exists():
+            raise HTTPException(status_code=404, detail="Crisis management framework not found")
+        
+        with open(framework_file, 'r') as f:
+            data = json.load(f)
+        
+        crisis_factors = data['crisis_management_framework']['crisis_factors']
+        
+        # Map scenario crisis type to relevant factors
+        crisis_type_mapping = {
+            'economic_crisis': ['supply_chain_vulnerabilities', 'communication_infrastructure'],
+            'natural_disaster': ['environmental_impact', 'population_displacement', 'communication_infrastructure'],
+            'cyber_attack': ['communication_infrastructure', 'supply_chain_vulnerabilities'],
+            'pandemic': ['environmental_impact', 'supply_chain_vulnerabilities', 'population_displacement'],
+            'geopolitical_crisis': ['supply_chain_vulnerabilities', 'population_displacement'],
+            'climate_change': ['environmental_impact', 'population_displacement'],
+            'supply_chain_disruption': ['supply_chain_vulnerabilities', 'communication_infrastructure']
+        }
+        
+        scenario_crisis_type = scenario.get('crisis_type', 'economic_crisis')
+        relevant_factor_categories = crisis_type_mapping.get(scenario_crisis_type, ['environmental_impact'])
+        
+        # Get relevant factors
+        relevant_factors = []
+        recommended_monitoring = []
+        
+        for category_key in relevant_factor_categories:
+            if category_key in crisis_factors:
+                category = crisis_factors[category_key]
+                for factor in category['factors']:
+                    factor_with_relevance = factor.copy()
+                    factor_with_relevance['category'] = category['category']
+                    factor_with_relevance['relevance_score'] = 0.8  # High relevance for mapped factors
+                    relevant_factors.append(factor_with_relevance)
+        
+        # Get recommended monitoring tasks based on crisis type
+        monitoring_tasks = data['crisis_management_framework']['monitoring_tasks']
+        for task_name, task in monitoring_tasks.items():
+            if (scenario_crisis_type in ['natural_disaster', 'climate_change'] and 'environmental' in task_name) or \
+               (scenario_crisis_type in ['economic_crisis', 'supply_chain_disruption'] and 'economic' in task_name) or \
+               (task.get('priority') == 'critical'):
+                recommended_monitoring.append({
+                    'task_name': task_name,
+                    'task': task['task'],
+                    'priority': task['priority'],
+                    'frequency': task['frequency'],
+                    'description': task['description']
+                })
+        
+        return {
+            'scenario_id': scenario_id,
+            'scenario_title': scenario.get('title'),
+            'crisis_type': scenario_crisis_type,
+            'severity_level': scenario.get('severity_level'),
+            'relevant_factors': relevant_factors,
+            'recommended_monitoring': recommended_monitoring,
+            'assessment_timestamp': datetime.now(timezone.utc).isoformat(),
+            'total_factors': len(relevant_factors),
+            'critical_monitoring_tasks': len([t for t in recommended_monitoring if t['priority'] == 'critical'])
+        }
+        
+    except Exception as e:
+        logging.error(f"Scenario assessment error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to assess scenario: {str(e)}")
+
 # Include the API router in the main app
 app.include_router(api_router)
