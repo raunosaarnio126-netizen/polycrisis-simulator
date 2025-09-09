@@ -4401,6 +4401,66 @@ def main():
         # Restore original token anyway
         tester.token = original_token
 
+    print("\n🚨 Testing CRISIS MANAGEMENT FRAMEWORK ENDPOINTS...")
+    
+    # Login with test credentials from review request for Crisis Framework testing
+    print("   Logging in with test credentials (test@example.com / password123)...")
+    test_login_data = {
+        "email": "test@example.com",
+        "password": "password123"
+    }
+    
+    # Store original token
+    original_token = tester.token
+    
+    login_success, login_response = tester.run_test(
+        "Login with Test Credentials for Crisis Framework",
+        "POST",
+        "login",
+        200,
+        data=test_login_data
+    )
+    
+    if login_success and 'access_token' in login_response:
+        tester.token = login_response['access_token']
+        print(f"   ✅ Successfully logged in with test credentials")
+        
+        print("   Testing Crisis Framework Summary...")
+        tester.test_crisis_framework_summary()
+        
+        print("   Testing Crisis Factors - No Filter...")
+        tester.test_crisis_factors_no_filter()
+        
+        print("   Testing Crisis Factors - Category Filters...")
+        tester.test_crisis_factors_category_filter()
+        
+        print("   Testing Crisis Factors - Priority Filters...")
+        tester.test_crisis_factors_priority_filter()
+        
+        print("   Testing Monitoring Tasks - No Filter...")
+        tester.test_monitoring_tasks_no_filter()
+        
+        print("   Testing Monitoring Tasks - Priority Filters...")
+        tester.test_monitoring_tasks_priority_filter()
+        
+        print("   Testing Monitoring Tasks - Frequency Filters...")
+        tester.test_monitoring_tasks_frequency_filter()
+        
+        print("   Testing Scenario Assessment with Finnish Economic Crisis...")
+        tester.test_scenario_assessment_finnish_crisis()
+        
+        print("   Testing Crisis Framework Authentication...")
+        tester.test_crisis_framework_authentication()
+        
+        # Restore original token
+        tester.token = original_token
+        print(f"   ✅ Restored original authentication token")
+        
+    else:
+        print(f"   ❌ Failed to login with test credentials, skipping Crisis Framework tests")
+        # Restore original token anyway
+        tester.token = original_token
+
     print("\n🗑️ Testing Scenario Deletion...")
     tester.test_delete_scenario()
 
