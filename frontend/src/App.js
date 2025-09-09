@@ -2620,33 +2620,46 @@ Comprehensive Scenario Analysis & Crisis Management Platform
           <title>${documentTitle} - ${implementationView.scenario.title}</title>
           <meta charset="utf-8">
           <style>
+            * {
+              margin: 0;
+              padding: 0;
+              box-sizing: border-box;
+            }
             body { 
-              font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+              font-family: 'Arial', 'Helvetica', sans-serif; 
               margin: 0; 
-              padding: 40px;
+              padding: 30px;
               line-height: 1.6; 
               color: #333; 
               background: white;
+              font-size: 14px;
             }
             .header { 
               border-bottom: 3px solid #3b82f6; 
-              padding-bottom: 30px; 
-              margin-bottom: 40px; 
+              padding-bottom: 20px; 
+              margin-bottom: 30px; 
               text-align: center;
+              page-break-after: avoid;
             }
             .title { 
-              font-size: 32px; 
+              font-size: 28px; 
               font-weight: bold; 
               color: #1e40af; 
-              margin-bottom: 10px; 
+              margin-bottom: 8px; 
+              line-height: 1.2;
             }
             .subtitle { 
               color: #6b7280; 
-              font-size: 18px; 
-              margin-bottom: 20px;
+              font-size: 16px; 
+              margin-bottom: 15px;
+              font-weight: 500;
+            }
+            .meta-info {
+              font-size: 12px;
+              color: #6b7280;
             }
             .section { 
-              margin-bottom: 40px; 
+              margin-bottom: 30px; 
               page-break-inside: avoid; 
               border: 1px solid #e5e7eb;
               border-radius: 8px;
@@ -2655,33 +2668,92 @@ Comprehensive Scenario Analysis & Crisis Management Platform
             .section-header {
               background: #3b82f6;
               color: white;
-              padding: 15px 20px;
-              font-size: 20px;
+              padding: 12px 16px;
+              font-size: 18px;
               font-weight: bold;
               margin: 0;
             }
             .section-content {
               padding: 20px;
-              white-space: pre-wrap;
+              line-height: 1.7;
               font-size: 14px;
-              line-height: 1.8;
+            }
+            .formatted-content {
+              white-space: pre-wrap;
+              font-family: 'Courier New', monospace;
+              background: #f8f9fa;
+              padding: 16px;
+              border-radius: 6px;
+              border: 1px solid #e5e7eb;
+              line-height: 1.5;
+              font-size: 12px;
+              overflow-wrap: break-word;
+            }
+            .content-block {
+              margin-bottom: 16px;
+              padding: 16px;
+              background: #f9fafb;
+              border-radius: 6px;
+              border-left: 4px solid #3b82f6;
+            }
+            .content-block h4 {
+              font-size: 16px;
+              font-weight: bold;
+              margin-bottom: 8px;
+              color: #1f2937;
+            }
+            .highlight-box {
+              background: #eff6ff;
+              border: 2px solid #93c5fd;
+              border-radius: 8px;
+              padding: 16px;
+              margin: 20px 0;
+            }
+            .highlight-box h3 {
+              color: #1e40af;
+              margin: 0 0 8px 0;
+              font-size: 18px;
             }
             @media print { 
-              body { margin: 20px; font-size: 12px; }
-              .header { margin-bottom: 20px; }
-              .section { margin-bottom: 25px; page-break-inside: avoid; }
+              body { 
+                margin: 15px; 
+                font-size: 12px; 
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+              }
+              .header { margin-bottom: 15px; }
+              .section { 
+                margin-bottom: 20px; 
+                page-break-inside: avoid; 
+                border: 1px solid #ccc !important;
+              }
+              .section-header { 
+                background: #3b82f6 !important; 
+                color: white !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+              }
+              .formatted-content {
+                background: #f9f9f9 !important;
+                border: 1px solid #ccc !important;
+              }
+              .highlight-box {
+                background: #f9f9f9 !important;
+                border: 1px solid #ccc !important;
+              }
             }
             @page { 
               margin: 2cm; 
               size: A4;
             }
             .footer {
-              margin-top: 40px;
-              padding-top: 20px;
+              margin-top: 30px;
+              padding-top: 15px;
               border-top: 2px solid #e5e7eb;
               text-align: center;
               color: #6b7280;
               font-size: 12px;
+              page-break-inside: avoid;
             }
           </style>
         </head>
@@ -2689,20 +2761,90 @@ Comprehensive Scenario Analysis & Crisis Management Platform
           <div class="header">
             <div class="title">${documentTitle}</div>
             <div class="subtitle">${implementationView.scenario.title}</div>
-            <div style="color: #6b7280; font-size: 14px;">
+            <div class="meta-info">
               Generated on ${currentDate} at ${currentTime}
             </div>
           </div>
 
+          <div class="highlight-box">
+            <h3>📄 Document Overview</h3>
+            <p>This document contains ${documentTitle.toLowerCase()} data and analysis for the selected crisis scenario.</p>
+          </div>
+
           <div class="section">
-            <div class="section-header">📄 Content</div>
+            <div class="section-header">📄 ${documentTitle} Content</div>
             <div class="section-content">
-              ${JSON.stringify(data, null, 2)}
+              ${(() => {
+                try {
+                  if (typeof data === 'object' && data !== null) {
+                    // Handle specific document types with better formatting
+                    if (implementationView.type === 'monitors' && data.risk_monitor) {
+                      return `
+                        <div class="content-block">
+                          <h4>🛡️ Risk Monitor</h4>
+                          <p>${data.risk_monitor}</p>
+                        </div>
+                        ${data.performance_monitor ? `
+                          <div class="content-block">
+                            <h4>📈 Performance Monitor</h4>
+                            <p>${data.performance_monitor}</p>
+                          </div>
+                        ` : ''}
+                        ${data.anomaly_monitor ? `
+                          <div class="content-block">
+                            <h4>⚠️ Anomaly Monitor</h4>
+                            <p>${data.anomaly_monitor}</p>
+                          </div>
+                        ` : ''}
+                        ${data.trend_monitor ? `
+                          <div class="content-block">
+                            <h4>📊 Trend Monitor</h4>
+                            <p>${data.trend_monitor}</p>
+                          </div>
+                        ` : ''}
+                      `;
+                    } else if (implementationView.type === 'systems' && data.system_analysis) {
+                      return `
+                        <div class="content-block">
+                          <h4>🌐 System Analysis</h4>
+                          <p>${data.system_analysis}</p>
+                          ${data.interconnections ? `
+                            <h4 style="margin-top: 16px;">🔗 Interconnections</h4>
+                            <ul>
+                              ${data.interconnections.map(connection => `<li>${connection}</li>`).join('')}
+                            </ul>
+                          ` : ''}
+                        </div>
+                      `;
+                    } else if (implementationView.type === 'learning' && data.learning_analysis) {
+                      return `
+                        <div class="content-block">
+                          <h4>🧠 Learning Analysis</h4>
+                          <p>${data.learning_analysis}</p>
+                          ${data.insights ? `
+                            <h4 style="margin-top: 16px;">💡 Key Insights</h4>
+                            <ul>
+                              ${data.insights.map(insight => `<li>${insight}</li>`).join('')}
+                            </ul>
+                          ` : ''}
+                        </div>
+                      `;
+                    } else {
+                      // Generic formatted JSON for other types
+                      return `<div class="formatted-content">${JSON.stringify(data, null, 2)}</div>`;
+                    }
+                  } else {
+                    return `<div class="content-block"><h4>No Content Available</h4><p>This document has not been generated yet or contains no data.</p></div>`;
+                  }
+                } catch (error) {
+                  return `<div class="content-block"><h4>Content Error</h4><p>Unable to format document content properly.</p></div>`;
+                }
+              })()}
             </div>
           </div>
 
           <div class="footer">
-            <div>Generated by Polycrisis Simulator</div>
+            <div><strong>Generated by Polycrisis Simulator</strong></div>
             <div>${documentTitle} Document</div>
           </div>
         </body>
