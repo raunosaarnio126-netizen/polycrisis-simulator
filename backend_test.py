@@ -2565,6 +2565,227 @@ startxref
         
         return passed_verifications >= (total_verifications * 0.8)  # 80% pass rate
 
+    def test_finland_regions_investigation(self):
+        """CRITICAL INVESTIGATION: Test Finland regions issue - comprehensive data flow analysis"""
+        print("\n🔍 CRITICAL INVESTIGATION: Finland Regions Data Loss Issue")
+        print("=" * 80)
+        
+        # Step 1: Check existing scenarios in database
+        print("\n📋 STEP 1: Checking existing scenarios in database...")
+        success, existing_scenarios = self.run_test(
+            "Get All Existing Scenarios",
+            "GET",
+            "scenarios",
+            200
+        )
+        
+        if success and isinstance(existing_scenarios, list):
+            print(f"   Found {len(existing_scenarios)} existing scenarios")
+            
+            # Look for scenarios created today (9.9.2025) and check affected_regions
+            today_scenarios = []
+            for scenario in existing_scenarios:
+                created_at = scenario.get('created_at', '')
+                if '2025-09-09' in created_at or '9.9.2025' in created_at:
+                    today_scenarios.append(scenario)
+                    
+                print(f"   - Scenario: {scenario.get('title', 'N/A')}")
+                print(f"     ID: {scenario.get('id', 'N/A')}")
+                print(f"     Created: {scenario.get('created_at', 'N/A')}")
+                print(f"     Affected Regions: {scenario.get('affected_regions', 'MISSING FIELD!')}")
+                print(f"     Regions Type: {type(scenario.get('affected_regions', None))}")
+                print(f"     Regions Length: {len(scenario.get('affected_regions', [])) if isinstance(scenario.get('affected_regions'), list) else 'NOT A LIST'}")
+                
+                # Check if Finland is in any scenario
+                regions = scenario.get('affected_regions', [])
+                if isinstance(regions, list) and 'Finland' in regions:
+                    print(f"     ✅ FOUND FINLAND in scenario: {scenario.get('title')}")
+                elif isinstance(regions, list) and any('finland' in str(r).lower() for r in regions):
+                    print(f"     ⚠️ Found Finland variant: {[r for r in regions if 'finland' in str(r).lower()]}")
+                else:
+                    print(f"     ❌ No Finland found in regions")
+            
+            print(f"\n   Today's scenarios (9.9.2025): {len(today_scenarios)}")
+        
+        # Step 2: Test scenario creation with Finland - LOG EVERYTHING
+        print("\n📋 STEP 2: Testing scenario creation with Finland - DETAILED LOGGING")
+        
+        finland_scenario_data = {
+            "title": "Finland Region Test",
+            "description": "Testing if Finland region is properly saved",
+            "crisis_type": "economic_crisis",
+            "severity_level": 7,
+            "affected_regions": ["Finland"],
+            "key_variables": ["Economy", "Population", "Infrastructure"]
+        }
+        
+        print(f"   REQUEST PAYLOAD BEING SENT:")
+        print(f"   {json.dumps(finland_scenario_data, indent=4)}")
+        
+        success, response = self.run_test(
+            "Create Finland Test Scenario",
+            "POST",
+            "scenarios",
+            200,
+            data=finland_scenario_data
+        )
+        
+        if success and 'id' in response:
+            finland_scenario_id = response['id']
+            print(f"\n   ✅ SCENARIO CREATED SUCCESSFULLY")
+            print(f"   Scenario ID: {finland_scenario_id}")
+            print(f"   RESPONSE RECEIVED:")
+            print(f"   {json.dumps(response, indent=4)}")
+            
+            # Verify affected_regions field in response
+            response_regions = response.get('affected_regions', 'MISSING')
+            print(f"\n   RESPONSE ANALYSIS:")
+            print(f"   - affected_regions field present: {response_regions != 'MISSING'}")
+            print(f"   - affected_regions value: {response_regions}")
+            print(f"   - affected_regions type: {type(response_regions)}")
+            if isinstance(response_regions, list):
+                print(f"   - affected_regions length: {len(response_regions)}")
+                print(f"   - Finland in list: {'Finland' in response_regions}")
+            
+            # Step 3: Immediately retrieve the scenario to check persistence
+            print(f"\n📋 STEP 3: Immediately retrieving scenario to verify persistence...")
+            
+            retrieve_success, retrieve_response = self.run_test(
+                "Retrieve Finland Test Scenario",
+                "GET",
+                f"scenarios/{finland_scenario_id}",
+                200
+            )
+            
+            if retrieve_success:
+                print(f"   ✅ SCENARIO RETRIEVED SUCCESSFULLY")
+                print(f"   RETRIEVED RESPONSE:")
+                print(f"   {json.dumps(retrieve_response, indent=4)}")
+                
+                # Compare original vs retrieved
+                original_regions = finland_scenario_data['affected_regions']
+                retrieved_regions = retrieve_response.get('affected_regions', 'MISSING')
+                
+                print(f"\n   DATA INTEGRITY CHECK:")
+                print(f"   - Original regions: {original_regions}")
+                print(f"   - Retrieved regions: {retrieved_regions}")
+                print(f"   - Data match: {original_regions == retrieved_regions}")
+                
+                if original_regions != retrieved_regions:
+                    print(f"   ❌ CRITICAL DATA LOSS DETECTED!")
+                    print(f"   - Expected: {original_regions}")
+                    print(f"   - Got: {retrieved_regions}")
+                    print(f"   - Loss type: {type(retrieved_regions)} vs expected {type(original_regions)}")
+                else:
+                    print(f"   ✅ Data integrity maintained")
+            
+            # Step 4: Check all scenarios again to see if Finland scenario appears
+            print(f"\n📋 STEP 4: Checking all scenarios again to verify Finland scenario...")
+            
+            verify_success, all_scenarios = self.run_test(
+                "Verify All Scenarios Include Finland Test",
+                "GET",
+                "scenarios",
+                200
+            )
+            
+            if verify_success and isinstance(all_scenarios, list):
+                finland_found = False
+                for scenario in all_scenarios:
+                    if scenario.get('id') == finland_scenario_id:
+                        finland_found = True
+                        print(f"   ✅ Found Finland test scenario in list")
+                        print(f"   - Title: {scenario.get('title')}")
+                        print(f"   - Regions: {scenario.get('affected_regions')}")
+                        break
+                
+                if not finland_found:
+                    print(f"   ❌ Finland test scenario NOT found in scenarios list!")
+            
+            # Step 5: Test multiple Finland scenarios with different data
+            print(f"\n📋 STEP 5: Testing multiple Finland scenarios with variations...")
+            
+            test_scenarios = [
+                {
+                    "title": "Finland Economic Crisis",
+                    "description": "Economic downturn affecting Finland specifically",
+                    "crisis_type": "economic_crisis",
+                    "severity_level": 8,
+                    "affected_regions": ["Finland", "Nordic Region"],
+                    "key_variables": ["GDP", "Employment", "Currency"]
+                },
+                {
+                    "title": "Finland Environmental Crisis", 
+                    "description": "Environmental challenges in Finland",
+                    "crisis_type": "environmental_crisis",
+                    "severity_level": 6,
+                    "affected_regions": ["Finland"],
+                    "key_variables": ["Climate", "Forests", "Water"]
+                },
+                {
+                    "title": "Multi-Region with Finland",
+                    "description": "Crisis affecting multiple regions including Finland",
+                    "crisis_type": "social_unrest",
+                    "severity_level": 5,
+                    "affected_regions": ["Finland", "Sweden", "Norway", "Denmark"],
+                    "key_variables": ["Population", "Migration", "Social Services"]
+                }
+            ]
+            
+            created_test_scenarios = []
+            for i, test_data in enumerate(test_scenarios):
+                print(f"\n   Testing scenario {i+1}: {test_data['title']}")
+                test_success, test_response = self.run_test(
+                    f"Create Finland Test Scenario {i+1}",
+                    "POST", 
+                    "scenarios",
+                    200,
+                    data=test_data
+                )
+                
+                if test_success and 'id' in test_response:
+                    created_test_scenarios.append(test_response['id'])
+                    original_regions = test_data['affected_regions']
+                    response_regions = test_response.get('affected_regions')
+                    
+                    print(f"     Original: {original_regions}")
+                    print(f"     Response: {response_regions}")
+                    print(f"     Match: {original_regions == response_regions}")
+                    
+                    if 'Finland' in original_regions:
+                        if isinstance(response_regions, list) and 'Finland' in response_regions:
+                            print(f"     ✅ Finland preserved in response")
+                        else:
+                            print(f"     ❌ Finland LOST in response!")
+            
+            # Step 6: Final verification - get all scenarios and check Finland presence
+            print(f"\n📋 STEP 6: Final verification of all Finland scenarios...")
+            
+            final_success, final_scenarios = self.run_test(
+                "Final Verification - All Scenarios",
+                "GET",
+                "scenarios", 
+                200
+            )
+            
+            if final_success and isinstance(final_scenarios, list):
+                finland_scenarios = []
+                for scenario in final_scenarios:
+                    regions = scenario.get('affected_regions', [])
+                    if isinstance(regions, list) and 'Finland' in regions:
+                        finland_scenarios.append(scenario)
+                
+                print(f"   Total scenarios: {len(final_scenarios)}")
+                print(f"   Scenarios with Finland: {len(finland_scenarios)}")
+                
+                for scenario in finland_scenarios:
+                    print(f"   - {scenario.get('title')}: {scenario.get('affected_regions')}")
+            
+            return True
+        else:
+            print(f"   ❌ FAILED to create Finland test scenario")
+            return False
+
     def test_scenario_data_persistence_comprehensive(self):
         """Comprehensive test for scenario creation and retrieval functionality"""
         print("\n" + "="*80)
