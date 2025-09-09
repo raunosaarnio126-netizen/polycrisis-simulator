@@ -2538,6 +2538,307 @@ Comprehensive Scenario Analysis & Crisis Management Platform
     }
   };
 
+  // Multi-document content rendering function
+  const renderDocumentContent = (document) => {
+    if (!document) return null;
+
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center justify-between border-b pb-2 mb-4">
+          <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+            {document.type === 'game-book' && <BookOpen className="w-5 h-5 text-blue-600" />}
+            {document.type === 'action-plan' && <CheckSquare className="w-5 h-5 text-green-600" />}
+            {document.type === 'strategy' && <Target className="w-5 h-5 text-purple-600" />}
+            {document.type === 'monitors' && <Monitor className="w-5 h-5 text-blue-600" />}
+            {document.type === 'systems' && <Network className="w-5 h-5 text-purple-600" />}
+            {document.type === 'learning' && <Brain className="w-5 h-5 text-green-600" />}
+            {document.type === 'sources' && <Lightbulb className="w-5 h-5 text-yellow-600" />}
+            {document.type === 'dashboard' && <BarChart className="w-5 h-5 text-teal-600" />}
+            {document.title}
+          </h3>
+          <div className="flex items-center gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => downloadImplementationAsPDF({ type: document.type, data: document.data, scenario: document.scenario })}
+              className="text-xs"
+            >
+              <Download className="w-3 h-3 mr-1" />
+              PDF
+            </Button>
+          </div>
+        </div>
+        
+        <div className="text-sm text-gray-600 mb-2">
+          Scenario: {document.scenario.title}
+        </div>
+
+        <div className="prose prose-sm max-w-none">
+          {document.type === 'game-book' && (
+            <div className="space-y-4">
+              {document.data?.game_book_content ? (
+                <div className="bg-blue-50 p-4 rounded-lg border-l-4 border-blue-500">
+                  <div className="whitespace-pre-wrap text-gray-800">
+                    {document.data.game_book_content}
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  <BookOpen className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                  <p>Game book content is being generated...</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {document.type === 'action-plan' && (
+            <div className="space-y-4">
+              {document.data?.immediate_actions && (
+                <div className="bg-red-50 p-4 rounded-lg border-l-4 border-red-500">
+                  <h4 className="font-semibold text-red-900 mb-3">🚨 Immediate Actions (0-24h)</h4>
+                  <div className="space-y-2">
+                    {document.data.immediate_actions.map((action, index) => (
+                      <div key={index} className="flex items-start gap-2">
+                        <div className="w-2 h-2 bg-red-500 rounded-full mt-2 flex-shrink-0"></div>
+                        <div>
+                          <div className="font-medium text-red-800">{action.action}</div>
+                          <div className="text-sm text-red-700">{action.description}</div>
+                          <div className="text-xs text-red-600">Priority: {action.priority} | Timeline: {action.timeline}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {document.data?.short_term_actions && (
+                <div className="bg-yellow-50 p-4 rounded-lg border-l-4 border-yellow-500">
+                  <h4 className="font-semibold text-yellow-900 mb-3">⏰ Short-term Actions (1-30d)</h4>
+                  <div className="space-y-2">
+                    {document.data.short_term_actions.map((action, index) => (
+                      <div key={index} className="flex items-start gap-2">
+                        <div className="w-2 h-2 bg-yellow-500 rounded-full mt-2 flex-shrink-0"></div>
+                        <div>
+                          <div className="font-medium text-yellow-800">{action.action}</div>
+                          <div className="text-sm text-yellow-700">{action.description}</div>
+                          <div className="text-xs text-yellow-600">Priority: {action.priority} | Timeline: {action.timeline}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {document.data?.long_term_actions && (
+                <div className="bg-green-50 p-4 rounded-lg border-l-4 border-green-500">
+                  <h4 className="font-semibold text-green-900 mb-3">📅 Long-term Actions (1-12m)</h4>
+                  <div className="space-y-2">
+                    {document.data.long_term_actions.map((action, index) => (
+                      <div key={index} className="flex items-start gap-2">
+                        <div className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
+                        <div>
+                          <div className="font-medium text-green-800">{action.action}</div>
+                          <div className="text-sm text-green-700">{action.description}</div>
+                          <div className="text-xs text-green-600">Priority: {action.priority} | Timeline: {action.timeline}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {document.type === 'strategy' && (
+            <div className="space-y-4">
+              {document.data?.implementation_strategy ? (
+                <div className="bg-purple-50 p-4 rounded-lg border-l-4 border-purple-500">
+                  <h4 className="font-semibold text-purple-900 mb-3">🎯 Implementation Strategy</h4>
+                  <div className="whitespace-pre-wrap text-purple-800">
+                    {document.data.implementation_strategy}
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  <Target className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                  <p>Strategy implementation is being generated...</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {document.type === 'monitors' && (
+            <div className="space-y-4">
+              <div className="grid gap-4">
+                {document.data?.risk_monitor && (
+                  <div className="bg-red-50 p-4 rounded-lg border-l-4 border-red-500">
+                    <h4 className="font-semibold text-red-900 mb-2 flex items-center gap-2">
+                      <Shield className="w-4 h-4" />
+                      Risk Monitor
+                    </h4>
+                    <div className="text-sm text-red-800 whitespace-pre-wrap">{document.data.risk_monitor}</div>
+                  </div>
+                )}
+                
+                {document.data?.performance_monitor && (
+                  <div className="bg-blue-50 p-4 rounded-lg border-l-4 border-blue-500">
+                    <h4 className="font-semibold text-blue-900 mb-2 flex items-center gap-2">
+                      <TrendingUp className="w-4 h-4" />
+                      Performance Monitor
+                    </h4>
+                    <div className="text-sm text-blue-800 whitespace-pre-wrap">{document.data.performance_monitor}</div>
+                  </div>
+                )}
+                
+                {document.data?.anomaly_monitor && (
+                  <div className="bg-yellow-50 p-4 rounded-lg border-l-4 border-yellow-500">
+                    <h4 className="font-semibold text-yellow-900 mb-2 flex items-center gap-2">
+                      <AlertTriangle className="w-4 h-4" />
+                      Anomaly Monitor
+                    </h4>
+                    <div className="text-sm text-yellow-800 whitespace-pre-wrap">{document.data.anomaly_monitor}</div>
+                  </div>
+                )}
+                
+                {document.data?.trend_monitor && (
+                  <div className="bg-green-50 p-4 rounded-lg border-l-4 border-green-500">
+                    <h4 className="font-semibold text-green-900 mb-2 flex items-center gap-2">
+                      <BarChart3 className="w-4 h-4" />
+                      Trend Monitor
+                    </h4>
+                    <div className="text-sm text-green-800 whitespace-pre-wrap">{document.data.trend_monitor}</div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {document.type === 'systems' && (
+            <div className="space-y-4">
+              {document.data?.system_analysis ? (
+                <div className="bg-purple-50 p-4 rounded-lg border-l-4 border-purple-500">
+                  <h4 className="font-semibold text-purple-900 mb-3 flex items-center gap-2">
+                    <Network className="w-4 h-4" />
+                    System Analysis
+                  </h4>
+                  <div className="whitespace-pre-wrap text-purple-800">{document.data.system_analysis}</div>
+                  
+                  {document.data.interconnections && (
+                    <div className="mt-4">
+                      <h5 className="font-medium text-purple-900 mb-2">Key Interconnections:</h5>
+                      <div className="space-y-1">
+                        {document.data.interconnections.map((connection, index) => (
+                          <div key={index} className="flex items-center gap-2 text-sm text-purple-700">
+                            <div className="w-1.5 h-1.5 bg-purple-600 rounded-full"></div>
+                            {connection}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  <Network className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                  <p>Complex systems analysis is being generated...</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {document.type === 'learning' && (
+            <div className="space-y-4">
+              {document.data?.learning_analysis ? (
+                <div className="bg-green-50 p-4 rounded-lg border-l-4 border-green-500">
+                  <h4 className="font-semibold text-green-900 mb-3 flex items-center gap-2">
+                    <Brain className="w-4 h-4" />
+                    Learning Analysis
+                  </h4>
+                  <div className="whitespace-pre-wrap text-green-800">{document.data.learning_analysis}</div>
+                  
+                  {document.data.insights && (
+                    <div className="mt-4">
+                      <h5 className="font-medium text-green-900 mb-2">Key Insights:</h5>
+                      <div className="space-y-1">
+                        {document.data.insights.map((insight, index) => (
+                          <div key={index} className="flex items-start gap-2 text-sm text-green-700">
+                            <Lightbulb className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
+                            {insight}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  <Brain className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                  <p>AI learning insights are being generated...</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {document.type === 'sources' && (
+            <div className="space-y-4">
+              {document.data?.sources ? (
+                <div className="space-y-3">
+                  {document.data.sources.map((source, index) => (
+                    <div key={index} className="bg-yellow-50 p-4 rounded-lg border-l-4 border-yellow-500">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Lightbulb className="w-4 h-4 text-yellow-600" />
+                        <h4 className="font-medium text-yellow-900">{source.name}</h4>
+                      </div>
+                      <p className="text-sm text-yellow-800 mb-2">{source.description}</p>
+                      {source.url && (
+                        <div className="flex items-center gap-2 text-sm">
+                          <ExternalLink className="w-3 h-3 text-yellow-600" />
+                          <a href={source.url} target="_blank" rel="noopener noreferrer" className="text-yellow-700 hover:underline">
+                            {source.url}
+                          </a>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  <Lightbulb className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                  <p>Smart sources are being generated...</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {document.type === 'dashboard' && (
+            <div className="space-y-4">
+              {document.data?.metrics ? (
+                <div className="grid gap-4">
+                  {Object.entries(document.data.metrics).map(([key, value]) => (
+                    <div key={key} className="bg-teal-50 p-4 rounded-lg border-l-4 border-teal-500">
+                      <div className="flex items-center justify-between">
+                        <h4 className="font-medium text-teal-900 capitalize">{key.replace('_', ' ')}</h4>
+                        <div className="flex items-center gap-2">
+                          <BarChart className="w-4 h-4 text-teal-600" />
+                          <span className="text-lg font-bold text-teal-800">{value}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  <BarChart className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                  <p>Dashboard metrics are being generated...</p>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
   // Multi-document management functions
   const openDocumentInPanel = async (scenario, documentType) => {
     const documentId = `${scenario.id}-${documentType}`;
