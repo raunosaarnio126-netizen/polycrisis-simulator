@@ -7530,7 +7530,7 @@ const KnowledgeTopology = () => {
     category: 'strategic_consultancy'
   });
 
-  const { toast } = useToast();
+  // No need for useToast hook, toast is imported directly
 
   useEffect(() => {
     fetchTopologyData();
