@@ -1818,13 +1818,11 @@ class PolycrisisAPITester:
                 print(f"   ❌ {endpoint} does not require authentication")
         
         # Test POST endpoint separately
-        crisis_data = {"crisis_type": "economic_crisis", "severity_level": 5}
         success, response = self.run_test(
             "Authentication Test - crisis-strategy",
             "POST",
-            "knowledge-topology/crisis-strategy",
-            401,
-            data=crisis_data
+            "knowledge-topology/crisis-strategy?crisis_type=economic_crisis&severity_level=5",
+            401
         )
         
         if success:
