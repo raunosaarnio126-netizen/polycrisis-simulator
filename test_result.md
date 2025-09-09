@@ -319,9 +319,7 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Company Insights Dialog with Print Feature"
-    - "Document Analysis Dialog with File Upload"
-    - "Team Creation Dialog"
+    - "Game Book URL Path Consistency Fix"
   stuck_tasks: 
     - "Document Analysis with File Upload"
   test_all: false
