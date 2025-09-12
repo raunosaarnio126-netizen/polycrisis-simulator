@@ -17,6 +17,7 @@ import PyPDF2
 from docx import Document
 import io
 import json
+import asyncio
 from pathlib import Path
 
 ROOT_DIR = Path(__file__).parent
