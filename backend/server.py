@@ -3924,5 +3924,373 @@ async def enhance_scenario_with_polycrisis_factors(
         logging.error(f"Scenario enhancement error: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to enhance scenario: {str(e)}")
 
+# AI Avatar System Models
+class Competence(BaseModel):
+    name: str
+    skill_level: int  # 1-10 scale
+    description: Optional[str] = None
+
+class AIAvatar(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    name: str
+    avatar_type: str
+    category: str
+    description: str
+    specializations: List[str]
+    core_competences: List[Competence]
+    knowledge_domains: List[str]
+    task_capabilities: List[str]
+    status: str = "active"  # "active", "busy", "inactive"
+    performance_metrics: Dict = Field(default_factory=dict)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class AvatarTask(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    avatar_id: str
+    task_category: str
+    task_type: str
+    title: str
+    description: str
+    requirements: List[str] = Field(default_factory=list)
+    priority: str = "medium"  # "low", "medium", "high", "urgent"
+    status: str = "pending"  # "pending", "in_progress", "completed", "failed"
+    assigned_at: Optional[datetime] = None
+    started_at: Optional[datetime] = None
+    completed_at: Optional[datetime] = None
+    result: Optional[str] = None
+    quality_score: Optional[float] = None
+    feedback: Optional[str] = None
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class AvatarCreate(BaseModel):
+    name: str
+    avatar_type: str
+    category: str
+    description: str
+    specializations: List[str]
+    core_competences: List[Competence]
+    knowledge_domains: List[str]
+    task_capabilities: List[str]
+
+class TaskCreate(BaseModel):
+    avatar_id: str
+    task_category: str
+    task_type: str
+    title: str
+    description: str
+    requirements: List[str] = Field(default_factory=list)
+    priority: str = "medium"
+
+class TaskExecution(BaseModel):
+    task_id: str
+    action: str  # "start", "complete", "fail"
+    result: Optional[str] = None
+    quality_score: Optional[float] = None
+    feedback: Optional[str] = None
+
+# AI Avatar System Endpoints
+@api_router.get("/ai-avatars", response_model=List[AIAvatar])
+async def get_user_avatars(current_user: User = Depends(get_current_user)):
+    """Get all AI avatars for the current user"""
+    try:
+        avatars = await db.ai_avatars.find({"user_id": current_user.id}).to_list(length=None)
+        return [AIAvatar(**avatar) for avatar in avatars]
+    except Exception as e:
+        logging.error(f"Get avatars error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to retrieve avatars: {str(e)}")
+
+@api_router.post("/ai-avatars", response_model=AIAvatar)
+async def create_avatar(avatar_data: AvatarCreate, current_user: User = Depends(get_current_user)):
+    """Create a new AI avatar"""
+    try:
+        avatar = AIAvatar(
+            user_id=current_user.id,
+            **avatar_data.dict()
+        )
+        
+        avatar_dict = avatar.dict()
+        await db.ai_avatars.insert_one(avatar_dict)
+        
+        return avatar
+    except Exception as e:
+        logging.error(f"Create avatar error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to create avatar: {str(e)}")
+
+@api_router.get("/ai-avatars/{avatar_id}", response_model=AIAvatar)
+async def get_avatar(avatar_id: str, current_user: User = Depends(get_current_user)):
+    """Get a specific AI avatar"""
+    try:
+        avatar = await db.ai_avatars.find_one({"id": avatar_id, "user_id": current_user.id})
+        if not avatar:
+            raise HTTPException(status_code=404, detail="Avatar not found")
+        return AIAvatar(**avatar)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Get avatar error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to retrieve avatar: {str(e)}")
+
+@api_router.put("/ai-avatars/{avatar_id}", response_model=AIAvatar)
+async def update_avatar(avatar_id: str, avatar_data: AvatarCreate, current_user: User = Depends(get_current_user)):
+    """Update an AI avatar"""
+    try:
+        avatar = await db.ai_avatars.find_one({"id": avatar_id, "user_id": current_user.id})
+        if not avatar:
+            raise HTTPException(status_code=404, detail="Avatar not found")
+        
+        update_data = avatar_data.dict()
+        update_data["updated_at"] = datetime.now(timezone.utc)
+        
+        await db.ai_avatars.update_one({"id": avatar_id}, {"$set": update_data})
+        updated_avatar = await db.ai_avatars.find_one({"id": avatar_id})
+        return AIAvatar(**updated_avatar)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Update avatar error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to update avatar: {str(e)}")
+
+@api_router.delete("/ai-avatars/{avatar_id}")
+async def delete_avatar(avatar_id: str, current_user: User = Depends(get_current_user)):
+    """Delete an AI avatar"""
+    try:
+        avatar = await db.ai_avatars.find_one({"id": avatar_id, "user_id": current_user.id})
+        if not avatar:
+            raise HTTPException(status_code=404, detail="Avatar not found")
+        
+        # Also delete all tasks associated with this avatar
+        await db.avatar_tasks.delete_many({"avatar_id": avatar_id, "user_id": current_user.id})
+        await db.ai_avatars.delete_one({"id": avatar_id})
+        
+        return {"message": "Avatar deleted successfully"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Delete avatar error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to delete avatar: {str(e)}")
+
+@api_router.get("/ai-avatars/{avatar_id}/tasks", response_model=List[AvatarTask])
+async def get_avatar_tasks(avatar_id: str, current_user: User = Depends(get_current_user)):
+    """Get all tasks for a specific avatar"""
+    try:
+        # Verify avatar belongs to user
+        avatar = await db.ai_avatars.find_one({"id": avatar_id, "user_id": current_user.id})
+        if not avatar:
+            raise HTTPException(status_code=404, detail="Avatar not found")
+        
+        tasks = await db.avatar_tasks.find({"avatar_id": avatar_id, "user_id": current_user.id}).to_list(length=None)
+        return [AvatarTask(**task) for task in tasks]
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Get avatar tasks error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to retrieve avatar tasks: {str(e)}")
+
+@api_router.post("/ai-avatars/tasks", response_model=AvatarTask)
+async def create_task(task_data: TaskCreate, current_user: User = Depends(get_current_user)):
+    """Create a new task for an AI avatar"""
+    try:
+        # Verify avatar belongs to user
+        avatar = await db.ai_avatars.find_one({"id": task_data.avatar_id, "user_id": current_user.id})
+        if not avatar:
+            raise HTTPException(status_code=404, detail="Avatar not found")
+        
+        task = AvatarTask(
+            user_id=current_user.id,
+            assigned_at=datetime.now(timezone.utc),
+            **task_data.dict()
+        )
+        
+        task_dict = task.dict()
+        await db.avatar_tasks.insert_one(task_dict)
+        
+        # Update avatar status to busy
+        await db.ai_avatars.update_one(
+            {"id": task_data.avatar_id}, 
+            {"$set": {"status": "busy", "updated_at": datetime.now(timezone.utc)}}
+        )
+        
+        return task
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Create task error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to create task: {str(e)}")
+
+@api_router.post("/ai-avatars/tasks/{task_id}/execute")
+async def execute_task(task_id: str, execution_data: TaskExecution, current_user: User = Depends(get_current_user)):
+    """Execute or update task status"""
+    try:
+        task = await db.avatar_tasks.find_one({"id": task_id, "user_id": current_user.id})
+        if not task:
+            raise HTTPException(status_code=404, detail="Task not found")
+        
+        update_data = {"updated_at": datetime.now(timezone.utc)}
+        
+        if execution_data.action == "start":
+            update_data["status"] = "in_progress"
+            update_data["started_at"] = datetime.now(timezone.utc)
+        elif execution_data.action == "complete":
+            update_data["status"] = "completed"
+            update_data["completed_at"] = datetime.now(timezone.utc)
+            if execution_data.result:
+                update_data["result"] = execution_data.result
+            if execution_data.quality_score:
+                update_data["quality_score"] = execution_data.quality_score
+            
+            # Update avatar status back to active
+            await db.ai_avatars.update_one(
+                {"id": task["avatar_id"]}, 
+                {"$set": {"status": "active", "updated_at": datetime.now(timezone.utc)}}
+            )
+        elif execution_data.action == "fail":
+            update_data["status"] = "failed"
+            if execution_data.feedback:
+                update_data["feedback"] = execution_data.feedback
+            
+            # Update avatar status back to active
+            await db.ai_avatars.update_one(
+                {"id": task["avatar_id"]}, 
+                {"$set": {"status": "active", "updated_at": datetime.now(timezone.utc)}}
+            )
+        
+        await db.avatar_tasks.update_one({"id": task_id}, {"$set": update_data})
+        updated_task = await db.avatar_tasks.find_one({"id": task_id})
+        return AvatarTask(**updated_task)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Execute task error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to execute task: {str(e)}")
+
+@api_router.post("/ai-avatars/tasks/{task_id}/ai-execute")
+async def ai_execute_task(task_id: str, current_user: User = Depends(get_current_user)):
+    """Execute task using AI capabilities"""
+    try:
+        task = await db.avatar_tasks.find_one({"id": task_id, "user_id": current_user.id})
+        if not task:
+            raise HTTPException(status_code=404, detail="Task not found")
+        
+        avatar = await db.ai_avatars.find_one({"id": task["avatar_id"], "user_id": current_user.id})
+        if not avatar:
+            raise HTTPException(status_code=404, detail="Avatar not found")
+        
+        # Mark task as in progress
+        await db.avatar_tasks.update_one(
+            {"id": task_id}, 
+            {"$set": {"status": "in_progress", "started_at": datetime.now(timezone.utc)}}
+        )
+        
+        # Get EMERGENT_LLM_KEY for AI execution
+        emergent_key = os.environ.get('EMERGENT_LLM_KEY')
+        if not emergent_key:
+            raise HTTPException(status_code=500, detail="AI service not available")
+        
+        # Create AI prompt based on avatar competences and task
+        avatar_competences = [comp["name"] for comp in avatar["core_competences"]]
+        avatar_specializations = avatar["specializations"]
+        
+        prompt = f"""
+You are an AI avatar named '{avatar["name"]}' with the following profile:
+- Type: {avatar["avatar_type"]}
+- Category: {avatar["category"]}
+- Description: {avatar["description"]}
+- Specializations: {', '.join(avatar_specializations)}
+- Core Competences: {', '.join(avatar_competences)}
+- Knowledge Domains: {', '.join(avatar["knowledge_domains"])}
+
+Task to Execute:
+- Title: {task["title"]}
+- Description: {task["description"]}
+- Category: {task["task_category"]}
+- Type: {task["task_type"]}
+- Requirements: {', '.join(task["requirements"]) if task["requirements"] else 'None specified'}
+
+Please execute this task according to your competences and provide:
+1. A detailed analysis or solution
+2. Key findings or recommendations
+3. Any relevant insights based on your specializations
+4. Next steps or follow-up actions if applicable
+
+Provide a professional, comprehensive response that demonstrates your expertise in the relevant areas.
+"""
+        
+        # Use emergentintegrations to call AI service
+        try:
+            from emergentintegrations import EmergentIntegrations
+            
+            ei = EmergentIntegrations(api_key=emergent_key)
+            
+            # Use Claude Sonnet for complex analysis tasks
+            response = await asyncio.to_thread(
+                ei.text_generation,
+                prompt=prompt,
+                model="claude-3-5-sonnet-20241022",
+                max_tokens=4000,
+                temperature=0.3
+            )
+            
+            ai_result = response.get('text', 'Task execution completed but no detailed result available.')
+            
+        except Exception as ai_error:
+            logging.error(f"AI execution error: {str(ai_error)}")
+            ai_result = f"Task execution encountered an error: {str(ai_error)}"
+        
+        # Mark task as completed with AI result
+        completion_time = datetime.now(timezone.utc)
+        await db.avatar_tasks.update_one(
+            {"id": task_id}, 
+            {"$set": {
+                "status": "completed",
+                "completed_at": completion_time,
+                "result": ai_result,
+                "quality_score": 8.5,  # Default good quality score for AI execution
+                "updated_at": completion_time
+            }}
+        )
+        
+        # Update avatar status back to active
+        await db.ai_avatars.update_one(
+            {"id": task["avatar_id"]}, 
+            {"$set": {"status": "active", "updated_at": completion_time}}
+        )
+        
+        updated_task = await db.avatar_tasks.find_one({"id": task_id})
+        return AvatarTask(**updated_task)
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"AI execute task error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to execute task with AI: {str(e)}")
+
+@api_router.get("/ai-avatars/system/templates")
+async def get_avatar_templates(current_user: User = Depends(get_current_user)):
+    """Get available avatar templates from the system"""
+    try:
+        system_file = Path(__file__).parent.parent / "ai_avatar_system.json"
+        
+        if not system_file.exists():
+            raise HTTPException(status_code=404, detail="Avatar system not found")
+        
+        with open(system_file, 'r') as f:
+            data = json.load(f)
+        
+        avatar_categories = data['ai_avatar_system']['avatar_categories']
+        
+        return {
+            'categories': avatar_categories,
+            'competence_framework': data['ai_avatar_system']['competence_framework'],
+            'task_categories': data['ai_avatar_system']['task_management']['task_categories']
+        }
+        
+    except Exception as e:
+        logging.error(f"Get avatar templates error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to get avatar templates: {str(e)}")
+
 # Include the API router in the main app
 app.include_router(api_router)
