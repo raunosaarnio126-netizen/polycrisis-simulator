@@ -9115,6 +9115,955 @@ const CrisisManagementFramework = () => {
   );
 };
 
+const AIAvatarManagement = () => {
+  const [avatars, setAvatars] = useState([]);
+  const [avatarTemplates, setAvatarTemplates] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [activeView, setActiveView] = useState('dashboard');
+  const [selectedAvatar, setSelectedAvatar] = useState(null);
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [showTaskDialog, setShowTaskDialog] = useState(false);
+  const [avatarTasks, setAvatarTasks] = useState([]);
+  
+  // Form states
+  const [createForm, setCreateForm] = useState({
+    name: '',
+    avatar_type: '',
+    category: '',
+    description: '',
+    specializations: [],
+    core_competences: [],
+    knowledge_domains: [],
+    task_capabilities: []
+  });
+
+  const [taskForm, setTaskForm] = useState({
+    title: '',
+    description: '',
+    task_category: '',
+    task_type: '',
+    requirements: [],
+    priority: 'medium'
+  });
+
+  const { toast } = useToast();
+
+  useEffect(() => {
+    fetchAvatars();
+    fetchAvatarTemplates();
+  }, []);
+
+  const fetchAvatars = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get(`${API}/ai-avatars`);
+      setAvatars(response.data);
+    } catch (error) {
+      console.error('Failed to fetch avatars:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load AI avatars",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchAvatarTemplates = async () => {
+    try {
+      const response = await axios.get(`${API}/ai-avatars/system/templates`);
+      setAvatarTemplates(response.data);
+    } catch (error) {
+      console.error('Failed to fetch avatar templates:', error);
+    }
+  };
+
+  const fetchAvatarTasks = async (avatarId) => {
+    try {
+      const response = await axios.get(`${API}/ai-avatars/${avatarId}/tasks`);
+      setAvatarTasks(response.data);
+    } catch (error) {
+      console.error('Failed to fetch avatar tasks:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load avatar tasks",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const createAvatar = async () => {
+    try {
+      const response = await axios.post(`${API}/ai-avatars`, createForm);
+      setAvatars([...avatars, response.data]);
+      
+      toast({
+        title: "Avatar Created",
+        description: `${createForm.name} has been successfully created and is ready for tasks.`
+      });
+      
+      setShowCreateDialog(false);
+      resetCreateForm();
+    } catch (error) {
+      console.error('Failed to create avatar:', error);
+      toast({
+        title: "Creation Failed",
+        description: error.response?.data?.detail || "Failed to create AI avatar",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const createTask = async () => {
+    if (!selectedAvatar) return;
+    
+    try {
+      const taskData = {
+        avatar_id: selectedAvatar.id,
+        ...taskForm,
+        requirements: taskForm.requirements.filter(req => req.trim() !== '')
+      };
+      
+      const response = await axios.post(`${API}/ai-avatars/tasks`, taskData);
+      
+      toast({
+        title: "Task Assigned",
+        description: `Task "${taskForm.title}" has been assigned to ${selectedAvatar.name}.`
+      });
+      
+      setShowTaskDialog(false);
+      resetTaskForm();
+      
+      // Refresh avatar data and tasks
+      fetchAvatars();
+      if (activeView === 'tasks') {
+        fetchAvatarTasks(selectedAvatar.id);
+      }
+    } catch (error) {
+      console.error('Failed to create task:', error);
+      toast({
+        title: "Task Creation Failed",
+        description: error.response?.data?.detail || "Failed to create task",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const executeTaskWithAI = async (taskId) => {
+    try {
+      const response = await axios.post(`${API}/ai-avatars/tasks/${taskId}/ai-execute`);
+      
+      toast({
+        title: "Task Completed",
+        description: "The AI avatar has successfully completed the task."
+      });
+      
+      // Refresh tasks
+      if (selectedAvatar) {
+        fetchAvatarTasks(selectedAvatar.id);
+      }
+      fetchAvatars();
+    } catch (error) {
+      console.error('Failed to execute task:', error);
+      toast({
+        title: "Execution Failed",
+        description: error.response?.data?.detail || "Failed to execute task with AI",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const deleteAvatar = async (avatarId) => {
+    try {
+      await axios.delete(`${API}/ai-avatars/${avatarId}`);
+      setAvatars(avatars.filter(avatar => avatar.id !== avatarId));
+      
+      toast({
+        title: "Avatar Deleted",
+        description: "AI avatar and all associated tasks have been deleted."
+      });
+      
+      if (selectedAvatar && selectedAvatar.id === avatarId) {
+        setSelectedAvatar(null);
+        setActiveView('dashboard');
+      }
+    } catch (error) {
+      console.error('Failed to delete avatar:', error);
+      toast({
+        title: "Deletion Failed",
+        description: error.response?.data?.detail || "Failed to delete avatar",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const resetCreateForm = () => {
+    setCreateForm({
+      name: '',
+      avatar_type: '',
+      category: '',
+      description: '',
+      specializations: [],
+      core_competences: [],
+      knowledge_domains: [],
+      task_capabilities: []
+    });
+  };
+
+  const resetTaskForm = () => {
+    setTaskForm({
+      title: '',
+      description: '',
+      task_category: '',
+      task_type: '',
+      requirements: [],
+      priority: 'medium'
+    });
+  };
+
+  const loadTemplate = (template) => {
+    setCreateForm({
+      name: template.name,
+      avatar_type: template.name,
+      category: template.category || 'crisis_management',
+      description: template.description || '',
+      specializations: template.specializations || [],
+      core_competences: Object.entries(template.skill_levels || {}).map(([name, level]) => ({
+        name,
+        skill_level: level,
+        description: `${name.replace(/_/g, ' ')} expertise`
+      })),
+      knowledge_domains: template.knowledge_domains || [],
+      task_capabilities: template.task_capabilities || []
+    });
+  };
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'active': return 'bg-green-100 text-green-800';
+      case 'busy': return 'bg-yellow-100 text-yellow-800';
+      case 'inactive': return 'bg-gray-100 text-gray-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getTaskStatusColor = (status) => {
+    switch (status) {
+      case 'completed': return 'bg-green-100 text-green-800';
+      case 'in_progress': return 'bg-blue-100 text-blue-800';
+      case 'pending': return 'bg-yellow-100 text-yellow-800';
+      case 'failed': return 'bg-red-100 text-red-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getPriorityColor = (priority) => {
+    switch (priority) {
+      case 'urgent': return 'bg-red-100 text-red-800';
+      case 'high': return 'bg-orange-100 text-orange-800';
+      case 'medium': return 'bg-yellow-100 text-yellow-800';
+      case 'low': return 'bg-green-100 text-green-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading AI Avatar Management...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="bg-white rounded-lg shadow-sm border p-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+              <Brain className="w-6 h-6 text-purple-600" />
+              AI Avatar Management
+            </h1>
+            <p className="text-gray-600 mt-1">
+              Create, manage, and deploy AI avatars with custom competences and task execution capabilities
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <Button 
+              onClick={() => setShowCreateDialog(true)}
+              className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700"
+            >
+              <Plus className="w-4 h-4" />
+              Create Avatar
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      {/* Navigation Tabs */}
+      <div className="bg-white rounded-lg shadow-sm border">
+        <div className="border-b">
+          <div className="flex space-x-8 px-6">
+            <button
+              onClick={() => setActiveView('dashboard')}
+              className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                activeView === 'dashboard'
+                  ? 'border-purple-500 text-purple-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              Dashboard
+            </button>
+            <button
+              onClick={() => setActiveView('avatars')}
+              className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                activeView === 'avatars'
+                  ? 'border-purple-500 text-purple-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              AI Avatars ({avatars.length})
+            </button>
+            {selectedAvatar && (
+              <button
+                onClick={() => {
+                  setActiveView('tasks');
+                  fetchAvatarTasks(selectedAvatar.id);
+                }}
+                className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                  activeView === 'tasks'
+                    ? 'border-purple-500 text-purple-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                {selectedAvatar.name} Tasks
+              </button>
+            )}
+          </div>
+        </div>
+
+        <div className="p-6">
+          {/* Dashboard Tab */}
+          {activeView === 'dashboard' && (
+            <div className="space-y-6">
+              {/* Statistics Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="bg-purple-50 p-4 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-purple-600">Total Avatars</p>
+                      <p className="text-2xl font-bold text-purple-900">{avatars.length}</p>
+                    </div>
+                    <Brain className="w-8 h-8 text-purple-500" />
+                  </div>
+                </div>
+                
+                <div className="bg-green-50 p-4 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-green-600">Active Avatars</p>
+                      <p className="text-2xl font-bold text-green-900">
+                        {avatars.filter(a => a.status === 'active').length}
+                      </p>
+                    </div>
+                    <CheckCircle className="w-8 h-8 text-green-500" />
+                  </div>
+                </div>
+                
+                <div className="bg-yellow-50 p-4 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-yellow-600">Busy Avatars</p>
+                      <p className="text-2xl font-bold text-yellow-900">
+                        {avatars.filter(a => a.status === 'busy').length}
+                      </p>
+                    </div>
+                    <Clock className="w-8 h-8 text-yellow-500" />
+                  </div>
+                </div>
+                
+                <div className="bg-blue-50 p-4 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-blue-600">Avg Competences</p>
+                      <p className="text-2xl font-bold text-blue-900">
+                        {avatars.length > 0 ? Math.round(avatars.reduce((sum, a) => sum + a.core_competences.length, 0) / avatars.length) : 0}
+                      </p>
+                    </div>
+                    <Award className="w-8 h-8 text-blue-500" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Recent Avatars */}
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent AI Avatars</h3>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  {avatars.slice(0, 4).map((avatar) => (
+                    <div key={avatar.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
+                      <div className="flex justify-between items-start mb-3">
+                        <div className="flex-1">
+                          <h4 className="font-bold text-gray-900">{avatar.name}</h4>
+                          <p className="text-sm text-gray-600">{avatar.avatar_type}</p>
+                        </div>
+                        <span className={`px-2 py-1 rounded-full text-xs font-semibold ${getStatusColor(avatar.status)}`}>
+                          {avatar.status}
+                        </span>
+                      </div>
+                      
+                      <p className="text-sm text-gray-700 mb-2">{avatar.description}</p>
+                      
+                      <div className="mb-3">
+                        <p className="text-xs text-gray-500 mb-1">Specializations:</p>
+                        <div className="flex flex-wrap gap-1">
+                          {avatar.specializations.slice(0, 2).map((spec, idx) => (
+                            <span key={idx} className="bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded">
+                              {spec.replace(/_/g, ' ')}
+                            </span>
+                          ))}
+                          {avatar.specializations.length > 2 && (
+                            <span className="text-xs text-gray-500">
+                              +{avatar.specializations.length - 2} more
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            setSelectedAvatar(avatar);
+                            setActiveView('avatars');
+                          }}
+                        >
+                          View Details
+                        </Button>
+                        <Button
+                          size="sm"
+                          onClick={() => {
+                            setSelectedAvatar(avatar);
+                            setShowTaskDialog(true);
+                          }}
+                        >
+                          Assign Task
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                
+                {avatars.length === 0 && (
+                  <div className="text-center py-8">
+                    <Brain className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">No AI Avatars Yet</h3>
+                    <p className="text-gray-600 mb-4">Create your first AI avatar to get started with automated task execution.</p>
+                    <Button onClick={() => setShowCreateDialog(true)}>
+                      Create First Avatar
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Avatars Tab */}
+          {activeView === 'avatars' && (
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                {avatars.map((avatar) => (
+                  <div key={avatar.id} className={`border rounded-lg p-6 hover:shadow-lg transition-shadow ${
+                    selectedAvatar && selectedAvatar.id === avatar.id ? 'ring-2 ring-purple-500' : ''
+                  }`}>
+                    <div className="flex justify-between items-start mb-4">
+                      <div className="flex-1">
+                        <h3 className="font-bold text-lg text-gray-900">{avatar.name}</h3>
+                        <p className="text-sm text-gray-600">{avatar.avatar_type}</p>
+                        <p className="text-xs text-gray-500 mt-1">{avatar.category.replace(/_/g, ' ')}</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className={`px-2 py-1 rounded-full text-xs font-semibold ${getStatusColor(avatar.status)}`}>
+                          {avatar.status}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <p className="text-sm text-gray-700 mb-4">{avatar.description}</p>
+                    
+                    <div className="mb-4">
+                      <h4 className="font-medium text-gray-800 mb-2">Core Competences:</h4>
+                      <div className="space-y-1">
+                        {avatar.core_competences.slice(0, 3).map((comp, idx) => (
+                          <div key={idx} className="flex justify-between items-center text-sm">
+                            <span className="text-gray-700">{comp.name.replace(/_/g, ' ')}</span>
+                            <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
+                              {comp.skill_level}/10
+                            </span>
+                          </div>
+                        ))}
+                        {avatar.core_competences.length > 3 && (
+                          <p className="text-xs text-gray-500">
+                            +{avatar.core_competences.length - 3} more competences
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    
+                    <div className="mb-4">
+                      <h4 className="font-medium text-gray-800 mb-2">Task Capabilities:</h4>
+                      <div className="flex flex-wrap gap-1">
+                        {avatar.task_capabilities.slice(0, 3).map((capability, idx) => (
+                          <span key={idx} className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">
+                            {capability.replace(/_/g, ' ')}
+                          </span>
+                        ))}
+                        {avatar.task_capabilities.length > 3 && (
+                          <span className="text-xs text-gray-500">
+                            +{avatar.task_capabilities.length - 3} more
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          setSelectedAvatar(avatar);
+                          setActiveView('tasks');
+                          fetchAvatarTasks(avatar.id);
+                        }}
+                      >
+                        View Tasks
+                      </Button>
+                      <Button
+                        size="sm"
+                        onClick={() => {
+                          setSelectedAvatar(avatar);
+                          setShowTaskDialog(true);
+                        }}
+                      >
+                        Assign Task
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => deleteAvatar(avatar.id)}
+                        className="text-red-600 hover:text-red-800"
+                      >
+                        Delete
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Tasks Tab */}
+          {activeView === 'tasks' && selectedAvatar && (
+            <div className="space-y-6">
+              <div className="flex justify-between items-center">
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">
+                    Tasks for {selectedAvatar.name}
+                  </h3>
+                  <p className="text-sm text-gray-600">
+                    {selectedAvatar.avatar_type} • {selectedAvatar.status}
+                  </p>
+                </div>
+                <Button
+                  onClick={() => setShowTaskDialog(true)}
+                  className="flex items-center gap-2"
+                >
+                  <Plus className="w-4 h-4" />
+                  Assign New Task
+                </Button>
+              </div>
+
+              <div className="space-y-4">
+                {avatarTasks.map((task) => (
+                  <div key={task.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
+                    <div className="flex justify-between items-start mb-3">
+                      <div className="flex-1">
+                        <h4 className="font-bold text-gray-900">{task.title}</h4>
+                        <p className="text-sm text-gray-600">{task.task_category} • {task.task_type}</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className={`px-2 py-1 rounded-full text-xs font-semibold ${getPriorityColor(task.priority)}`}>
+                          {task.priority}
+                        </span>
+                        <span className={`px-2 py-1 rounded-full text-xs font-semibold ${getTaskStatusColor(task.status)}`}>
+                          {task.status}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <p className="text-sm text-gray-700 mb-3">{task.description}</p>
+                    
+                    {task.requirements && task.requirements.length > 0 && (
+                      <div className="mb-3">
+                        <p className="text-xs text-gray-500 mb-1">Requirements:</p>
+                        <ul className="text-sm text-gray-600 list-disc list-inside">
+                          {task.requirements.map((req, idx) => (
+                            <li key={idx}>{req}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    
+                    {task.result && (
+                      <div className="mb-3 p-3 bg-green-50 rounded border">
+                        <p className="text-xs text-green-600 font-medium mb-1">Result:</p>
+                        <p className="text-sm text-gray-700">{task.result.substring(0, 200)}...</p>
+                        {task.quality_score && (
+                          <p className="text-xs text-green-600 mt-1">
+                            Quality Score: {task.quality_score}/10
+                          </p>
+                        )}
+                      </div>
+                    )}
+                    
+                    <div className="flex justify-between items-center text-xs text-gray-500">
+                      <div>
+                        <p>Created: {new Date(task.created_at).toLocaleDateString()}</p>
+                        {task.completed_at && (
+                          <p>Completed: {new Date(task.completed_at).toLocaleDateString()}</p>
+                        )}
+                      </div>
+                      
+                      <div className="flex gap-2">
+                        {task.status === 'pending' && (
+                          <Button
+                            size="sm"
+                            onClick={() => executeTaskWithAI(task.id)}
+                            className="bg-purple-600 hover:bg-purple-700"
+                          >
+                            Execute with AI
+                          </Button>
+                        )}
+                        {task.result && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              // Show full result in a modal or expand
+                              toast({
+                                title: "Task Result",
+                                description: "Full result displayed in console for now",
+                              });
+                              console.log('Full Task Result:', task.result);
+                            }}
+                          >
+                            View Full Result
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              
+              {avatarTasks.length === 0 && (
+                <div className="text-center py-8">
+                  <Clock className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No Tasks Assigned</h3>
+                  <p className="text-gray-600 mb-4">{selectedAvatar.name} is ready for task assignments.</p>
+                  <Button onClick={() => setShowTaskDialog(true)}>
+                    Assign First Task
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Create Avatar Dialog */}
+      {showCreateDialog && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-lg font-semibold text-gray-900">Create AI Avatar</h3>
+                <button
+                  onClick={() => setShowCreateDialog(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+
+              <div className="space-y-6">
+                {/* Templates Section */}
+                {avatarTemplates && (
+                  <div className="bg-blue-50 p-4 rounded-lg">
+                    <h4 className="font-medium text-blue-900 mb-3">Quick Start Templates</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {Object.entries(avatarTemplates.categories).map(([key, category]) => (
+                        <div key={key} className="bg-white p-3 rounded border">
+                          <h5 className="font-medium text-gray-800 mb-2">{category.category}</h5>
+                          <div className="space-y-2">
+                            {category.avatar_types.map((template, idx) => (
+                              <button
+                                key={idx}
+                                onClick={() => loadTemplate(template)}
+                                className="block w-full text-left p-2 text-sm text-blue-600 hover:bg-blue-50 rounded"
+                              >
+                                {template.name}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Form */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="avatar-name">Avatar Name *</Label>
+                    <Input
+                      id="avatar-name"
+                      value={createForm.name}
+                      onChange={(e) => setCreateForm({...createForm, name: e.target.value})}
+                      placeholder="e.g., Crisis Response Coordinator"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="avatar-type">Avatar Type *</Label>
+                    <Input
+                      id="avatar-type"
+                      value={createForm.avatar_type}
+                      onChange={(e) => setCreateForm({...createForm, avatar_type: e.target.value})}
+                      placeholder="e.g., Crisis Management Specialist"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="category">Category</Label>
+                    <select
+                      id="category"
+                      value={createForm.category}
+                      onChange={(e) => setCreateForm({...createForm, category: e.target.value})}
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500"
+                    >
+                      <option value="">Select Category</option>
+                      <option value="crisis_management">Crisis Management</option>
+                      <option value="strategic_planning">Strategic Planning</option>
+                      <option value="data_analysis">Data Analysis</option>
+                      <option value="communication">Communication</option>
+                      <option value="technical_operations">Technical Operations</option>
+                      <option value="research_innovation">Research & Innovation</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <Label htmlFor="description">Description *</Label>
+                  <textarea
+                    id="description"
+                    value={createForm.description}
+                    onChange={(e) => setCreateForm({...createForm, description: e.target.value})}
+                    placeholder="Describe the avatar's role and capabilities..."
+                    className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                    rows={3}
+                    required
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="specializations">Specializations (comma-separated)</Label>
+                  <Input
+                    id="specializations"
+                    value={createForm.specializations.join(', ')}
+                    onChange={(e) => setCreateForm({
+                      ...createForm, 
+                      specializations: e.target.value.split(',').map(s => s.trim()).filter(s => s)
+                    })}
+                    placeholder="e.g., emergency response, risk assessment, team coordination"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="knowledge-domains">Knowledge Domains (comma-separated)</Label>
+                  <Input
+                    id="knowledge-domains"
+                    value={createForm.knowledge_domains.join(', ')}
+                    onChange={(e) => setCreateForm({
+                      ...createForm, 
+                      knowledge_domains: e.target.value.split(',').map(s => s.trim()).filter(s => s)
+                    })}
+                    placeholder="e.g., emergency management, public safety, logistics"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="task-capabilities">Task Capabilities (comma-separated)</Label>
+                  <Input
+                    id="task-capabilities"
+                    value={createForm.task_capabilities.join(', ')}
+                    onChange={(e) => setCreateForm({
+                      ...createForm, 
+                      task_capabilities: e.target.value.split(',').map(s => s.trim()).filter(s => s)
+                    })}
+                    placeholder="e.g., assess crisis severity, develop response plans, coordinate resources"
+                  />
+                </div>
+
+                <div className="flex gap-3 pt-4 border-t">
+                  <Button onClick={createAvatar} className="flex-1">
+                    Create Avatar
+                  </Button>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={() => setShowCreateDialog(false)}
+                    className="flex-1"
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Create Task Dialog */}
+      {showTaskDialog && selectedAvatar && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Assign Task to {selectedAvatar.name}
+                </h3>
+                <button
+                  onClick={() => setShowTaskDialog(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="task-title">Task Title *</Label>
+                  <Input
+                    id="task-title"
+                    value={taskForm.title}
+                    onChange={(e) => setTaskForm({...taskForm, title: e.target.value})}
+                    placeholder="e.g., Analyze Supply Chain Vulnerability"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="task-description">Description *</Label>
+                  <textarea
+                    id="task-description"
+                    value={taskForm.description}
+                    onChange={(e) => setTaskForm({...taskForm, description: e.target.value})}
+                    placeholder="Detailed description of what needs to be accomplished..."
+                    className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                    rows={4}
+                    required
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="task-category">Category</Label>
+                    <select
+                      id="task-category"
+                      value={taskForm.task_category}
+                      onChange={(e) => setTaskForm({...taskForm, task_category: e.target.value})}
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500"
+                    >
+                      <option value="">Select Category</option>
+                      <option value="Analysis & Assessment">Analysis & Assessment</option>
+                      <option value="Planning & Strategy">Planning & Strategy</option>
+                      <option value="Communication & Coordination">Communication & Coordination</option>
+                      <option value="Research & Innovation">Research & Innovation</option>
+                      <option value="Monitoring & Maintenance">Monitoring & Maintenance</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="task-priority">Priority</Label>
+                    <select
+                      id="task-priority"
+                      value={taskForm.priority}
+                      onChange={(e) => setTaskForm({...taskForm, priority: e.target.value})}
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500"
+                    >
+                      <option value="low">Low</option>
+                      <option value="medium">Medium</option>
+                      <option value="high">High</option>
+                      <option value="urgent">Urgent</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <Label htmlFor="task-type">Task Type</Label>
+                  <Input
+                    id="task-type"
+                    value={taskForm.task_type}
+                    onChange={(e) => setTaskForm({...taskForm, task_type: e.target.value})}
+                    placeholder="e.g., risk_assessment, strategic_planning, data_analysis"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="requirements">Requirements (one per line)</Label>
+                  <textarea
+                    id="requirements"
+                    value={taskForm.requirements.join('\n')}
+                    onChange={(e) => setTaskForm({
+                      ...taskForm, 
+                      requirements: e.target.value.split('\n').filter(req => req.trim())
+                    })}
+                    placeholder="Access to supply chain data&#10;Regional market analysis&#10;Stakeholder contact information"
+                    className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                    rows={3}
+                  />
+                </div>
+
+                <div className="flex gap-3 pt-4 border-t">
+                  <Button onClick={createTask} className="flex-1">
+                    Assign Task
+                  </Button>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={() => setShowTaskDialog(false)}
+                    className="flex-1"
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 // Main App Component
 const AppContent = () => {
   const { user, logout } = useAuth();
