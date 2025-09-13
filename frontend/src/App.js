@@ -10441,7 +10441,7 @@ const AIAvatarManagement = () => {
                     value={createForm.specializations.join(', ')}
                     onChange={(e) => setCreateForm({
                       ...createForm, 
-                      specializations: e.target.value.split(',').map(s => s.trim()).filter(s => s)
+                      specializations: e.target.value.split(',').map(s => s.trim()).filter(s => s.length > 0)
                     })}
                     placeholder="e.g., emergency response, risk assessment, team coordination"
                   />
