@@ -626,7 +626,7 @@ class ABCTrackingTester:
         success, user_analytics = self.run_test(
             "Get User Scenario Analytics",
             "GET",
-            "scenarios/user-analytics",
+            "user/scenario-analytics",
             200
         )
         
