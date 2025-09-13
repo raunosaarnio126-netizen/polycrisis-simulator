@@ -479,3 +479,146 @@ body {
 .technological-slider {
   background: linear-gradient(to right, #fef3c7 0%, #cffafe 100%);
 }
+
+/* ABC Counting & Tracking Styles */
+.tracking-info {
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border: 1px solid #e2e8f0;
+  transition: all 0.3s ease;
+}
+
+.tracking-info:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border-color: #cbd5e1;
+}
+
+.tracking-header {
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 8px;
+}
+
+.tracking-grid {
+  gap: 12px;
+}
+
+.tracking-item {
+  text-align: center;
+  padding: 8px;
+  background: white;
+  border-radius: 6px;
+  border: 1px solid #f1f5f9;
+  transition: all 0.2s ease;
+}
+
+.tracking-item:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-color: #e2e8f0;
+}
+
+.tracking-label {
+  font-size: 10px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 2px;
+}
+
+.tracking-value {
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.impact-scores {
+  background: white;
+  border-radius: 6px;
+  padding: 8px;
+}
+
+.impact-breakdown {
+  margin-top: 8px;
+}
+
+.impact-item {
+  padding: 4px;
+  background: #f8fafc;
+  border-radius: 4px;
+  border: 1px solid #f1f5f9;
+}
+
+.impact-trend {
+  margin-top: 8px;
+}
+
+/* ABC Classification Colors */
+.abc-a {
+  background: linear-gradient(135deg, #fee2e2, #fecaca);
+  color: #991b1b;
+}
+
+.abc-b {
+  background: linear-gradient(135deg, #fef3c7, #fed7aa);
+  color: #92400e;
+}
+
+.abc-c {
+  background: linear-gradient(135deg, #dcfce7, #bbf7d0);
+  color: #166534;
+}
+
+/* Version Badge Styles */
+.version-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  background: linear-gradient(135deg, #ddd6fe, #c7d2fe);
+  color: #5b21b6;
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: 600;
+  border: 1px solid #e9d5ff;
+}
+
+/* Impact Trend Animations */
+.trend-increasing {
+  animation: pulseRed 2s infinite;
+}
+
+.trend-decreasing {
+  animation: pulseGreen 2s infinite;
+}
+
+.trend-stable {
+  animation: pulseBlue 3s infinite;
+}
+
+@keyframes pulseRed {
+  0%, 100% { background-color: #fee2e2; }
+  50% { background-color: #fecaca; }
+}
+
+@keyframes pulseGreen {
+  0%, 100% { background-color: #dcfce7; }
+  50% { background-color: #bbf7d0; }
+}
+
+@keyframes pulseBlue {
+  0%, 100% { background-color: #dbeafe; }
+  50% { background-color: #bfdbfe; }
+}
+
+/* Responsive Tracking */
+@media (max-width: 768px) {
+  .tracking-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .tracking-item {
+    padding: 6px;
+  }
+  
+  .tracking-value {
+    font-size: 12px;
+  }
+}
