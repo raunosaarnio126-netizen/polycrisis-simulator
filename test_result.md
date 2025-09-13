@@ -297,7 +297,7 @@ frontend:
     implemented: true
     working: false
     file: "/app/frontend/src/App.js"
-    stuck_count: 1
+    stuck_count: 2
     priority: "high"
     needs_retesting: false
     status_history:
@@ -307,6 +307,9 @@ frontend:
       - working: false
         agent: "testing"
         comment: "FLOATING AI GENIE TESTING COMPLETED: Button implementation is EXCELLENT but dialog functionality has issues. ✅ BUTTON IMPLEMENTATION: Floating button found with perfect positioning (fixed bottom-6 right-6), correct blue styling, MessageSquare icon present, 'G' badge working correctly, proper hover effects and z-index (z-50). ✅ VISUAL DESIGN: Button matches specifications exactly - blue background, rounded-full, shadow effects, positioned in bottom-right corner as requested. ❌ DIALOG FUNCTIONALITY: Dialog does not open when floating button is clicked. Tested multiple detection strategies (role='dialog', data-state='open', modal classes) but no dialog appears. The click event is registered but no modal/dialog is displayed. ✅ BUTTON ACCESSIBILITY: Title attribute 'Open AI Genie' present for accessibility. CONCLUSION: Floating button implementation is perfect, but dialog opening mechanism needs fixing."
+      - working: false
+        agent: "testing"
+        comment: "CRITICAL ISSUE IDENTIFIED: Root cause found for floating AI Genie dialog not opening. ✅ BUTTON VISIBILITY: Floating button correctly positioned and styled in bottom-right corner with MessageSquare icon and 'G' badge. ❌ OVERLAY BLOCKING CLICKS: Emergent badge element (id='emergent-badge') positioned at bottom-right (x:1739, y:1026, 160x34px) overlaps and intercepts all pointer events intended for the floating button (x:1840, y:1000, 56x56px). ❌ CLICK HANDLER NOT EXECUTING: Even after removing overlay element, button clicks do not trigger console logs ('Floating Genie button clicked') or state changes (showFloatingGenie). ❌ REACT EVENT BINDING ISSUE: onClick handler appears not properly bound to button element - direct JavaScript clicks and React fiber manipulation attempts failed. ❌ NO DEBUG INDICATOR: Debug indicator (green 'Genie Dialog State: OPEN') never appears, confirming state is not changing. ❌ NO DIALOG RENDERING: Dialog component with role='dialog' never renders or becomes visible. CONCLUSION: Two-part issue: 1) Emergent badge overlay blocks clicks, 2) React onClick handler not properly attached to button element. Both issues must be fixed for functionality to work."
 
   - task: "Company Insights Dialog with Print Feature"
     implemented: false
