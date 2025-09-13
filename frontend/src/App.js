@@ -10439,12 +10439,20 @@ const AIAvatarManagement = () => {
                   <Input
                     id="specializations"
                     value={createForm.specializations.join(', ')}
-                    onChange={(e) => setCreateForm({
-                      ...createForm, 
-                      specializations: e.target.value.split(',').map(s => s.trim()).filter(s => s.length > 0)
-                    })}
+                    onChange={(e) => {
+                      console.log('Specializations input value:', e.target.value);
+                      const newSpecializations = e.target.value.split(',').map(s => s.trim()).filter(s => s.length > 0);
+                      console.log('Parsed specializations:', newSpecializations);
+                      setCreateForm({
+                        ...createForm, 
+                        specializations: newSpecializations
+                      });
+                    }}
                     placeholder="e.g., emergency response, risk assessment, team coordination"
                   />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Enter specializations separated by commas. Current: [{createForm.specializations.join(', ')}]
+                  </p>
                 </div>
 
                 <div>
