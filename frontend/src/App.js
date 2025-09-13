@@ -10117,27 +10117,15 @@ const AppContent = () => {
                   <span className="hidden xs:inline">Dashboard</span>
                   <span className="xs:hidden">Dash</span>
                 </TabsTrigger>
-                {user?.email === 'rauno.saarnio@xr-presence.com' && (
-                  <TabsTrigger value="admin" className="flex items-center gap-1 px-2 sm:px-3 text-xs sm:text-sm whitespace-nowrap">
-                    <Crown className="w-3 h-3 sm:w-4 sm:h-4" />
-                    <span className="hidden xs:inline">Admin</span>
-                    <span className="xs:hidden">Admin</span>
-                  </TabsTrigger>
-                )}
+                <TabsTrigger value="scenario-adjusters" className="flex items-center gap-1 px-2 sm:px-3 text-xs sm:text-sm whitespace-nowrap">
+                  <Layers className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <span className="hidden xs:inline">Scenario Adjusters</span>
+                  <span className="xs:hidden">Adjusters</span>
+                </TabsTrigger>
                 <TabsTrigger value="company" className="flex items-center gap-1 px-2 sm:px-3 text-xs sm:text-sm whitespace-nowrap">
                   <Building2 className="w-3 h-3 sm:w-4 sm:h-4" />
                   <span className="hidden xs:inline">Company</span>
                   <span className="xs:hidden">Co</span>
-                </TabsTrigger>
-                <TabsTrigger value="documents" className="flex items-center gap-1 px-2 sm:px-3 text-xs sm:text-sm whitespace-nowrap">
-                  <FileText className="w-3 h-3 sm:w-4 sm:h-4" />
-                  <span className="hidden xs:inline">Documents</span>
-                  <span className="xs:hidden">Docs</span>
-                </TabsTrigger>
-                <TabsTrigger value="avatars" className="flex items-center gap-1 px-2 sm:px-3 text-xs sm:text-sm whitespace-nowrap">
-                  <Brain className="w-3 h-3 sm:w-4 sm:h-4" />
-                  <span className="hidden xs:inline">AI Avatars</span>
-                  <span className="xs:hidden">AI</span>
                 </TabsTrigger>
                 <TabsTrigger value="create" className="flex items-center gap-1 px-2 sm:px-3 text-xs sm:text-sm whitespace-nowrap">
                   <Plus className="w-3 h-3 sm:w-4 sm:h-4" />
@@ -10147,17 +10135,17 @@ const AppContent = () => {
                 <TabsTrigger value="scenarios" className="flex items-center gap-1 px-2 sm:px-3 text-xs sm:text-sm whitespace-nowrap">
                   <Globe className="w-3 h-3 sm:w-4 sm:h-4" />
                   <span className="hidden xs:inline">Scenarios</span>
-                  <span className="xs:hidden">Scen</span>
+                  <span className="xs:hidden">Scan</span>
                 </TabsTrigger>
-                <TabsTrigger value="scenario-adjusters" className="flex items-center gap-1 px-2 sm:px-3 text-xs sm:text-sm whitespace-nowrap">
-                  <Layers className="w-3 h-3 sm:w-4 sm:h-4" />
-                  <span className="hidden xs:inline">Scenario Adjusters</span>
-                  <span className="xs:hidden">Adjusters</span>
+                <TabsTrigger value="avatars" className="flex items-center gap-1 px-2 sm:px-3 text-xs sm:text-sm whitespace-nowrap">
+                  <Brain className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <span className="hidden xs:inline">AI Avatars</span>
+                  <span className="xs:hidden">AI</span>
                 </TabsTrigger>
-                <TabsTrigger value="ai-genie" className="flex items-center gap-1 px-2 sm:px-3 text-xs sm:text-sm whitespace-nowrap">
-                  <MessageSquare className="w-3 h-3 sm:w-4 sm:h-4" />
-                  <span className="hidden xs:inline">AI Genie</span>
-                  <span className="xs:hidden">Genie</span>
+                <TabsTrigger value="documents" className="flex items-center gap-1 px-2 sm:px-3 text-xs sm:text-sm whitespace-nowrap">
+                  <FileText className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <span className="hidden xs:inline">Documents</span>
+                  <span className="xs:hidden">Docs</span>
                 </TabsTrigger>
                 <TabsTrigger value="knowledge-topology" className="flex items-center gap-1 px-2 sm:px-3 text-xs sm:text-sm whitespace-nowrap">
                   <Network className="w-3 h-3 sm:w-4 sm:h-4" />
@@ -10169,6 +10157,13 @@ const AppContent = () => {
                   <span className="hidden xs:inline">Crisis Framework</span>
                   <span className="xs:hidden">Crisis</span>
                 </TabsTrigger>
+                {user?.email === 'rauno.saarnio@xr-presence.com' && (
+                  <TabsTrigger value="admin" className="flex items-center gap-1 px-2 sm:px-3 text-xs sm:text-sm whitespace-nowrap">
+                    <Crown className="w-3 h-3 sm:w-4 sm:h-4" />
+                    <span className="hidden xs:inline">Admin</span>
+                    <span className="xs:hidden">Admin</span>
+                  </TabsTrigger>
+                )}
               </TabsList>
             </div>
           </Tabs>
