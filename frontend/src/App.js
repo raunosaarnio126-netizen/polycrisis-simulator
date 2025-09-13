@@ -3712,6 +3712,126 @@ Comprehensive Scenario Analysis & Crisis Management Platform
                   </div>
                 </div>
 
+                {/* ABC Counting & Tracking Information */}
+                <div className="tracking-info mt-4 p-3 bg-gray-50 rounded-lg border">
+                  <div className="tracking-header mb-3">
+                    <h4 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                      <BarChart3 className="w-4 h-4" />
+                      Scenario Analytics & Tracking
+                    </h4>
+                  </div>
+                  
+                  <div className="tracking-grid grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                    {/* Option 1: Sequential Numbering/Labeling */}
+                    <div className="tracking-item">
+                      <div className="tracking-label text-gray-600">ID</div>
+                      <div className="tracking-value font-bold text-purple-700">
+                        {scenario.sequence_letter || 'A'}{scenario.sequence_number || '1'}
+                      </div>
+                    </div>
+                    
+                    <div className="tracking-item">
+                      <div className="tracking-label text-gray-600">Number</div>
+                      <div className="tracking-value font-bold text-blue-700">
+                        #{scenario.sequence_number || '1'}
+                      </div>
+                    </div>
+
+                    {/* Option 2: Impact Change Tracking */}
+                    <div className="tracking-item">
+                      <div className="tracking-label text-gray-600">Changes</div>
+                      <div className="tracking-value font-bold text-orange-700">
+                        {scenario.modification_count || 0}
+                      </div>
+                    </div>
+                    
+                    <div className="tracking-item">
+                      <div className="tracking-label text-gray-600">History</div>
+                      <div className="tracking-value font-bold text-green-700">
+                        {scenario.change_history?.length || 0} events
+                      </div>
+                    </div>
+
+                    {/* Option 3: ABC Analysis Classification */}
+                    <div className="tracking-item">
+                      <div className="tracking-label text-gray-600">Priority</div>
+                      <div className={`tracking-value font-bold ${
+                        scenario.abc_classification === 'A' ? 'text-red-700' :
+                        scenario.abc_classification === 'B' ? 'text-yellow-700' : 'text-green-700'
+                      }`}>
+                        {scenario.abc_classification || 'B'} Class
+                      </div>
+                    </div>
+                    
+                    <div className="tracking-item">
+                      <div className="tracking-label text-gray-600">Impact</div>
+                      <div className={`tracking-value font-bold ${
+                        scenario.impact_category === 'high' ? 'text-red-700' :
+                        scenario.impact_category === 'medium' ? 'text-yellow-700' : 'text-green-700'
+                      }`}>
+                        {scenario.impact_category || 'medium'}
+                      </div>
+                    </div>
+
+                    {/* Option 4: Version Control/Change Counter */}
+                    <div className="tracking-item">
+                      <div className="tracking-label text-gray-600">Version</div>
+                      <div className="tracking-value font-bold text-indigo-700">
+                        v{scenario.version_number || '1.0.0'}
+                      </div>
+                    </div>
+                    
+                    <div className="tracking-item">
+                      <div className="tracking-label text-gray-600">Revisions</div>
+                      <div className="tracking-value font-bold text-teal-700">
+                        {scenario.revision_count || 0}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Option 5: Impact Measurement System */}
+                  <div className="impact-scores mt-3 pt-3 border-t border-gray-200">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs font-medium text-gray-600">Impact Analysis</span>
+                      <span className="text-xs font-bold text-gray-800">
+                        Total: {Math.round(scenario.calculated_total_impact || scenario.impact_score || 50)}/100
+                      </span>
+                    </div>
+                    
+                    <div className="impact-breakdown grid grid-cols-3 gap-2 text-xs">
+                      <div className="impact-item text-center">
+                        <div className="text-gray-600">Economic</div>
+                        <div className="font-bold text-blue-700">
+                          {Math.round(scenario.economic_impact || 45)}
+                        </div>
+                      </div>
+                      <div className="impact-item text-center">
+                        <div className="text-gray-600">Social</div>
+                        <div className="font-bold text-green-700">
+                          {Math.round(scenario.social_impact || 55)}
+                        </div>
+                      </div>
+                      <div className="impact-item text-center">
+                        <div className="text-gray-600">Environmental</div>
+                        <div className="font-bold text-red-700">
+                          {Math.round(scenario.environmental_impact || 40)}
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="impact-trend mt-2 flex items-center justify-center">
+                      <span className="text-xs text-gray-600 mr-2">Trend:</span>
+                      <span className={`text-xs font-medium px-2 py-1 rounded ${
+                        scenario.impact_trend === 'increasing' ? 'bg-red-100 text-red-700' :
+                        scenario.impact_trend === 'decreasing' ? 'bg-green-100 text-green-700' :
+                        'bg-gray-100 text-gray-700'
+                      }`}>
+                        {scenario.impact_trend || 'stable'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
                 <div className="action-buttons">
                   <div className="action-row">
                     <button
