@@ -10247,7 +10247,7 @@ const AppContent = () => {
 
       {/* Floating AI Genie Dialog */}
       <Dialog open={showFloatingGenie} onOpenChange={setShowFloatingGenie}>
-        <DialogContent className="max-w-4xl h-[600px] flex flex-col">
+        <DialogContent className="max-w-4xl h-[600px] flex flex-col z-[10000]">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <MessageSquare className="w-5 h-5 text-blue-600" />
