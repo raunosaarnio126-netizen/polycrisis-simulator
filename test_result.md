@@ -510,51 +510,63 @@ test_plan:
 
   - task: "Real-Time Impact Analysis Save Functionality"
     implemented: true
-    working: "NA"
+    working: false
     file: "/app/frontend/src/App.js"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "Implemented Save button for Real-Time Impact Analysis that saves current analysis to backend for later retrieval and comparison. Uses POST /api/companies/{company_id}/analyses endpoint."
+      - working: false
+        agent: "testing"
+        comment: "REAL-TIME IMPACT ANALYSIS SAVE FUNCTIONALITY TESTING COMPLETED: Save button implementation found but not working properly. ✅ BUTTON VISIBILITY: Save button found and visible in Real-Time Impact Analysis section. ✅ UI INTEGRATION: Button properly positioned with Database icon and 'Save' text as specified. ❌ CRITICAL ISSUE: Save button is disabled and cannot be clicked. Error shows 'element is not enabled' - button has disabled attribute preventing interaction. ✅ BACKEND ENDPOINT: POST /api/companies/{company_id}/analyses endpoint exists and is properly implemented. ❌ FRONTEND VALIDATION: Save button appears to be disabled due to missing analysis content validation or state management issue. The button should be enabled when realTimeAnalysis content is present. CONCLUSION: Save functionality is implemented but has a critical enablement issue preventing users from saving analyses."
 
   - task: "Real-Time Impact Analysis PDF Export Functionality"
     implemented: true
-    working: "NA"
+    working: true
     file: "/app/frontend/src/App.js"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "Implemented PDF Export button that generates formatted PDF with analysis content, SEPTE values, and company branding. Opens print dialog for PDF generation."
+      - working: true
+        agent: "testing"
+        comment: "REAL-TIME IMPACT ANALYSIS PDF EXPORT FUNCTIONALITY TESTING COMPLETED: PDF Export working excellently. ✅ BUTTON VISIBILITY: PDF button found and visible in Real-Time Impact Analysis section with Download icon and 'PDF' text. ✅ POPUP FUNCTIONALITY: PDF button click successfully opens popup window for PDF generation. ✅ PDF GENERATION: exportToPDF() function working correctly - generates formatted PDF with SEPTE Framework Analysis content. ✅ COMPANY BRANDING: PDF includes company name and Polycrisis Simulator branding as specified. ✅ CONTENT FORMATTING: PDF contains analysis content, SEPTE values, and professional formatting with proper styling. ✅ PRINT DIALOG: PDF opens in new window with print dialog functionality for PDF export. CONCLUSION: PDF Export functionality is fully operational and meets all requirements from review request."
 
   - task: "Real-Time Impact Analysis Print Functionality"
     implemented: true
-    working: "NA"
+    working: true
     file: "/app/frontend/src/App.js"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "Implemented Print button that prints the analysis using PDF export functionality. Opens print dialog for direct printing."
+      - working: true
+        agent: "testing"
+        comment: "REAL-TIME IMPACT ANALYSIS PRINT FUNCTIONALITY TESTING COMPLETED: Print functionality working perfectly. ✅ BUTTON VISIBILITY: Print button found and visible in Real-Time Impact Analysis section with FileText icon and 'Print' text. ✅ PRINT DIALOG: Print button click successfully opens print window/dialog. ✅ PRINT CONTENT: printAnalysis() function working correctly - uses same PDF generation mechanism as PDF export for consistent formatting. ✅ POPUP BEHAVIOR: Print window opens properly and displays formatted analysis content ready for printing. ✅ USER EXPERIENCE: Print functionality provides direct printing capability as requested in review. CONCLUSION: Print functionality is fully operational and provides seamless printing experience for Real-Time Impact Analysis."
 
   - task: "Scenario Comparison Functionality"
     implemented: true
-    working: "NA"
+    working: false
     file: "/app/frontend/src/App.js"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "Implemented Scenario Comparison feature that appears when 2+ analyses are saved. Shows biggest differences between scenarios with percentage changes, risk level changes, and Print Comparison functionality."
+      - working: false
+        agent: "testing"
+        comment: "SCENARIO COMPARISON FUNCTIONALITY TESTING COMPLETED: Implementation exists but not accessible during testing. ✅ CODE IMPLEMENTATION: Scenario Comparison card and dialog code found in frontend with proper structure for comparing analyses. ✅ CONDITIONAL DISPLAY: Code correctly shows comparison card only when savedAnalyses.length >= 2. ✅ COMPARISON LOGIC: findBiggestDifferences() function implemented to identify changes ≥15% between scenarios. ✅ PRINT COMPARISON: Print Comparison functionality implemented with proper report generation. ❌ VISIBILITY ISSUE: Scenario Comparison card not visible during testing - likely because Save functionality is disabled, preventing creation of multiple saved analyses required for comparison. ❌ DEPENDENCY ISSUE: Comparison feature depends on Save functionality working, which is currently disabled. ✅ BACKEND SUPPORT: GET /api/companies/{company_id}/analyses endpoint exists to retrieve saved analyses. CONCLUSION: Scenario Comparison is properly implemented but cannot be tested due to Save functionality being disabled. Once Save is fixed, comparison should work as designed."
 
 agent_communication:
   - agent: "main"
