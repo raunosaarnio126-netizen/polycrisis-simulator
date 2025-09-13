@@ -278,6 +278,30 @@ backend:
         comment: "SCENARIO AMENDMENT FUNCTIONALITY TESTING COMPLETED SUCCESSFULLY: 8/8 tests passed (100% success rate). ✅ CRITICAL TESTS PASSED: 1) PATCH /api/scenarios/{scenario_id}/amend endpoint accepts partial data without validation errors - tested with scenario ID 9796a80e-976e-463d-ba00-aeb899b76a7a using test credentials test@example.com/password123. 2) Only provided fields are updated in database - verified affected_regions, key_variables, additional_context, stakeholders, timeline fields updated correctly while title, description, crisis_type, severity_level remained unchanged. 3) Response returns complete updated scenario with new fields - all required fields present in response including new Scenario model fields (additional_context, stakeholders, timeline). 4) GET /api/scenarios reflects amendments - verified updated scenario data persists correctly in database and retrieval operations. 5) Partial amendments work correctly - tested updating only some fields (affected_regions, additional_context) while others remain unchanged. 6) Authentication properly enforced - returns 403 for unauthenticated requests. 7) Invalid scenario ID handling - returns 404 for non-existent scenarios. 8) Empty amendment data handled gracefully - accepts empty payload without errors. ✅ SOLUTION VERIFICATION: The original PUT endpoint validation issue has been resolved. New ScenarioAmendment model with optional fields allows partial updates. PATCH endpoint only updates provided fields, solving the 'update failed' issue. All test data from review request (Finland, Sweden, Estonia regions; GDP Growth, Employment Rate, Trade Balance variables; Nordic Council stakeholders; 6-12 months timeline) processed correctly. CONCLUSION: Scenario amendment functionality is production-ready and fully resolves the reported 'update failed' issue."
 
 frontend:
+  - task: "Navigation Banner Order Changes"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Navigation banner reordered to: Dashboard, Adjusters (Scenario Adjusters), Co (Company), Create Scenario, Scan (Scenarios), AI (AI Avatars), Docs (Documents), Knowledge (Knowledge Base), Crisis (Crisis Framework), Admin (last, admin-only). Ready for testing."
+
+  - task: "Floating AI Genie Implementation"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "AI Genie converted from tab to floating button with MessageSquare icon and 'G' badge in bottom-right corner. Opens dialog with AI Genie functionality. Ready for testing."
+
   - task: "Company Insights Dialog with Print Feature"
     implemented: false
     working: "NA"
