@@ -278,7 +278,7 @@ const ScenarioAnalyticsSummary = ({ scenarios }) => {
 
   const fetchUserAnalytics = async () => {
     try {
-      const response = await axios.get(`${API}/scenarios/user-analytics`);
+      const response = await axios.get(`${API}/user/scenario-analytics`);
       setUserAnalytics(response.data);
     } catch (error) {
       console.error('Failed to fetch user analytics:', error);
