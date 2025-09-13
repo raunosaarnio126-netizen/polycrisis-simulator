@@ -168,13 +168,19 @@ class AddNewCustomerTester:
         print("🤖 TESTING AI AVATAR CREATION")
         print("="*80)
         
-        # Test different avatar types with realistic data
+        # Test different avatar types with realistic data (including required fields)
         avatar_test_cases = [
             {
                 "name": "Crisis Response Specialist",
                 "avatar_type": "research",
+                "category": "crisis_management",
                 "description": "Specialized AI avatar for crisis response research and analysis",
                 "specializations": ["emergency response", "risk assessment", "crisis communication"],
+                "core_competences": [
+                    {"name": "Emergency Response", "skill_level": 9, "description": "Expert in emergency response protocols"},
+                    {"name": "Risk Assessment", "skill_level": 8, "description": "Advanced risk analysis capabilities"},
+                    {"name": "Crisis Communication", "skill_level": 7, "description": "Effective crisis communication skills"}
+                ],
                 "knowledge_domains": ["disaster management", "public safety", "emergency protocols"],
                 "task_capabilities": ["analyze crisis scenarios", "develop response plans", "coordinate emergency teams"],
                 "team_name": "Emergency Response Team",
@@ -183,8 +189,14 @@ class AddNewCustomerTester:
             {
                 "name": "Business Impact Analyst",
                 "avatar_type": "assessment", 
+                "category": "business_analysis",
                 "description": "AI avatar focused on business impact assessment and continuity planning",
                 "specializations": ["business continuity", "impact analysis", "financial assessment"],
+                "core_competences": [
+                    {"name": "Business Continuity", "skill_level": 9, "description": "Expert in business continuity planning"},
+                    {"name": "Impact Analysis", "skill_level": 8, "description": "Advanced impact assessment skills"},
+                    {"name": "Financial Assessment", "skill_level": 7, "description": "Financial risk evaluation expertise"}
+                ],
                 "knowledge_domains": ["business operations", "financial modeling", "risk management"],
                 "task_capabilities": ["assess business impact", "create continuity plans", "analyze financial risks"],
                 "team_name": "Business Continuity Team",
@@ -193,8 +205,14 @@ class AddNewCustomerTester:
             {
                 "name": "Strategic Planning Assistant",
                 "avatar_type": "analyst",
+                "category": "strategic_planning",
                 "description": "AI avatar for strategic planning and decision support",
                 "specializations": ["strategic planning", "decision analysis", "scenario modeling"],
+                "core_competences": [
+                    {"name": "Strategic Planning", "skill_level": 8, "description": "Strategic planning and analysis"},
+                    {"name": "Decision Analysis", "skill_level": 9, "description": "Advanced decision support capabilities"},
+                    {"name": "Scenario Modeling", "skill_level": 7, "description": "Scenario development and modeling"}
+                ],
                 "knowledge_domains": ["strategic management", "decision science", "predictive analytics"],
                 "task_capabilities": ["develop strategies", "analyze scenarios", "support decision making"],
                 "team_name": "Strategic Planning Division",
