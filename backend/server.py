@@ -2898,7 +2898,7 @@ async def create_team(company_id: str, team_data: TeamCreate, current_user: User
     )
     
     await db.teams.insert_one(team.dict())
-    return team
+    return {"message": "Team created successfully", "team_id": team.id}
 
 @api_router.get("/companies/{company_id}/teams", response_model=List[Team])
 async def get_company_teams(company_id: str, current_user: User = Depends(get_current_user)):
