@@ -10471,13 +10471,26 @@ const AIAvatarManagement = () => {
                   <Label htmlFor="knowledge-domains">Knowledge Domains (comma-separated)</Label>
                   <Input
                     id="knowledge-domains"
-                    value={createForm.knowledge_domains.join(', ')}
-                    onChange={(e) => setCreateForm({
-                      ...createForm, 
-                      knowledge_domains: e.target.value.split(',').map(s => s.trim()).filter(s => s.length > 0)
-                    })}
+                    type="text"
+                    value={createFormInputs.knowledge_domains}
+                    onChange={(e) => {
+                      const rawValue = e.target.value;
+                      setCreateFormInputs({
+                        ...createFormInputs,
+                        knowledge_domains: rawValue
+                      });
+                      const newDomains = rawValue.length > 0 ? rawValue.split(',').map(s => s.trim()).filter(s => s.length > 0) : [];
+                      setCreateForm({
+                        ...createForm, 
+                        knowledge_domains: newDomains
+                      });
+                    }}
                     placeholder="e.g., emergency management, public safety, logistics"
+                    autoComplete="off"
                   />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Parsed: {createForm.knowledge_domains.join(' | ')}
+                  </p>
                 </div>
 
                 <div>
