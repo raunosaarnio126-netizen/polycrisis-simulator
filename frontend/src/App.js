@@ -10236,6 +10236,13 @@ const AppContent = () => {
         </span>
       </button>
 
+      {/* Debug indicator */}
+      {showFloatingGenie && (
+        <div className="fixed top-4 right-4 bg-green-500 text-white p-2 rounded z-[100]">
+          Genie Dialog State: OPEN
+        </div>
+      )}
+
       {/* Floating AI Genie Dialog */}
       <Dialog open={showFloatingGenie} onOpenChange={setShowFloatingGenie}>
         <DialogContent className="max-w-4xl h-[600px] flex flex-col">
