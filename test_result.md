@@ -280,27 +280,33 @@ backend:
 frontend:
   - task: "Navigation Banner Order Changes"
     implemented: true
-    working: "NA"
+    working: true
     file: "/app/frontend/src/App.js"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "Navigation banner reordered to: Dashboard, Adjusters (Scenario Adjusters), Co (Company), Create Scenario, Scan (Scenarios), AI (AI Avatars), Docs (Documents), Knowledge (Knowledge Base), Crisis (Crisis Framework), Admin (last, admin-only). Ready for testing."
+      - working: true
+        agent: "testing"
+        comment: "NAVIGATION ORDER TESTING COMPLETED: Desktop navigation order is PERFECT - matches exactly: ['Dash', 'Adjusters', 'Co', 'Create Scenario', 'Scan', 'AI', 'Docs', 'Knowledge', 'Crisis']. All tabs functional and clickable. ✅ DESKTOP NAVIGATION: All 9 tabs in correct order, proper icons, responsive design working. ✅ TAB FUNCTIONALITY: Successfully tested clicking Co, Create Scenario, and Scan tabs - all navigate correctly. Minor: Mobile view shows full names instead of abbreviated 'Scan' text (shows 'Scenarios' instead), but this is acceptable as functionality works correctly. Overall: Navigation reordering implementation is production-ready and working excellently."
 
   - task: "Floating AI Genie Implementation"
     implemented: true
-    working: "NA"
+    working: false
     file: "/app/frontend/src/App.js"
-    stuck_count: 0
+    stuck_count: 1
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "AI Genie converted from tab to floating button with MessageSquare icon and 'G' badge in bottom-right corner. Opens dialog with AI Genie functionality. Ready for testing."
+      - working: false
+        agent: "testing"
+        comment: "FLOATING AI GENIE TESTING COMPLETED: Button implementation is EXCELLENT but dialog functionality has issues. ✅ BUTTON IMPLEMENTATION: Floating button found with perfect positioning (fixed bottom-6 right-6), correct blue styling, MessageSquare icon present, 'G' badge working correctly, proper hover effects and z-index (z-50). ✅ VISUAL DESIGN: Button matches specifications exactly - blue background, rounded-full, shadow effects, positioned in bottom-right corner as requested. ❌ DIALOG FUNCTIONALITY: Dialog does not open when floating button is clicked. Tested multiple detection strategies (role='dialog', data-state='open', modal classes) but no dialog appears. The click event is registered but no modal/dialog is displayed. ✅ BUTTON ACCESSIBILITY: Title attribute 'Open AI Genie' present for accessibility. CONCLUSION: Floating button implementation is perfect, but dialog opening mechanism needs fixing."
 
   - task: "Company Insights Dialog with Print Feature"
     implemented: false
