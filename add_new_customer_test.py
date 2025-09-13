@@ -292,7 +292,7 @@ class AddNewCustomerTester:
         if success and isinstance(response, list):
             print(f"   ✅ Retrieved {len(response)} AI avatars")
             for avatar in response:
-                print(f"   - {avatar.get('avatar_name')}: {avatar.get('avatar_type')} ({avatar.get('status')})")
+                print(f"   - {avatar.get('name')}: {avatar.get('avatar_type')} ({avatar.get('status')})")
             return True
         else:
             print(f"   ❌ Failed to retrieve AI avatars")
