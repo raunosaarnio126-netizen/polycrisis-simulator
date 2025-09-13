@@ -9135,7 +9135,23 @@ const AIAvatarManagement = () => {
     specializations: [],
     core_competences: [],
     knowledge_domains: [],
-    task_capabilities: []
+    task_capabilities: [],
+    team_name: '',
+    organization: ''
+  });
+
+  // State for amend functionality
+  const [showAmendDialog, setShowAmendDialog] = useState(false);
+  const [amendingAvatar, setAmendingAvatar] = useState(null);
+  const [amendForm, setAmendForm] = useState({
+    name: '',
+    description: '',
+    specializations: [],
+    core_competences: [],
+    knowledge_domains: [],
+    task_capabilities: [],
+    team_name: '',
+    organization: ''
   });
 
   const [taskForm, setTaskForm] = useState({
