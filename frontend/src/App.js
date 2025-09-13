@@ -10109,6 +10109,27 @@ const AIAvatarManagement = () => {
                   />
                 </div>
 
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="team-name">Team Name</Label>
+                    <Input
+                      id="team-name"
+                      value={createForm.team_name}
+                      onChange={(e) => setCreateForm({...createForm, team_name: e.target.value})}
+                      placeholder="e.g., Crisis Response Team"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="organization">Organization</Label>
+                    <Input
+                      id="organization"
+                      value={createForm.organization}
+                      onChange={(e) => setCreateForm({...createForm, organization: e.target.value})}
+                      placeholder="e.g., Emergency Management Division"
+                    />
+                  </div>
+                </div>
+
                 <div className="flex gap-3 pt-4 border-t">
                   <Button onClick={createAvatar} className="flex-1">
                     Create Avatar
