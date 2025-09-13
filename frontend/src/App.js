@@ -9750,6 +9750,20 @@ const AIAvatarManagement = () => {
                         <h3 className="font-bold text-lg text-gray-900">{avatar.name}</h3>
                         <p className="text-sm text-gray-600">{avatar.avatar_type}</p>
                         <p className="text-xs text-gray-500 mt-1">{avatar.category.replace(/_/g, ' ')}</p>
+                        {(avatar.team_name || avatar.organization) && (
+                          <div className="flex flex-wrap gap-1 mt-2">
+                            {avatar.team_name && (
+                              <span className="bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded">
+                                Team: {avatar.team_name}
+                              </span>
+                            )}
+                            {avatar.organization && (
+                              <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
+                                Org: {avatar.organization}
+                              </span>
+                            )}
+                          </div>
+                        )}
                       </div>
                       <div className="flex items-center gap-2">
                         <span className={`px-2 py-1 rounded-full text-xs font-semibold ${getStatusColor(avatar.status)}`}>
