@@ -1199,23 +1199,23 @@ const AIGenie = ({ selectedScenario }) => {
   };
 
   return (
-    <Card className="h-[600px] flex flex-col">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+    <div className="flex flex-col h-full">
+      <div className="mb-4">
+        <h3 className="text-lg font-semibold flex items-center gap-2 mb-2">
           <MessageSquare className="w-5 h-5" />
           AI Avatar Genie
-        </CardTitle>
-        <CardDescription>
+        </h3>
+        <p className="text-sm text-gray-600">
           Get intelligent insights and suggestions for your crisis scenarios
           {selectedScenario && (
             <Badge variant="outline" className="ml-2">
               {selectedScenario.title}
             </Badge>
           )}
-        </CardDescription>
-      </CardHeader>
+        </p>
+      </div>
       
-      <CardContent className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col min-h-0">
         <div className="flex-1 overflow-y-auto space-y-4 mb-4 p-4 bg-gray-50 rounded-lg">
           {conversation.length === 0 ? (
             <div className="text-center text-gray-500 mt-8">
