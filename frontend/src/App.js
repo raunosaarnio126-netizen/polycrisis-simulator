@@ -10222,7 +10222,11 @@ const AppContent = () => {
 
       {/* Floating AI Genie Button */}
       <button
-        onClick={() => setShowFloatingGenie(true)}
+        onClick={() => {
+          console.log('Floating Genie button clicked, current state:', showFloatingGenie);
+          setShowFloatingGenie(true);
+          console.log('State should now be true');
+        }}
         className="fixed bottom-6 right-6 bg-blue-600 hover:bg-blue-700 text-white p-4 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 z-50 group"
         title="Open AI Genie"
       >
