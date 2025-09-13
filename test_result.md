@@ -385,8 +385,7 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Navigation Banner Order Changes"
-    - "Floating AI Genie Implementation"
+    - "AI Avatar Creation Enhancements"
   stuck_tasks: 
     - "Document Analysis with File Upload"
   test_all: false
