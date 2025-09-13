@@ -1,0 +1,308 @@
+{
+  "ai_avatar_system": {
+    "meta": {
+      "name": "AI Avatar Competence Management System",
+      "version": "1.0",
+      "description": "Comprehensive system for creating, managing, and deploying AI avatars with custom competences and task execution capabilities",
+      "created_at": "2025-09-09",
+      "total_categories": 6
+    },
+    "avatar_categories": {
+      "crisis_management": {
+        "category": "Crisis Management Specialists",
+        "description": "AI avatars specialized in crisis response, risk assessment, and emergency management",
+        "avatar_types": [
+          {
+            "name": "Crisis Response Coordinator",
+            "specializations": ["emergency_response", "resource_allocation", "stakeholder_coordination"],
+            "core_competences": ["crisis_assessment", "response_planning", "team_coordination", "communication"],
+            "skill_levels": {"leadership": 9, "analytical_thinking": 8, "crisis_communication": 9, "decision_making": 8},
+            "knowledge_domains": ["emergency_management", "public_safety", "logistics", "communications"],
+            "task_capabilities": ["assess_crisis_severity", "develop_response_plans", "coordinate_resources", "manage_communications"]
+          },
+          {
+            "name": "Risk Assessment Analyst",
+            "specializations": ["risk_analysis", "vulnerability_assessment", "predictive_modeling"],
+            "core_competences": ["data_analysis", "statistical_modeling", "risk_quantification", "report_generation"],
+            "skill_levels": {"analytical_thinking": 9, "statistical_analysis": 9, "technical_writing": 8, "pattern_recognition": 8},
+            "knowledge_domains": ["statistics", "risk_management", "data_science", "modeling"],
+            "task_capabilities": ["analyze_risk_factors", "create_risk_models", "generate_assessments", "provide_recommendations"]
+          }
+        ]
+      },
+      "strategic_planning": {
+        "category": "Strategic Planning Experts",
+        "description": "AI avatars focused on long-term planning, strategy development, and organizational guidance",
+        "avatar_types": [
+          {
+            "name": "Strategic Planning Advisor",
+            "specializations": ["strategic_thinking", "long_term_planning", "organizational_development"],
+            "core_competences": ["strategic_analysis", "scenario_planning", "stakeholder_management", "change_management"],
+            "skill_levels": {"strategic_thinking": 9, "systems_thinking": 8, "stakeholder_engagement": 8, "planning": 9},
+            "knowledge_domains": ["business_strategy", "organizational_behavior", "change_management", "leadership"],
+            "task_capabilities": ["develop_strategic_plans", "conduct_scenario_analysis", "facilitate_planning_sessions", "create_roadmaps"]
+          },
+          {
+            "name": "Policy Development Specialist",
+            "specializations": ["policy_analysis", "regulatory_compliance", "governance"],
+            "core_competences": ["policy_analysis", "legal_research", "stakeholder_consultation", "implementation_planning"],
+            "skill_levels": {"analytical_thinking": 8, "legal_knowledge": 9, "stakeholder_management": 8, "writing": 9},
+            "knowledge_domains": ["public_policy", "law", "governance", "regulatory_frameworks"],
+            "task_capabilities": ["analyze_policies", "draft_recommendations", "assess_compliance", "stakeholder_consultation"]
+          }
+        ]
+      },
+      "data_analysis": {
+        "category": "Data & Analytics Specialists",
+        "description": "AI avatars specialized in data processing, analysis, and insights generation",
+        "avatar_types": [
+          {
+            "name": "Data Science Analyst",
+            "specializations": ["machine_learning", "statistical_analysis", "data_visualization"],
+            "core_competences": ["data_processing", "statistical_modeling", "visualization", "interpretation"],
+            "skill_levels": {"data_analysis": 9, "machine_learning": 8, "statistics": 9, "programming": 8},
+            "knowledge_domains": ["data_science", "statistics", "machine_learning", "visualization"],
+            "task_capabilities": ["process_datasets", "build_models", "generate_insights", "create_visualizations"]
+          },
+          {
+            "name": "Business Intelligence Analyst",
+            "specializations": ["business_analytics", "performance_metrics", "dashboard_creation"],
+            "core_competences": ["business_analysis", "kpi_development", "reporting", "trend_analysis"],
+            "skill_levels": {"business_analysis": 9, "data_interpretation": 8, "reporting": 9, "trend_analysis": 8},
+            "knowledge_domains": ["business_intelligence", "analytics", "performance_management", "reporting"],
+            "task_capabilities": ["analyze_business_data", "create_dashboards", "identify_trends", "generate_reports"]
+          }
+        ]
+      },
+      "communication": {
+        "category": "Communication & Engagement Specialists",
+        "description": "AI avatars focused on communication, public relations, and stakeholder engagement",
+        "avatar_types": [
+          {
+            "name": "Crisis Communication Manager",
+            "specializations": ["crisis_communication", "media_relations", "public_messaging"],
+            "core_competences": ["message_crafting", "media_management", "stakeholder_communication", "reputation_management"],
+            "skill_levels": {"communication": 9, "media_relations": 8, "crisis_management": 8, "writing": 9},
+            "knowledge_domains": ["public_relations", "media", "communications", "crisis_communication"],
+            "task_capabilities": ["craft_messages", "manage_media_relations", "coordinate_communications", "monitor_reputation"]
+          },
+          {
+            "name": "Stakeholder Engagement Coordinator",
+            "specializations": ["stakeholder_management", "community_engagement", "partnership_development"],
+            "core_competences": ["relationship_building", "facilitation", "negotiation", "collaboration"],
+            "skill_levels": {"interpersonal_skills": 9, "facilitation": 8, "negotiation": 8, "project_management": 7},
+            "knowledge_domains": ["stakeholder_management", "community_engagement", "partnership_development", "facilitation"],
+            "task_capabilities": ["engage_stakeholders", "facilitate_meetings", "build_partnerships", "manage_relationships"]
+          }
+        ]
+      },
+      "technical_operations": {
+        "category": "Technical Operations Experts",
+        "description": "AI avatars specialized in technical systems, infrastructure, and operational management",
+        "avatar_types": [
+          {
+            "name": "Infrastructure Management Specialist",
+            "specializations": ["infrastructure_monitoring", "system_management", "technical_support"],
+            "core_competences": ["system_monitoring", "troubleshooting", "maintenance_planning", "technical_documentation"],
+            "skill_levels": {"technical_expertise": 9, "problem_solving": 8, "system_administration": 9, "documentation": 8},
+            "knowledge_domains": ["infrastructure", "systems_administration", "monitoring", "maintenance"],
+            "task_capabilities": ["monitor_systems", "diagnose_issues", "plan_maintenance", "create_documentation"]
+          },
+          {
+            "name": "Cybersecurity Analyst",
+            "specializations": ["security_analysis", "threat_detection", "incident_response"],
+            "core_competences": ["security_assessment", "threat_analysis", "incident_management", "security_reporting"],
+            "skill_levels": {"cybersecurity": 9, "threat_detection": 9, "incident_response": 8, "analysis": 8},
+            "knowledge_domains": ["cybersecurity", "threat_intelligence", "incident_response", "security_frameworks"],
+            "task_capabilities": ["assess_security", "detect_threats", "respond_to_incidents", "generate_security_reports"]
+          }
+        ]
+      },
+      "research_innovation": {
+        "category": "Research & Innovation Specialists",
+        "description": "AI avatars focused on research, innovation, and knowledge discovery",
+        "avatar_types": [
+          {
+            "name": "Research Analyst",
+            "specializations": ["research_methodology", "literature_review", "knowledge_synthesis"],
+            "core_competences": ["research_design", "data_collection", "analysis", "synthesis"],
+            "skill_levels": {"research": 9, "critical_thinking": 9, "writing": 8, "analysis": 8},
+            "knowledge_domains": ["research_methodology", "academic_research", "knowledge_management", "analysis"],
+            "task_capabilities": ["conduct_research", "analyze_literature", "synthesize_findings", "generate_insights"]
+          },
+          {
+            "name": "Innovation Strategist",
+            "specializations": ["innovation_management", "technology_assessment", "future_trends"],
+            "core_competences": ["trend_analysis", "innovation_assessment", "strategic_foresight", "opportunity_identification"],
+            "skill_levels": {"innovation_thinking": 9, "trend_analysis": 8, "strategic_thinking": 8, "creativity": 9},
+            "knowledge_domains": ["innovation", "technology", "futures_research", "strategic_planning"],
+            "task_capabilities": ["identify_trends", "assess_innovations", "develop_strategies", "forecast_futures"]
+          }
+        ]
+      }
+    },
+    "competence_framework": {
+      "core_competences": [
+        {
+          "name": "Analytical Thinking",
+          "description": "Ability to break down complex problems and analyze components systematically",
+          "skill_levels": {"novice": 1, "beginner": 2, "competent": 3, "proficient": 4, "expert": 5, "master": 6, "advanced": 7, "specialist": 8, "authority": 9, "innovator": 10},
+          "assessment_criteria": ["problem_decomposition", "logical_reasoning", "pattern_recognition", "data_interpretation"]
+        },
+        {
+          "name": "Communication",
+          "description": "Ability to convey information clearly and effectively to various audiences",
+          "skill_levels": {"novice": 1, "beginner": 2, "competent": 3, "proficient": 4, "expert": 5, "master": 6, "advanced": 7, "specialist": 8, "authority": 9, "innovator": 10},
+          "assessment_criteria": ["clarity", "audience_adaptation", "persuasiveness", "active_listening"]
+        },
+        {
+          "name": "Leadership",
+          "description": "Ability to guide, influence, and inspire others toward achieving goals",
+          "skill_levels": {"novice": 1, "beginner": 2, "competent": 3, "proficient": 4, "expert": 5, "master": 6, "advanced": 7, "specialist": 8, "authority": 9, "innovator": 10},
+          "assessment_criteria": ["team_building", "decision_making", "delegation", "motivation"]
+        },
+        {
+          "name": "Problem Solving",
+          "description": "Ability to identify, analyze, and resolve challenges effectively",
+          "skill_levels": {"novice": 1, "beginner": 2, "competent": 3, "proficient": 4, "expert": 5, "master": 6, "advanced": 7, "specialist": 8, "authority": 9, "innovator": 10},
+          "assessment_criteria": ["problem_identification", "solution_generation", "implementation", "evaluation"]
+        },
+        {
+          "name": "Strategic Thinking",
+          "description": "Ability to think long-term and see the big picture while planning for the future",
+          "skill_levels": {"novice": 1, "beginner": 2, "competent": 3, "proficient": 4, "expert": 5, "master": 6, "advanced": 7, "specialist": 8, "authority": 9, "innovator": 10},
+          "assessment_criteria": ["systems_thinking", "future_orientation", "stakeholder_consideration", "resource_planning"]
+        }
+      ],
+      "specialization_areas": [
+        "crisis_management", "strategic_planning", "data_analysis", "communication",
+        "technical_operations", "research", "innovation", "stakeholder_management",
+        "risk_assessment", "policy_development", "project_management", "change_management"
+      ],
+      "knowledge_domains": [
+        "business_strategy", "public_policy", "data_science", "cybersecurity",
+        "emergency_management", "communications", "research_methodology", "innovation",
+        "risk_management", "stakeholder_engagement", "project_management", "leadership"
+      ]
+    },
+    "task_management": {
+      "task_categories": [
+        {
+          "category": "Analysis & Assessment",
+          "description": "Tasks involving data analysis, risk assessment, and evaluation",
+          "task_types": ["risk_assessment", "data_analysis", "situation_analysis", "impact_evaluation", "trend_analysis"]
+        },
+        {
+          "category": "Planning & Strategy",
+          "description": "Tasks focused on planning, strategy development, and roadmap creation",
+          "task_types": ["strategic_planning", "action_planning", "resource_planning", "scenario_planning", "roadmap_development"]
+        },
+        {
+          "category": "Communication & Coordination",
+          "description": "Tasks involving communication, coordination, and stakeholder management",
+          "task_types": ["stakeholder_communication", "team_coordination", "message_crafting", "meeting_facilitation", "report_generation"]
+        },
+        {
+          "category": "Research & Innovation",
+          "description": "Tasks focused on research, knowledge discovery, and innovation",
+          "task_types": ["literature_review", "research_analysis", "innovation_assessment", "knowledge_synthesis", "trend_identification"]
+        },
+        {
+          "category": "Monitoring & Maintenance",
+          "description": "Tasks involving ongoing monitoring, maintenance, and optimization",
+          "task_types": ["system_monitoring", "performance_tracking", "quality_assurance", "process_optimization", "maintenance_planning"]
+        }
+      ],
+      "task_execution_framework": {
+        "stages": [
+          {
+            "stage": "Task Assignment",
+            "description": "Assign task to appropriate avatar based on competences",
+            "activities": ["competence_matching", "availability_check", "priority_assessment", "resource_allocation"]
+          },
+          {
+            "stage": "Task Planning",
+            "description": "Avatar develops execution plan for the task",
+            "activities": ["requirement_analysis", "approach_definition", "resource_identification", "timeline_planning"]
+          },
+          {
+            "stage": "Task Execution",
+            "description": "Avatar executes the task using AI capabilities",
+            "activities": ["data_processing", "analysis_execution", "solution_development", "quality_check"]
+          },
+          {
+            "stage": "Result Delivery",
+            "description": "Avatar delivers results and insights",
+            "activities": ["result_compilation", "insight_generation", "recommendation_formulation", "presentation_preparation"]
+          },
+          {
+            "stage": "Feedback & Learning",
+            "description": "System captures feedback and improves avatar capabilities",
+            "activities": ["performance_evaluation", "feedback_collection", "competence_adjustment", "knowledge_update"]
+          }
+        ]
+      }
+    },
+    "ai_integration": {
+      "llm_capabilities": {
+        "text_generation": "Advanced text generation for reports, analysis, and communications",
+        "analysis": "Complex data analysis and pattern recognition",
+        "reasoning": "Logical reasoning and problem-solving capabilities",
+        "synthesis": "Knowledge synthesis and insight generation"
+      },
+      "supported_models": {
+        "claude_sonnet": "Primary model for complex analysis and reasoning tasks",
+        "openai_gpt": "Alternative model for creative and communication tasks",
+        "gemini": "Specialized model for data analysis and technical tasks"
+      },
+      "task_routing": {
+        "analysis_heavy": "claude_sonnet",
+        "creative_tasks": "openai_gpt",
+        "technical_tasks": "gemini",
+        "general_purpose": "claude_sonnet"
+      }
+    },
+    "performance_metrics": {
+      "avatar_performance": [
+        {
+          "metric": "Task Completion Rate",
+          "description": "Percentage of assigned tasks completed successfully",
+          "calculation": "completed_tasks / assigned_tasks * 100",
+          "target": ">95%"
+        },
+        {
+          "metric": "Quality Score",
+          "description": "Average quality rating of delivered results",
+          "calculation": "sum_of_quality_ratings / number_of_tasks",
+          "target": ">8.0/10"
+        },
+        {
+          "metric": "Response Time",
+          "description": "Average time to complete assigned tasks",
+          "calculation": "sum_of_completion_times / number_of_tasks",
+          "target": "<2 hours for standard tasks"
+        },
+        {
+          "metric": "Competence Utilization",
+          "description": "How well avatar's competences match assigned tasks",
+          "calculation": "competence_match_score / maximum_match_score * 100",
+          "target": ">80%"
+        }
+      ],
+      "system_performance": [
+        {
+          "metric": "Avatar Utilization",
+          "description": "Percentage of avatars actively working on tasks",
+          "calculation": "active_avatars / total_avatars * 100",
+          "target": ">70%"
+        },
+        {
+          "metric": "Task Queue Efficiency",
+          "description": "Average time tasks spend in queue before assignment",
+          "calculation": "sum_of_queue_times / number_of_tasks",
+          "target": "<15 minutes"
+        }
+      ]
+    }
+  }
+}

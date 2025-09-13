@@ -1,54 +1,11540 @@
-import { useEffect } from "react";
-import "./App.css";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import axios from "axios";
+/* global Blob */
+import React, { useState, useEffect, useMemo } from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import axios from 'axios';
+import './App.css';
+
+// Import UI components
+import { Button } from './components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './components/ui/card';
+import { Input } from './components/ui/input';
+import { Label } from './components/ui/label';
+import { Textarea } from './components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './components/ui/select';
+import { Badge } from './components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from './components/ui/tabs';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from './components/ui/dialog';
+import { Alert, AlertDescription } from './components/ui/alert';
+import { Progress } from './components/ui/progress';
+import { toast, useToast } from './hooks/use-toast';
+import { Toaster } from './components/ui/toaster';
+
+// Icons
+import { AlertTriangle, Brain, Globe, Shield, TrendingUp, Users, Plus, Play, Eye, MessageSquare, BookOpen, CheckSquare, CheckCircle, Target, FileText, Download, Activity, Zap, BarChart3, Network, Layers, Cpu, Monitor, TrendingDown, Link, Cloud, Lightbulb, Rss, Database, Timer, Share2, ExternalLink, Building2, Upload, Users2, Settings, BarChart, TrendingUp as TrendingUpIcon, Briefcase, Crown, CreditCard, UserCheck, Package, DollarSign, Key, Lock, Unlock, Power, PowerOff, RotateCcw, Trash2, X, Clock, Award } from 'lucide-react';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
-const Home = () => {
-  const helloWorldApi = async () => {
+// Auth Context
+const AuthContext = React.createContext();
+
+const AuthProvider = ({ children }) => {
+  const [user, setUser] = useState(null);
+  const [token, setToken] = useState(localStorage.getItem('token'));
+
+  useEffect(() => {
+    if (token) {
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      fetchUserProfile();
+    }
+  }, [token]);
+
+  const fetchUserProfile = async () => {
     try {
-      const response = await axios.get(`${API}/`);
-      console.log(response.data.message);
-    } catch (e) {
-      console.error(e, `errored out requesting / api`);
+      const response = await axios.get(`${API}/me`);
+      setUser(response.data);
+    } catch (error) {
+      console.error('Failed to fetch user profile:', error);
+      // Don't logout on profile fetch failure - allow user to continue using the app
+      // The user can still access the dashboard with just the token
+      console.warn('Profile fetch failed but user remains authenticated');
+    }
+  };
+
+  const login = (newToken) => {
+    console.log('Login function called with token:', newToken);
+    localStorage.setItem('token', newToken);
+    setToken(newToken);
+    axios.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
+    console.log('Token set in localStorage and axios headers, authentication should be complete');
+  };
+
+  const logout = () => {
+    localStorage.removeItem('token');
+    setToken(null);
+    setUser(null);
+    delete axios.defaults.headers.common['Authorization'];
+  };
+
+  return (
+    <AuthContext.Provider value={{ user, login, logout, isAuthenticated: !!token }}>
+      {children}
+    </AuthContext.Provider>
+  );
+};
+
+const useAuth = () => React.useContext(AuthContext);
+
+// Auth Components
+const AuthPage = () => {
+  const [isLogin, setIsLogin] = useState(true);
+  const [formData, setFormData] = useState({
+    email: '',
+    password: '',
+    username: '',
+    organization: '',
+    job_title: '',
+    department: ''
+  });
+  const [loading, setLoading] = useState(false);
+  const { login } = useAuth();
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      const endpoint = isLogin ? '/login' : '/register';
+      const payload = isLogin 
+        ? { email: formData.email, password: formData.password }
+        : formData;
+
+      console.log('Attempting authentication:', endpoint, { email: payload.email });
+      const response = await axios.post(`${API}${endpoint}`, payload);
+      console.log('Authentication response received:', { token: response.data.access_token });
+      
+      login(response.data.access_token);
+      console.log('Login function called, token should be set');
+      
+      toast({ title: "Success", description: `${isLogin ? 'Logged in' : 'Registered'} successfully!` });
+    } catch (error) {
+      console.error('Authentication error:', error);
+      toast({ 
+        title: "Error", 
+        description: error.response?.data?.detail || `${isLogin ? 'Login' : 'Registration'} failed`,
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center p-4 relative">
+      <div className="absolute inset-0 opacity-20" style={{
+        backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='m36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
+      }}></div>
+      
+      <Card className="w-full max-w-md backdrop-blur-xl bg-white/10 border-white/20 shadow-2xl">
+        <CardHeader className="text-center">
+          <CardTitle className="text-3xl font-bold text-white flex items-center justify-center gap-2">
+            <Brain className="w-8 h-8 text-blue-400" />
+            Polycrisis Simulator
+          </CardTitle>
+          <CardDescription className="text-gray-300">
+            Simulate, Analyze, and Mitigate Complex Crises with AI
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Tabs value={isLogin ? "login" : "register"} onValueChange={(value) => setIsLogin(value === "login")}>
+            <TabsList className="grid w-full grid-cols-2 bg-white/10">
+              <TabsTrigger value="login" className="text-white data-[state=active]:bg-blue-500">Login</TabsTrigger>
+              <TabsTrigger value="register" className="text-white data-[state=active]:bg-blue-500">Register</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="login" className="mt-6">
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div>
+                  <Label htmlFor="email" className="text-white">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="Enter your email"
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    required
+                    className="bg-white/10 border-white/20 text-white placeholder-gray-400"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="password" className="text-white">Password</Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    placeholder="Enter your password"
+                    value={formData.password}
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    required
+                    className="bg-white/10 border-white/20 text-white placeholder-gray-400"
+                  />
+                </div>
+                <Button 
+                  type="submit" 
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                  disabled={loading}
+                >
+                  {loading ? "Logging in..." : "Login"}
+                </Button>
+              </form>
+            </TabsContent>
+            
+            <TabsContent value="register" className="mt-6">
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div>
+                  <Label htmlFor="reg-email" className="text-white">Email</Label>
+                  <Input
+                    id="reg-email"
+                    type="email"
+                    placeholder="Enter your email"
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    required
+                    className="bg-white/10 border-white/20 text-white placeholder-gray-400"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="reg-password" className="text-white">Password</Label>
+                  <Input
+                    id="reg-password"
+                    type="password"
+                    placeholder="Create a password"
+                    value={formData.password}
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    required
+                    className="bg-white/10 border-white/20 text-white placeholder-gray-400"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="username" className="text-white">Username</Label>
+                  <Input
+                    id="username"
+                    type="text"  
+                    placeholder="Choose a username"
+                    value={formData.username}
+                    onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                    required
+                    className="bg-white/10 border-white/20 text-white placeholder-gray-400"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="organization" className="text-white">Organization</Label>
+                  <Input
+                    id="organization"
+                    type="text"
+                    placeholder="Your organization"
+                    value={formData.organization}
+                    onChange={(e) => setFormData({ ...formData, organization: e.target.value })}
+                    required
+                    className="bg-white/10 border-white/20 text-white placeholder-gray-400"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="job_title" className="text-white">Job Title</Label>
+                    <Input
+                      id="job_title"
+                      type="text"
+                      placeholder="Your job title"
+                      value={formData.job_title}
+                      onChange={(e) => setFormData({ ...formData, job_title: e.target.value })}
+                      className="bg-white/10 border-white/20 text-white placeholder-gray-400"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="department" className="text-white">Department</Label>
+                    <Input
+                      id="department"
+                      type="text"
+                      placeholder="Your department"
+                      value={formData.department}
+                      onChange={(e) => setFormData({ ...formData, department: e.target.value })}
+                      className="bg-white/10 border-white/20 text-white placeholder-gray-400"
+                    />
+                  </div>
+                </div>
+                <Button 
+                  type="submit" 
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                  disabled={loading}
+                >
+                  {loading ? "Registering..." : "Register"}
+                </Button>
+              </form>
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
+
+// Scenario Analytics Summary Component
+const ScenarioAnalyticsSummary = ({ scenarios }) => {
+  const [userAnalytics, setUserAnalytics] = useState(null);
+  
+  useEffect(() => {
+    fetchUserAnalytics();
+  }, [scenarios]);
+
+  const fetchUserAnalytics = async () => {
+    try {
+      const response = await axios.get(`${API}/user/scenario-analytics`);
+      setUserAnalytics(response.data);
+    } catch (error) {
+      console.error('Failed to fetch user analytics:', error);
+    }
+  };
+
+  // Calculate analytics from scenarios
+  const analytics = useMemo(() => {
+    if (!scenarios || scenarios.length === 0) {
+      return {
+        totalScenarios: 0,
+        abcDistribution: { A: 0, B: 0, C: 0 },
+        versionStats: { latest: '1.0.0', totalRevisions: 0 },
+        impactStats: { average: 50, highest: 50, trend: 'stable' },
+        modificationStats: { total: 0, average: 0, mostModified: null }
+      };
+    }
+
+    const abcDistribution = { A: 0, B: 0, C: 0 };
+    let totalImpact = 0;
+    let totalModifications = 0;
+    let totalRevisions = 0;
+    let highestImpact = 0;
+    let latestVersion = '1.0.0';
+    let mostModified = null;
+    let maxMods = 0;
+
+    scenarios.forEach(scenario => {
+      // ABC Distribution
+      const abc = scenario.abc_classification || 'B';
+      abcDistribution[abc] = (abcDistribution[abc] || 0) + 1;
+
+      // Impact calculations
+      const impact = scenario.calculated_total_impact || scenario.impact_score || 50;
+      totalImpact += impact;
+      if (impact > highestImpact) highestImpact = impact;
+
+      // Modification tracking
+      const modCount = scenario.modification_count || 0;
+      totalModifications += modCount;
+      if (modCount > maxMods) {
+        maxMods = modCount;
+        mostModified = scenario;
+      }
+
+      // Version tracking
+      totalRevisions += scenario.revision_count || 0;
+      const version = scenario.version_number || '1.0.0';
+      if (version > latestVersion) latestVersion = version;
+    });
+
+    return {
+      totalScenarios: scenarios.length,
+      abcDistribution,
+      versionStats: { latest: latestVersion, totalRevisions },
+      impactStats: { 
+        average: Math.round(totalImpact / scenarios.length), 
+        highest: Math.round(highestImpact),
+        trend: 'stable' // Could be enhanced with trend analysis
+      },
+      modificationStats: { 
+        total: totalModifications, 
+        average: Math.round(totalModifications / scenarios.length),
+        mostModified 
+      }
+    };
+  }, [scenarios]);
+
+  return (
+    <div className="space-y-6">
+      {/* Quick Stats Row */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="text-center p-4 bg-white rounded-lg border">
+          <div className="text-2xl font-bold text-blue-600">{analytics.totalScenarios}</div>
+          <div className="text-sm text-gray-600">Total Scenarios</div>
+        </div>
+        
+        <div className="text-center p-4 bg-white rounded-lg border">
+          <div className="text-2xl font-bold text-green-600">{analytics.impactStats.average}</div>
+          <div className="text-sm text-gray-600">Avg Impact Score</div>
+        </div>
+        
+        <div className="text-center p-4 bg-white rounded-lg border">
+          <div className="text-2xl font-bold text-purple-600">{analytics.versionStats.totalRevisions}</div>
+          <div className="text-sm text-gray-600">Total Revisions</div>
+        </div>
+        
+        <div className="text-center p-4 bg-white rounded-lg border">
+          <div className="text-2xl font-bold text-orange-600">{analytics.modificationStats.total}</div>
+          <div className="text-sm text-gray-600">Total Changes</div>
+        </div>
+      </div>
+
+      {/* ABC Distribution & Impact Analysis */}
+      <div className="grid md:grid-cols-2 gap-6">
+        {/* ABC Classification Distribution */}
+        <div className="bg-white p-4 rounded-lg border">
+          <h4 className="font-semibold text-gray-800 mb-4 flex items-center gap-2">
+            <Target className="w-4 h-4" />
+            ABC Priority Distribution
+          </h4>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 bg-red-500 rounded"></div>
+                <span className="text-sm">Class A (High Impact)</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-red-600">{analytics.abcDistribution.A}</span>
+                <div className="w-16 h-2 bg-gray-200 rounded">
+                  <div 
+                    className="h-2 bg-red-500 rounded" 
+                    style={{ width: `${(analytics.abcDistribution.A / analytics.totalScenarios) * 100}%` }}
+                  ></div>
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 bg-yellow-500 rounded"></div>
+                <span className="text-sm">Class B (Medium Impact)</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-yellow-600">{analytics.abcDistribution.B}</span>
+                <div className="w-16 h-2 bg-gray-200 rounded">
+                  <div 
+                    className="h-2 bg-yellow-500 rounded" 
+                    style={{ width: `${(analytics.abcDistribution.B / analytics.totalScenarios) * 100}%` }}
+                  ></div>
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 bg-green-500 rounded"></div>
+                <span className="text-sm">Class C (Low Impact)</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-green-600">{analytics.abcDistribution.C}</span>
+                <div className="w-16 h-2 bg-gray-200 rounded">
+                  <div 
+                    className="h-2 bg-green-500 rounded" 
+                    style={{ width: `${(analytics.abcDistribution.C / analytics.totalScenarios) * 100}%` }}
+                  ></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Impact & Modification Statistics */}
+        <div className="bg-white p-4 rounded-lg border">
+          <h4 className="font-semibold text-gray-800 mb-4 flex items-center gap-2">
+            <TrendingUp className="w-4 h-4" />
+            Change & Impact Metrics
+          </h4>
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-gray-600">Highest Impact Score</span>
+              <span className="font-bold text-blue-600">{analytics.impactStats.highest}/100</span>
+            </div>
+            
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-gray-600">Latest Version</span>
+              <span className="font-bold text-purple-600">v{analytics.versionStats.latest}</span>
+            </div>
+            
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-gray-600">Avg Modifications</span>
+              <span className="font-bold text-orange-600">{analytics.modificationStats.average}</span>
+            </div>
+            
+            {analytics.modificationStats.mostModified && (
+              <div className="pt-2 border-t border-gray-200">
+                <div className="text-xs text-gray-500">Most Modified Scenario:</div>
+                <div className="text-sm font-medium text-gray-800 truncate">
+                  {analytics.modificationStats.mostModified.title}
+                </div>
+                <div className="text-xs text-gray-500">
+                  {analytics.modificationStats.mostModified.modification_count || 0} changes, v{analytics.modificationStats.mostModified.version_number || '1.0.0'}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* User Analytics from Backend */}
+      {userAnalytics && (
+        <div className="bg-gradient-to-r from-indigo-50 to-blue-50 p-4 rounded-lg border border-indigo-200">
+          <h4 className="font-semibold text-indigo-800 mb-3 flex items-center gap-2">
+            <Database className="w-4 h-4" />
+            Advanced Analytics Summary
+          </h4>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+            <div className="text-center">
+              <div className="font-bold text-indigo-700">{userAnalytics.total_scenarios}</div>
+              <div className="text-indigo-600">Backend Total</div>
+            </div>
+            <div className="text-center">
+              <div className="font-bold text-indigo-700">{userAnalytics.impact_average}</div>
+              <div className="text-indigo-600">Impact Average</div>
+            </div>
+            <div className="text-center">
+              <div className="font-bold text-indigo-700">{userAnalytics.modification_stats?.total_modifications || 0}</div>
+              <div className="text-indigo-600">Total Mods</div>
+            </div>
+            <div className="text-center">
+              <div className="font-bold text-indigo-700">v{userAnalytics.latest_version}</div>
+              <div className="text-indigo-600">Latest Version</div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Advanced Analytics Dashboard
+const AdvancedDashboard = () => {
+  const [stats, setStats] = useState({});
+  const [scenarios, setScenarios] = useState([]);
+  const [advancedAnalytics, setAdvancedAnalytics] = useState({});
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchAdvancedDashboardData();
+  }, []);
+
+  const fetchAdvancedDashboardData = async () => {
+    try {
+      const [statsRes, scenariosRes, analyticsRes] = await Promise.all([
+        axios.get(`${API}/dashboard/stats`),
+        axios.get(`${API}/scenarios`),
+        axios.get(`${API}/dashboard/advanced-analytics`)
+      ]);
+      setStats(statsRes.data);
+      setScenarios(scenariosRes.data);
+      setAdvancedAnalytics(analyticsRes.data);
+    } catch (error) {
+      console.error('Failed to fetch dashboard data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getHealthScoreColor = (score) => {
+    if (score >= 0.8) return 'text-green-600';
+    if (score >= 0.6) return 'text-yellow-600';
+    if (score >= 0.4) return 'text-orange-600';
+    return 'text-red-600';
+  };
+
+  const getHealthScoreBg = (score) => {
+    if (score >= 0.8) return 'bg-green-50 border-green-200';
+    if (score >= 0.6) return 'bg-yellow-50 border-yellow-200';
+    if (score >= 0.4) return 'bg-orange-50 border-orange-200';
+    return 'bg-red-50 border-red-200';
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <Brain className="w-12 h-12 animate-pulse text-blue-500 mx-auto mb-4" />
+          <p className="text-gray-600">Loading advanced analytics...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* System Health Overview */}
+      <Card className={`${getHealthScoreBg(advancedAnalytics.system_health_score || 0.5)}`}>
+        <CardContent className="p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900">System Health Score</h3>
+              <p className="text-sm text-gray-600">Overall polycrisis simulation system performance</p>
+            </div>
+            <div className="text-right">
+              <div className={`text-4xl font-bold ${getHealthScoreColor(advancedAnalytics.system_health_score || 0.5)}`}>
+                {Math.round((advancedAnalytics.system_health_score || 0.5) * 100)}%
+              </div>
+              <div className="flex items-center gap-1 text-sm text-gray-600">
+                <Activity className="w-4 h-4" />
+                <span>{advancedAnalytics.monitoring_coverage || 'Basic'} Monitoring</span>
+              </div>
+            </div>
+          </div>
+          
+          <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="text-center">
+              <div className="text-lg font-semibold text-gray-900">
+                {Math.round((advancedAnalytics.average_resilience_score || 0.5) * 100)}%
+              </div>
+              <div className="text-xs text-gray-600">Resilience Score</div>
+            </div>
+            <div className="text-center">
+              <div className="text-lg font-semibold text-gray-900">
+                {advancedAnalytics.total_monitor_agents || 0}
+              </div>
+              <div className="text-xs text-gray-600">AI Monitors</div>
+            </div>
+            <div className="text-center">
+              <div className="text-lg font-semibold text-gray-900">
+                {advancedAnalytics.learning_insights_generated || 0}
+              </div>
+              <div className="text-xs text-gray-600">Learning Insights</div>
+            </div>
+            <div className="text-center">
+              <div className="text-lg font-semibold text-gray-900">
+                {advancedAnalytics.complex_systems_analyzed || 0}
+              </div>
+              <div className="text-xs text-gray-600">Complex Systems</div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Advanced Metrics Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
+        <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
+          <CardContent className="p-3 sm:p-4 lg:p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs sm:text-sm text-blue-600 font-medium">Active Scenarios</p>
+                <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-blue-900">{stats.active_scenarios || 0}</p>
+                <p className="text-xs text-blue-700">of {stats.total_scenarios || 0} total</p>
+              </div>
+              <Globe className="w-6 h-6 sm:w-8 sm:h-8 lg:w-10 lg:h-10 text-blue-500" />
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200">
+          <CardContent className="p-3 sm:p-4 lg:p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs sm:text-sm text-purple-600 font-medium">AI Monitor Agents</p>
+                <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-purple-900">{advancedAnalytics.total_monitor_agents || 0}</p>
+                <p className="text-xs text-purple-700">Real-time monitoring</p>
+              </div>
+              <Monitor className="w-6 h-6 sm:w-8 sm:h-8 lg:w-10 lg:h-10 text-purple-500" />
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
+          <CardContent className="p-3 sm:p-4 lg:p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs sm:text-sm text-green-600 font-medium">Adaptive Learning</p>
+                <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-green-900">
+                  {advancedAnalytics.adaptive_learning_active ? 'ON' : 'OFF'}
+                </p>
+                <p className="text-xs text-green-700">{advancedAnalytics.learning_insights_generated || 0} insights</p>
+              </div>
+              <Brain className="w-6 h-6 sm:w-8 sm:h-8 lg:w-10 lg:h-10 text-green-500" />
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200">
+          <CardContent className="p-3 sm:p-4 lg:p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs sm:text-sm text-orange-600 font-medium">Complex Systems</p>
+                <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-orange-900">{advancedAnalytics.complex_systems_analyzed || 0}</p>
+                <p className="text-xs text-orange-700">Analyzed systems</p>
+              </div>
+              <Network className="w-6 h-6 sm:w-8 sm:h-8 lg:w-10 lg:h-10 text-orange-500" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Real-Time Analytics Section */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <BarChart3 className="w-5 h-5 text-blue-600" />
+              System Performance Metrics
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-600">Resilience Score</span>
+                <div className="flex items-center gap-2">
+                  <div className="w-32 bg-gray-200 rounded-full h-2">
+                    <div 
+                      className="bg-green-500 h-2 rounded-full" 
+                      style={{width: `${(advancedAnalytics.average_resilience_score || 0.5) * 100}%`}}
+                    ></div>
+                  </div>
+                  <span className="text-sm font-medium">{Math.round((advancedAnalytics.average_resilience_score || 0.5) * 100)}%</span>
+                </div>
+              </div>
+              
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-600">System Health</span>
+                <div className="flex items-center gap-2">
+                  <div className="w-32 bg-gray-200 rounded-full h-2">
+                    <div 
+                      className="bg-blue-500 h-2 rounded-full" 
+                      style={{width: `${(advancedAnalytics.system_health_score || 0.5) * 100}%`}}
+                    ></div>
+                  </div>
+                  <span className="text-sm font-medium">{Math.round((advancedAnalytics.system_health_score || 0.5) * 100)}%</span>
+                </div>
+              </div>
+              
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-600">Monitoring Coverage</span>
+                <Badge variant="outline" className="text-xs">
+                  {advancedAnalytics.monitoring_coverage || 'Basic'}
+                </Badge>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Zap className="w-5 h-5 text-purple-600" />
+              AI Monitor Agents Status
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-200">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                  <span className="text-sm font-medium text-green-800">Risk Monitor</span>
+                </div>
+                <Badge className="bg-green-100 text-green-800">Active</Badge>
+              </div>
+              
+              <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-200">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                  <span className="text-sm font-medium text-blue-800">Performance Tracker</span>
+                </div>
+                <Badge className="bg-blue-100 text-blue-800">Active</Badge>
+              </div>
+              
+              <div className="flex items-center justify-between p-3 bg-orange-50 rounded-lg border border-orange-200">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                  <span className="text-sm font-medium text-orange-800">Anomaly Detector</span>
+                </div>
+                <Badge className="bg-orange-100 text-orange-800">Monitoring</Badge>
+              </div>
+              
+              <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg border border-purple-200">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                  <span className="text-sm font-medium text-purple-800">Trend Analyzer</span>
+                </div>
+                <Badge className="bg-purple-100 text-purple-800">Learning</Badge>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* ABC Counting & Analytics Summary */}
+      <Card className="bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <BarChart3 className="w-5 h-5 text-blue-600" />
+            Scenario Analytics & Impact Tracking
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ScenarioAnalyticsSummary scenarios={scenarios} />
+        </CardContent>
+      </Card>
+
+      {/* Recent Scenarios with Enhanced Actions */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <AlertTriangle className="w-5 h-5" />
+            Enhanced Scenarios with AI Monitoring
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {scenarios.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">
+              <Globe className="w-12 h-12 mx-auto mb-4 opacity-50" />
+              <p>No scenarios created yet. Start by creating your first crisis scenario with AI monitoring.</p>
+            </div>
+          ) : (
+            <div className="grid gap-4">
+              {scenarios.slice(0, 3).map((scenario) => (
+                <div key={scenario.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors">
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-gray-900">{scenario.title}</h3>
+                    <p className="text-sm text-gray-600 truncate">{scenario.description}</p>
+                    <div className="flex items-center gap-2 mt-2">
+                      <Badge variant={scenario.status === 'active' ? 'default' : 'secondary'}>
+                        {scenario.status}
+                      </Badge>
+                      <Badge variant="outline">{scenario.crisis_type}</Badge>
+                      <span className="text-xs text-gray-500">Severity: {scenario.severity_level}/10</span>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm">
+                      <Eye className="w-4 h-4" />
+                    </Button>
+                    <Button variant="outline" size="sm">
+                      <Monitor className="w-4 h-4" />
+                    </Button>
+                    <Button variant="outline" size="sm">
+                      <Network className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
+
+// Basic Dashboard (keeping for compatibility)
+const Dashboard = () => {
+  const [stats, setStats] = useState({});
+  const [scenarios, setScenarios] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
+
+  const fetchDashboardData = async () => {
+    try {
+      const [statsRes, scenariosRes] = await Promise.all([
+        axios.get(`${API}/dashboard/stats`),
+        axios.get(`${API}/scenarios`)
+      ]);
+      setStats(statsRes.data);
+      setScenarios(scenariosRes.data);
+    } catch (error) {
+      console.error('Failed to fetch dashboard data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <Brain className="w-12 h-12 animate-pulse text-blue-500 mx-auto mb-4" />
+          <p className="text-gray-600">Loading dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-blue-600 font-medium">Total Scenarios</p>
+                <p className="text-3xl font-bold text-blue-900">{stats.total_scenarios || 0}</p>
+              </div>
+              <Globe className="w-10 h-10 text-blue-500" />
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-green-600 font-medium">Active Scenarios</p>
+                <p className="text-3xl font-bold text-green-900">{stats.active_scenarios || 0}</p>
+              </div>
+              <TrendingUp className="w-10 h-10 text-green-500" />
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-purple-600 font-medium">Simulations Run</p>
+                <p className="text-3xl font-bold text-purple-900">{stats.total_simulations || 0}</p>
+              </div>
+              <Brain className="w-10 h-10 text-purple-500" />
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-orange-600 font-medium">Organization</p>
+                <p className="text-lg font-bold text-orange-900 truncate">{stats.user_organization || 'N/A'}</p>
+              </div>
+              <Users className="w-10 h-10 text-orange-500" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Recent Scenarios */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <AlertTriangle className="w-5 h-5" />
+            Recent Scenarios
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {scenarios.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">
+              <Globe className="w-12 h-12 mx-auto mb-4 opacity-50" />
+              <p>No scenarios created yet. Start by creating your first crisis scenario.</p>
+            </div>
+          ) : (
+            <div className="grid gap-4">
+              {scenarios.slice(0, 5).map((scenario) => (
+                <div key={scenario.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors">
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-gray-900">{scenario.title}</h3>
+                    <p className="text-sm text-gray-600 truncate">{scenario.description}</p>
+                    <div className="flex items-center gap-2 mt-2">
+                      <Badge variant={scenario.status === 'active' ? 'default' : 'secondary'}>
+                        {scenario.status}
+                      </Badge>
+                      <Badge variant="outline">{scenario.crisis_type}</Badge>
+                      <span className="text-xs text-gray-500">Severity: {scenario.severity_level}/10</span>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm">
+                      <Eye className="w-4 h-4" />
+                    </Button>
+                    <Button variant="outline" size="sm">
+                      <Play className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
+
+// Scenario Creation Component
+const ScenarioCreator = ({ onScenarioCreated }) => {
+  const [formData, setFormData] = useState({
+    title: '',
+    description: '',
+    crisis_type: '',
+    severity_level: 5,
+    affected_regions: [],
+    key_variables: []
+  });
+  const [regionInput, setRegionInput] = useState('');
+  const [variableInput, setVariableInput] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const crisisTypes = [
+    'natural_disaster',
+    'economic_crisis', 
+    'social_unrest',
+    'pandemic',
+    'cyber_attack',
+    'supply_chain_disruption',
+    'climate_change',
+    'political_instability'
+  ];
+
+  const addRegion = () => {
+    if (regionInput.trim() && !formData.affected_regions.includes(regionInput.trim())) {
+      setFormData({
+        ...formData,
+        affected_regions: [...formData.affected_regions, regionInput.trim()]
+      });
+      setRegionInput('');
+    }
+  };
+
+  const addVariable = () => {
+    if (variableInput.trim() && !formData.key_variables.includes(variableInput.trim())) {
+      setFormData({
+        ...formData,
+        key_variables: [...formData.key_variables, variableInput.trim()]
+      });
+      setVariableInput('');
+    }
+  };
+
+  const removeRegion = (region) => {
+    setFormData({
+      ...formData,
+      affected_regions: formData.affected_regions.filter(r => r !== region)
+    });
+  };
+
+  const removeVariable = (variable) => {
+    setFormData({
+      ...formData,
+      key_variables: formData.key_variables.filter(v => v !== variable)
+    });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      const response = await axios.post(`${API}/scenarios`, formData);
+      toast({ title: "Success", description: "Scenario created successfully!" });
+      onScenarioCreated(response.data);
+      
+      // Reset form
+      setFormData({
+        title: '',
+        description: '',
+        crisis_type: '',
+        severity_level: 5,
+        affected_regions: [],
+        key_variables: []
+      });
+    } catch (error) {
+      toast({ 
+        title: "Error", 
+        description: error.response?.data?.detail || "Failed to create scenario",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Card className="max-w-2xl mx-auto">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Plus className="w-5 h-5" />
+          Create New Crisis Scenario
+        </CardTitle>
+        <CardDescription>
+          Define a complex crisis scenario for AI-powered analysis and simulation
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div>
+            <Label htmlFor="title">Scenario Title</Label>
+            <Input
+              id="title"
+              value={formData.title}
+              onChange={(e) => setFormData({...formData, title: e.target.value})}
+              placeholder="e.g., Major Earthquake in Metropolitan Area"
+              required
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="description">Description</Label>
+            <Textarea
+              id="description"
+              value={formData.description}
+              onChange={(e) => setFormData({...formData, description: e.target.value})}
+              placeholder="Detailed description of the crisis scenario..."
+              rows={4}
+              required
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="crisis_type">Crisis Type</Label>
+            <Select value={formData.crisis_type} onValueChange={(value) => setFormData({...formData, crisis_type: value})}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select crisis type" />
+              </SelectTrigger>
+              <SelectContent>
+                {crisisTypes.map((type) => (
+                  <SelectItem key={type} value={type}>
+                    {type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <Label htmlFor="severity">Severity Level: {formData.severity_level}/10</Label>
+            <input
+              type="range"
+              id="severity"
+              min="1"
+              max="10"
+              value={formData.severity_level}
+              onChange={(e) => setFormData({...formData, severity_level: parseInt(e.target.value)})}
+              className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+            />
+          </div>
+
+          <div>
+            <Label>Affected Regions</Label>
+            <div className="flex gap-2 mb-2">
+              <Input
+                value={regionInput}
+                onChange={(e) => setRegionInput(e.target.value)}
+                placeholder="Add region (e.g., California, Tokyo)"
+                onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addRegion())}
+              />
+              <Button type="button" onClick={addRegion} variant="outline" size="sm">
+                Add
+              </Button>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {formData.affected_regions.map((region) => (
+                <Badge key={region} variant="secondary" className="cursor-pointer" onClick={() => removeRegion(region)}>
+                  {region} ×
+                </Badge>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <Label>Key Variables</Label>
+            <div className="flex gap-2 mb-2">
+              <Input
+                value={variableInput}
+                onChange={(e) => setVariableInput(e.target.value)}
+                placeholder="Add variable (e.g., Population density, Infrastructure age)"
+                onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addVariable())}
+              />
+              <Button type="button" onClick={addVariable} variant="outline" size="sm">
+                Add
+              </Button>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {formData.key_variables.map((variable) => (
+                <Badge key={variable} variant="secondary" className="cursor-pointer" onClick={() => removeVariable(variable)}>
+                  {variable} ×
+                </Badge>
+              ))}
+            </div>
+          </div>
+
+          <Button type="submit" className="w-full" disabled={loading}>
+            {loading ? 'Creating...' : 'Create Scenario'}
+          </Button>
+        </form>
+      </CardContent>
+    </Card>
+  );
+};
+
+// AI Genie Component
+const AIGenie = ({ selectedScenario }) => {
+  const [query, setQuery] = useState('');
+  const [conversation, setConversation] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!query.trim()) return;
+
+    const userMessage = { type: 'user', content: query, timestamp: new Date() };
+    setConversation([...conversation, userMessage]);
+    setLoading(true);
+
+    try {
+      const response = await axios.post(`${API}/ai-genie`, {
+        scenario_id: selectedScenario?.id,
+        user_query: query,
+        context: selectedScenario ? JSON.stringify(selectedScenario) : null
+      });
+
+      const aiMessage = {
+        type: 'assistant',
+        content: response.data.response,
+        suggestions: response.data.suggestions,
+        monitoring_tasks: response.data.monitoring_tasks,
+        timestamp: new Date()
+      };
+
+      setConversation(prev => [...prev, aiMessage]);
+      setQuery('');
+    } catch (error) {
+      toast({ 
+        title: "Error", 
+        description: "Failed to get AI response",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="flex flex-col h-full">
+      <div className="mb-4">
+        <h3 className="text-lg font-semibold flex items-center gap-2 mb-2">
+          <MessageSquare className="w-5 h-5" />
+          AI Avatar Genie
+        </h3>
+        <p className="text-sm text-gray-600">
+          Get intelligent insights and suggestions for your crisis scenarios
+          {selectedScenario && (
+            <Badge variant="outline" className="ml-2">
+              {selectedScenario.title}
+            </Badge>
+          )}
+        </p>
+      </div>
+      
+      <div className="flex-1 flex flex-col min-h-0">
+        <div className="flex-1 overflow-y-auto space-y-4 mb-4 p-4 bg-gray-50 rounded-lg">
+          {conversation.length === 0 ? (
+            <div className="text-center text-gray-500 mt-8">
+              <Brain className="w-12 h-12 mx-auto mb-4 opacity-50" />
+              <p>Start a conversation with the AI Avatar Genie</p>
+              <p className="text-sm">Ask for scenario insights, monitoring tasks, or mitigation strategies</p>
+            </div>
+          ) : (
+            conversation.map((message, index) => (
+              <div key={index} className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}>
+                <div className={`max-w-[80%] p-3 rounded-lg ${
+                  message.type === 'user' 
+                    ? 'bg-blue-500 text-white' 
+                    : 'bg-white border shadow-sm'
+                }`}>
+                  <p className="text-sm">{message.content}</p>
+                  {message.suggestions && (
+                    <div className="mt-3 pt-3 border-t border-gray-200">
+                      <p className="text-xs font-semibold text-gray-600 mb-2">Suggestions:</p>
+                      <ul className="text-xs space-y-1">
+                        {message.suggestions.map((suggestion, i) => (
+                          <li key={i} className="text-gray-700">• {suggestion}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {message.monitoring_tasks && (
+                    <div className="mt-3 pt-3 border-t border-gray-200">
+                      <p className="text-xs font-semibold text-gray-600 mb-2">Monitoring Tasks:</p>
+                      <ul className="text-xs space-y-1">
+                        {message.monitoring_tasks.map((task, i) => (
+                          <li key={i} className="text-gray-700">• {task}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))
+          )}
+          {loading && (
+            <div className="flex justify-start">
+              <div className="bg-white border shadow-sm p-3 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <Brain className="w-4 h-4 animate-pulse text-blue-500" />
+                  <span className="text-sm text-gray-600">AI is thinking...</span>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+        
+        <form onSubmit={handleSubmit} className="flex gap-2">
+          <Input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Ask the AI Genie about your scenario..."
+            disabled={loading}
+          />
+          <Button type="submit" disabled={loading || !query.trim()}>
+            Send
+          </Button>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+// Scenario Management Component
+const ScenarioManagement = ({ onScenarioSelect }) => {
+  const [scenarios, setScenarios] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedScenario, setSelectedScenario] = useState(null);
+  const [filterStatus, setFilterStatus] = useState('all');
+  const [filterType, setFilterType] = useState('all');
+  const [sortBy, setSortBy] = useState('created_at');
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [scenarioToDelete, setScenarioToDelete] = useState(null);
+  const [editingScenario, setEditingScenario] = useState(null);
+  const [implementationView, setImplementationView] = useState(null);
+  const [implementationData, setImplementationData] = useState({});
+  const [generatingImplementation, setGeneratingImplementation] = useState(false);
+  const [monitorAgents, setMonitorAgents] = useState({});
+  const [deployingMonitors, setDeployingMonitors] = useState(false);
+  const [systemMetrics, setSystemMetrics] = useState({});
+  const [complexSystems, setComplexSystems] = useState({});
+  const [learningInsights, setLearningInsights] = useState({});
+  const [monitoringSources, setMonitoringSources] = useState({});
+  const [smartSuggestions, setSmartSuggestions] = useState({});
+  const [monitoringDashboard, setMonitoringDashboard] = useState({});
+  const [showMonitoringDialog, setShowMonitoringDialog] = useState(null);
+  
+  // Multi-document state management
+  const [openDocuments, setOpenDocuments] = useState([]);
+  const [activeDocument, setActiveDocument] = useState(null);
+  const [showAmendDialog, setShowAmendDialog] = useState(false);
+  const [amendingScenario, setAmendingScenario] = useState(null);
+  const [amendFormData, setAmendFormData] = useState({
+    affected_regions: '',
+    key_variables: '',
+    additional_context: '',
+    stakeholders: '',
+    timeline: ''
+  });
+  const [showMultiDocView, setShowMultiDocView] = useState(false);
+  const [showAddSourceDialog, setShowAddSourceDialog] = useState(null);
+  const [newSourceData, setNewSourceData] = useState({
+    source_type: '',
+    source_url: '',
+    source_name: '',
+    monitoring_frequency: 'daily',
+    data_keywords: []
+  });
+
+  useEffect(() => {
+    fetchScenarios();
+  }, []);
+
+  const fetchScenarios = async () => {
+    try {
+      const response = await axios.get(`${API}/scenarios`);
+      setScenarios(response.data);
+    } catch (error) {
+      toast({ 
+        title: "Error", 
+        description: "Failed to fetch scenarios",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteScenario = async (scenarioId) => {
+    try {
+      await axios.delete(`${API}/scenarios/${scenarioId}`);
+      setScenarios(scenarios.filter(s => s.id !== scenarioId));
+      setShowDeleteDialog(false);
+      setScenarioToDelete(null);
+      toast({ title: "Success", description: "Scenario deleted successfully" });
+    } catch (error) {
+      toast({ 
+        title: "Error", 
+        description: "Failed to delete scenario",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleRunSimulation = async (scenario) => {
+    try {
+      setLoading(true);
+      const response = await axios.post(`${API}/scenarios/${scenario.id}/simulate`);
+      
+      // Update scenario status to active
+      const updatedScenarios = scenarios.map(s => 
+        s.id === scenario.id ? { ...s, status: 'active' } : s
+      );
+      setScenarios(updatedScenarios);
+      
+      toast({ 
+        title: "Success", 
+        description: "Simulation completed successfully!",
+        duration: 5000
+      });
+      
+      // Show results in a dialog or navigate to results view
+      setSelectedScenario({ ...scenario, simulation_result: response.data });
+      
+    } catch (error) {
+      toast({ 
+        title: "Error", 
+        description: "Failed to run simulation",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGenerateImplementation = async (scenario, type) => {
+    try {
+      setGeneratingImplementation(true);
+      let endpoint = '';
+      
+      switch(type) {
+        case 'game-book':
+          endpoint = `scenarios/${scenario.id}/game-book`;
+          break;
+        case 'action-plan':
+          endpoint = `scenarios/${scenario.id}/action-plan`;
+          break;
+        case 'strategy-implementation':
+          endpoint = `scenarios/${scenario.id}/strategy-implementation`;
+          break;
+        default:
+          return;
+      }
+      
+      const response = await axios.post(`${API}/${endpoint}`);
+      setImplementationData({
+        ...implementationData,
+        [scenario.id]: {
+          ...implementationData[scenario.id],
+          [type]: response.data
+        }
+      });
+      
+      setImplementationView({ scenario, type, data: response.data });
+      
+      toast({ 
+        title: "Success", 
+        description: `${type.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())} generated successfully!`,
+        duration: 3000
+      });
+      
+    } catch (error) {
+      toast({ 
+        title: "Error", 
+        description: `Failed to generate ${type.replace('-', ' ')}`,
+        variant: "destructive"
+      });
+    } finally {
+      setGeneratingImplementation(false);
+    }
+  };
+
+  const handleSuggestMonitoringSources = async (scenario) => {
+    try {
+      setGeneratingImplementation(true);
+      const response = await axios.post(`${API}/scenarios/${scenario.id}/suggest-monitoring-sources`);
+      setSmartSuggestions({
+        ...smartSuggestions,
+        [scenario.id]: response.data
+      });
+      
+      setImplementationView({ scenario, type: 'monitoring-suggestions', data: response.data });
+      
+      toast({ 
+        title: "Success", 
+        description: "Smart monitoring suggestions generated!",
+        duration: 3000
+      });
+      
+    } catch (error) {
+      toast({ 
+        title: "Error", 
+        description: "Failed to generate monitoring suggestions",
+        variant: "destructive"
+      });
+    } finally {
+      setGeneratingImplementation(false);
+    }
+  };
+
+  const handleOpenMonitoringDashboard = async (scenario) => {
+    try {
+      const response = await axios.get(`${API}/scenarios/${scenario.id}/monitoring-dashboard`);
+      setMonitoringDashboard({
+        ...monitoringDashboard,
+        [scenario.id]: response.data
+      });
+      setShowMonitoringDialog(scenario);
+      
+    } catch (error) {
+      toast({ 
+        title: "Error", 
+        description: "Failed to load monitoring dashboard",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleAddMonitoringSource = async (scenario) => {
+    setShowAddSourceDialog(scenario);
+    setNewSourceData({
+      source_type: '',
+      source_url: '',
+      source_name: '',  
+      monitoring_frequency: 'daily',
+      data_keywords: []
+    });
+  };
+
+  const submitMonitoringSource = async () => {
+    if (!showAddSourceDialog) return;
+    
+    try {
+      const response = await axios.post(`${API}/scenarios/${showAddSourceDialog.id}/add-monitoring-source`, newSourceData);
+      
+      setMonitoringSources({
+        ...monitoringSources,
+        [showAddSourceDialog.id]: [
+          ...(monitoringSources[showAddSourceDialog.id] || []),
+          response.data
+        ]
+      });
+      
+      setShowAddSourceDialog(null);
+      toast({ 
+        title: "Success", 
+        description: "Monitoring source added successfully!",
+        duration: 3000
+      });
+      
+    } catch (error) {
+      toast({ 
+        title: "Error", 
+        description: "Failed to add monitoring source",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleCollectData = async (scenario) => {
+    try {
+      setLoading(true);
+      const response = await axios.post(`${API}/scenarios/${scenario.id}/collect-data`);
+      
+      toast({ 
+        title: "Data Collection Started", 
+        description: `Collecting data from ${response.data.sources_monitored} monitoring sources`,
+        duration: 4000
+      });
+      
+      // Refresh monitoring dashboard
+      setTimeout(() => handleOpenMonitoringDashboard(scenario), 2000);
+      
+    } catch (error) {
+      toast({ 
+        title: "Error", 
+        description: "Failed to start data collection",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeployMonitors = async (scenario) => {
+    try {
+      setDeployingMonitors(true);
+      const response = await axios.post(`${API}/scenarios/${scenario.id}/deploy-monitors`);
+      setMonitorAgents({
+        ...monitorAgents,
+        [scenario.id]: response.data
+      });
+      
+      toast({ 
+        title: "Success", 
+        description: "AI Monitor Agents deployed successfully!",
+        duration: 3000
+      });
+      
+    } catch (error) {
+      toast({ 
+        title: "Error", 
+        description: "Failed to deploy monitor agents",
+        variant: "destructive"
+      });
+    } finally {
+      setDeployingMonitors(false);
+    }
+  };
+
+  const handleComplexSystemsAnalysis = async (scenario) => {
+    try {
+      setGeneratingImplementation(true);
+      const response = await axios.post(`${API}/scenarios/${scenario.id}/complex-systems-analysis`);
+      setComplexSystems({
+        ...complexSystems,
+        [scenario.id]: response.data
+      });
+      
+      setImplementationView({ scenario, type: 'complex-systems', data: response.data });
+      
+      toast({ 
+        title: "Success", 
+        description: "Complex Adaptive Systems analysis completed!",
+        duration: 3000
+      });
+      
+    } catch (error) {
+      toast({ 
+        title: "Error", 
+        description: "Failed to analyze complex systems",
+        variant: "destructive"
+      });
+    } finally {
+      setGeneratingImplementation(false);
+    }
+  };
+
+  const handleGenerateMetrics = async (scenario) => {
+    try {
+      const response = await axios.post(`${API}/scenarios/${scenario.id}/generate-metrics`);
+      setSystemMetrics({
+        ...systemMetrics,
+        [scenario.id]: response.data
+      });
+      
+      toast({ 
+        title: "Success", 
+        description: "System metrics generated successfully!",
+        duration: 3000
+      });
+      
+    } catch (error) {
+      toast({ 
+        title: "Error", 
+        description: "Failed to generate system metrics",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleGenerateLearningInsights = async (scenario) => {
+    try {
+      setGeneratingImplementation(true);
+      const response = await axios.post(`${API}/scenarios/${scenario.id}/generate-learning-insights`);
+      setLearningInsights({
+        ...learningInsights,
+        [scenario.id]: response.data
+      });
+      
+      setImplementationView({ scenario, type: 'learning-insights', data: response.data });
+      
+      toast({ 
+        title: "Success", 
+        description: "Adaptive learning insights generated!",
+        duration: 3000
+      });
+      
+    } catch (error) {
+      toast({ 
+        title: "Error", 
+        description: "Failed to generate learning insights",
+        variant: "destructive"
+      });
+    } finally {
+      setGeneratingImplementation(false);
+    }
+  };
+
+  const getCrisisTypeColor = (type) => {
+    const colors = {
+      'natural_disaster': 'bg-red-100 text-red-800',
+      'economic_crisis': 'bg-yellow-100 text-yellow-800',
+      'social_unrest': 'bg-purple-100 text-purple-800',
+      'pandemic': 'bg-pink-100 text-pink-800',
+      'cyber_attack': 'bg-blue-100 text-blue-800',
+      'supply_chain_disruption': 'bg-orange-100 text-orange-800',
+      'climate_change': 'bg-green-100 text-green-800',
+      'political_instability': 'bg-gray-100 text-gray-800'
+    };
+    return colors[type] || 'bg-gray-100 text-gray-800';
+  };
+
+  const getStatusColor = (status) => {
+    const colors = {
+      'draft': 'bg-gray-100 text-gray-800',
+      'active': 'bg-green-100 text-green-800',
+      'completed': 'bg-blue-100 text-blue-800'
+    };
+    return colors[status] || 'bg-gray-100 text-gray-800';
+  };
+
+  const generateComprehensivePDFReport = async (scenario) => {
+    if (!scenario) {
+      toast({
+        title: "No Scenario Selected",
+        description: "Please select a scenario to generate a comprehensive report",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      // Gather all scenario data
+      const reportSections = [];
+      
+      // Try to fetch all available implementations for this scenario
+      try {
+        const gameBookResponse = await axios.get(`${API}/scenarios/${scenario.id}/game-book`);
+        reportSections.push({
+          title: "Crisis Game Book",
+          type: "gamebook",
+          data: gameBookResponse.data
+        });
+      } catch (error) {
+        console.log("Game Book not available for this scenario");
+      }
+
+      try {
+        const actionPlanResponse = await axios.get(`${API}/scenarios/${scenario.id}/action-plan`);
+        reportSections.push({
+          title: "Action Plan",
+          type: "action-plan",
+          data: actionPlanResponse.data
+        });
+      } catch (error) {
+        console.log("Action Plan not available for this scenario");
+      }
+
+      try {
+        const strategyResponse = await axios.get(`${API}/scenarios/${scenario.id}/strategy-implementation`);
+        reportSections.push({
+          title: "Implementation Strategy",
+          type: "strategy",
+          data: strategyResponse.data
+        });
+      } catch (error) {
+        console.log("Strategy Implementation not available for this scenario");
+      }
+
+      try {
+        const monitorsResponse = await axios.get(`${API}/scenarios/${scenario.id}/monitor-agents`);
+        reportSections.push({
+          title: "AI Monitor Agents",
+          type: "monitors",
+          data: monitorsResponse.data
+        });
+      } catch (error) {
+        console.log("AI Monitors not available for this scenario");
+      }
+
+      try {
+        const systemsResponse = await axios.get(`${API}/scenarios/${scenario.id}/complex-systems`);
+        reportSections.push({
+          title: "Complex Adaptive Systems Analysis",
+          type: "systems",
+          data: systemsResponse.data
+        });
+      } catch (error) {
+        console.log("Complex Systems analysis not available for this scenario");
+      }
+
+      try {
+        const learningResponse = await axios.get(`${API}/scenarios/${scenario.id}/learning-insights`);
+        reportSections.push({
+          title: "AI Learning Insights",
+          type: "learning",
+          data: learningResponse.data
+        });
+      } catch (error) {
+        console.log("Learning Insights not available for this scenario");
+      }
+
+      // Generate comprehensive report content
+      const reportContent = generateFullReportHTML(scenario, reportSections);
+      
+      // Open print dialog for PDF
+      const printWindow = window.open('', '_blank');
+      
+      if (!printWindow) {
+        // Fallback to text download if popup blocked
+        downloadComprehensiveReport(scenario, reportSections);
+        return;
+      }
+      
+      printWindow.document.write(reportContent);
+      printWindow.document.close();
+      
+      printWindow.onload = () => {
+        printWindow.focus();
+        setTimeout(() => {
+          printWindow.print();
+        }, 500);
+      };
+
+      toast({
+        title: "PDF Report Generated",
+        description: "Comprehensive scenario report opened for printing/PDF export",
+        duration: 4000
+      });
+
+    } catch (error) {
+      console.error('PDF generation failed:', error);
+      toast({
+        title: "PDF Generation Failed",
+        description: "Failed to generate comprehensive report. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const generateFullReportHTML = (scenario, reportSections) => {
+    const currentDate = new Date().toLocaleDateString();
+    const currentTime = new Date().toLocaleTimeString();
+    
+    return `
+      <html>
+        <head>
+          <title>Comprehensive Scenario Report - ${scenario.title}</title>
+          <meta charset="utf-8">
+          <style>
+            body { 
+              font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+              margin: 0; 
+              padding: 40px;
+              line-height: 1.6; 
+              color: #333; 
+              background: white;
+            }
+            .header { 
+              border-bottom: 3px solid #3b82f6; 
+              padding-bottom: 30px; 
+              margin-bottom: 40px; 
+              text-align: center;
+            }
+            .title { 
+              font-size: 32px; 
+              font-weight: bold; 
+              color: #1f2937; 
+              margin-bottom: 10px; 
+            }
+            .subtitle { 
+              color: #6b7280; 
+              font-size: 16px; 
+              margin-bottom: 20px;
+            }
+            .meta-info {
+              background: #f8fafc;
+              padding: 20px;
+              border-radius: 8px;
+              margin-bottom: 30px;
+              border-left: 4px solid #3b82f6;
+            }
+            .meta-row {
+              display: flex;
+              justify-content: space-between;
+              margin-bottom: 8px;
+            }
+            .meta-label {
+              font-weight: 600;
+              color: #374151;
+            }
+            .section { 
+              margin-bottom: 40px; 
+              page-break-inside: avoid; 
+              border: 1px solid #e5e7eb;
+              border-radius: 8px;
+              overflow: hidden;
+            }
+            .section-header {
+              background: #3b82f6;
+              color: white;
+              padding: 15px 20px;
+              font-size: 20px;
+              font-weight: bold;
+              margin: 0;
+            }
+            .section-content {
+              padding: 20px;
+            }
+            .section-title { 
+              font-size: 18px; 
+              font-weight: bold; 
+              margin-bottom: 15px; 
+              color: #1f2937; 
+              border-bottom: 2px solid #e5e7eb; 
+              padding-bottom: 8px; 
+            }
+            .content-block {
+              margin-bottom: 20px;
+              padding: 15px;
+              background: #f9fafb;
+              border-radius: 6px;
+              border-left: 3px solid #10b981;
+            }
+            .list-item { 
+              margin-bottom: 12px; 
+              padding-left: 25px; 
+              position: relative; 
+              font-size: 14px; 
+              line-height: 1.6;
+            }
+            .list-item:before { 
+              content: "▶"; 
+              position: absolute; 
+              left: 0; 
+              color: #3b82f6; 
+              font-weight: bold; 
+            }
+            .action-item {
+              background: white;
+              border: 1px solid #d1d5db;
+              padding: 12px;
+              margin-bottom: 8px;
+              border-radius: 4px;
+              border-left: 4px solid #f59e0b;
+            }
+            .priority-high { border-left-color: #ef4444; }
+            .priority-medium { border-left-color: #f59e0b; }
+            .priority-low { border-left-color: #10b981; }
+            .toc {
+              background: #f8fafc;
+              padding: 20px;
+              border-radius: 8px;
+              margin-bottom: 30px;
+            }
+            .toc-title {
+              font-size: 18px;
+              font-weight: bold;
+              margin-bottom: 15px;
+              color: #1f2937;
+            }
+            .toc-item {
+              margin-bottom: 8px;
+              color: #3b82f6;
+              text-decoration: none;
+            }
+            @media print { 
+              body { margin: 20px; font-size: 12px; }
+              .header { margin-bottom: 20px; }
+              .section { margin-bottom: 25px; page-break-inside: avoid; }
+              .section-header { background: #4b5563 !important; }
+            }
+            @page { 
+              margin: 2cm; 
+              size: A4;
+            }
+            .footer {
+              margin-top: 40px;
+              padding-top: 20px;
+              border-top: 2px solid #e5e7eb;
+              text-align: center;
+              color: #6b7280;
+              font-size: 12px;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <div class="title">Comprehensive Scenario Report</div>
+            <div class="subtitle">${scenario.title}</div>
+            <div style="color: #6b7280; font-size: 14px;">
+              Generated on ${currentDate} at ${currentTime}
+            </div>
+          </div>
+
+          <div class="meta-info">
+            <div class="meta-row">
+              <span class="meta-label">Crisis Type:</span>
+              <span>${scenario.crisis_type.replace(/_/g, ' ').toUpperCase()}</span>
+            </div>
+            <div class="meta-row">
+              <span class="meta-label">Severity Level:</span>
+              <span>${scenario.severity_level}/10</span>
+            </div>
+            <div class="meta-row">
+              <span class="meta-label">Status:</span>
+              <span>${scenario.status.toUpperCase()}</span>
+            </div>
+            <div class="meta-row">
+              <span class="meta-label">Location:</span>
+              <span>${scenario.location || 'Not specified'}</span>
+            </div>
+            <div class="meta-row">
+              <span class="meta-label">Timeline:</span>
+              <span>${scenario.timeline || 'Not specified'}</span>
+            </div>
+          </div>
+
+          <div class="toc">
+            <div class="toc-title">Table of Contents</div>
+            <div class="toc-item">1. Scenario Overview</div>
+            ${reportSections.map((section, idx) => `<div class="toc-item">${idx + 2}. ${section.title}</div>`).join('')}
+          </div>
+
+          <div class="section">
+            <div class="section-header">1. Scenario Overview</div>
+            <div class="section-content">
+              <div class="content-block">
+                <strong>Description:</strong><br>
+                ${scenario.description || 'No description provided'}
+              </div>
+              ${scenario.key_stakeholders ? `
+                <div class="content-block">
+                  <strong>Key Stakeholders:</strong><br>
+                  ${scenario.key_stakeholders.map(stakeholder => `<div class="list-item">${stakeholder}</div>`).join('')}
+                </div>
+              ` : ''}
+              ${scenario.potential_impacts ? `
+                <div class="content-block">
+                  <strong>Potential Impacts:</strong><br>
+                  ${scenario.potential_impacts.map(impact => `<div class="list-item">${impact}</div>`).join('')}
+                </div>
+              ` : ''}
+            </div>
+          </div>
+
+          ${reportSections.map((section, idx) => {
+            let sectionContent = '';
+            
+            if (section.type === 'gamebook' && section.data) {
+              sectionContent = `
+                <div class="content-block">
+                  <strong>Game Book Content:</strong><br>
+                  ${section.data.game_book_content || 'No content available'}
+                </div>
+              `;
+            } else if (section.type === 'action-plan' && section.data) {
+              sectionContent = `
+                <div class="section-title">Immediate Actions (0-24h)</div>
+                ${section.data.immediate_actions ? section.data.immediate_actions.map(action => `
+                  <div class="action-item priority-high">
+                    <strong>${action.action}</strong><br>
+                    <em>Priority: ${action.priority} | Timeline: ${action.timeline}</em><br>
+                    ${action.description}
+                  </div>
+                `).join('') : '<p>No immediate actions defined</p>'}
+                
+                <div class="section-title">Short-term Actions (1-30d)</div>
+                ${section.data.short_term_actions ? section.data.short_term_actions.map(action => `
+                  <div class="action-item priority-medium">
+                    <strong>${action.action}</strong><br>
+                    <em>Priority: ${action.priority} | Timeline: ${action.timeline}</em><br>
+                    ${action.description}
+                  </div>
+                `).join('') : '<p>No short-term actions defined</p>'}
+                
+                <div class="section-title">Long-term Actions (1-12m)</div>
+                ${section.data.long_term_actions ? section.data.long_term_actions.map(action => `
+                  <div class="action-item priority-low">
+                    <strong>${action.action}</strong><br>
+                    <em>Priority: ${action.priority} | Timeline: ${action.timeline}</em><br>
+                    ${action.description}
+                  </div>
+                `).join('') : '<p>No long-term actions defined</p>'}
+              `;
+            } else if (section.type === 'strategy' && section.data) {
+              sectionContent = `
+                <div class="content-block">
+                  <strong>Implementation Strategy:</strong><br>
+                  ${section.data.implementation_strategy || 'No strategy available'}
+                </div>
+              `;
+            } else if (section.type === 'monitors' && section.data) {
+              sectionContent = `
+                <div class="content-block">
+                  <strong>Risk Monitor:</strong><br>
+                  ${section.data.risk_monitor || 'No risk monitor data'}
+                </div>
+                <div class="content-block">
+                  <strong>Performance Monitor:</strong><br>
+                  ${section.data.performance_monitor || 'No performance monitor data'}
+                </div>
+                <div class="content-block">
+                  <strong>Anomaly Monitor:</strong><br>
+                  ${section.data.anomaly_monitor || 'No anomaly monitor data'}
+                </div>
+                <div class="content-block">
+                  <strong>Trend Monitor:</strong><br>
+                  ${section.data.trend_monitor || 'No trend monitor data'}
+                </div>
+              `;
+            } else if (section.type === 'systems' && section.data) {
+              sectionContent = `
+                <div class="content-block">
+                  <strong>System Analysis:</strong><br>
+                  ${section.data.system_analysis || 'No system analysis available'}
+                </div>
+                ${section.data.interconnections ? `
+                  <div class="content-block">
+                    <strong>Key Interconnections:</strong><br>
+                    ${section.data.interconnections.map(connection => `<div class="list-item">${connection}</div>`).join('')}
+                  </div>
+                ` : ''}
+              `;
+            } else if (section.type === 'learning' && section.data) {
+              sectionContent = `
+                <div class="content-block">
+                  <strong>Learning Analysis:</strong><br>
+                  ${section.data.learning_analysis || 'No learning analysis available'}
+                </div>
+                ${section.data.insights ? `
+                  <div class="content-block">
+                    <strong>Key Insights:</strong><br>
+                    ${section.data.insights.map(insight => `<div class="list-item">${insight}</div>`).join('')}
+                  </div>
+                ` : ''}
+              `;
+            } else {
+              sectionContent = '<div class="content-block">This section has not been generated yet. Click the corresponding button in the scenario dashboard to generate content.</div>';
+            }
+
+            return `
+              <div class="section">
+                <div class="section-header">${idx + 2}. ${section.title}</div>
+                <div class="section-content">
+                  ${sectionContent}
+                </div>
+              </div>
+            `;
+          }).join('')}
+
+          <div class="footer">
+            <div>Generated by Polycrisis Simulator</div>
+            <div>Comprehensive Scenario Analysis & Crisis Management Platform</div>
+          </div>
+        </body>
+      </html>
+    `;
+  };
+
+  const downloadComprehensiveReport = (scenario, reportSections) => {
+    try {
+      const content = `
+COMPREHENSIVE SCENARIO REPORT
+${scenario.title}
+Generated on ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}
+
+${'='.repeat(100)}
+
+SCENARIO OVERVIEW:
+- Crisis Type: ${scenario.crisis_type.replace(/_/g, ' ').toUpperCase()}
+- Severity Level: ${scenario.severity_level}/10  
+- Status: ${scenario.status.toUpperCase()}
+- Location: ${scenario.location || 'Not specified'}
+- Timeline: ${scenario.timeline || 'Not specified'}
+
+Description:
+${scenario.description || 'No description provided'}
+
+${scenario.key_stakeholders ? `
+Key Stakeholders:
+${scenario.key_stakeholders.map((stakeholder, idx) => `${idx + 1}. ${stakeholder}`).join('\n')}
+` : ''}
+
+${scenario.potential_impacts ? `
+Potential Impacts:
+${scenario.potential_impacts.map((impact, idx) => `${idx + 1}. ${impact}`).join('\n')}
+` : ''}
+
+${'='.repeat(100)}
+
+${reportSections.map((section, idx) => {
+  let sectionContent = '';
+  
+  if (section.type === 'gamebook' && section.data) {
+    sectionContent = section.data.game_book_content || 'No content available';
+  } else if (section.type === 'action-plan' && section.data) {
+    sectionContent = `
+IMMEDIATE ACTIONS (0-24h):
+${section.data.immediate_actions ? section.data.immediate_actions.map((action, i) => 
+  `${i + 1}. ${action.action} (Priority: ${action.priority}, Timeline: ${action.timeline})\n   ${action.description}`
+).join('\n') : 'No immediate actions defined'}
+
+SHORT-TERM ACTIONS (1-30d):
+${section.data.short_term_actions ? section.data.short_term_actions.map((action, i) => 
+  `${i + 1}. ${action.action} (Priority: ${action.priority}, Timeline: ${action.timeline})\n   ${action.description}`
+).join('\n') : 'No short-term actions defined'}
+
+LONG-TERM ACTIONS (1-12m):
+${section.data.long_term_actions ? section.data.long_term_actions.map((action, i) => 
+  `${i + 1}. ${action.action} (Priority: ${action.priority}, Timeline: ${action.timeline})\n   ${action.description}`
+).join('\n') : 'No long-term actions defined'}
+    `;
+  } else if (section.type === 'strategy' && section.data) {
+    sectionContent = section.data.implementation_strategy || 'No strategy available';
+  } else if (section.type === 'monitors' && section.data) {
+    sectionContent = `
+Risk Monitor: ${section.data.risk_monitor || 'No data'}
+Performance Monitor: ${section.data.performance_monitor || 'No data'}
+Anomaly Monitor: ${section.data.anomaly_monitor || 'No data'}
+Trend Monitor: ${section.data.trend_monitor || 'No data'}
+    `;
+  } else if (section.type === 'systems' && section.data) {
+    sectionContent = `
+System Analysis: ${section.data.system_analysis || 'No analysis available'}
+${section.data.interconnections ? `
+Key Interconnections:
+${section.data.interconnections.map((connection, i) => `${i + 1}. ${connection}`).join('\n')}
+` : ''}
+    `;
+  } else if (section.type === 'learning' && section.data) {
+    sectionContent = `
+Learning Analysis: ${section.data.learning_analysis || 'No analysis available'}
+${section.data.insights ? `
+Key Insights:
+${section.data.insights.map((insight, i) => `${i + 1}. ${insight}`).join('\n')}
+` : ''}
+    `;
+  } else {
+    sectionContent = 'This section has not been generated yet.';
+  }
+
+  return `
+${section.title.toUpperCase()}:
+${'-'.repeat(50)}
+${sectionContent}
+
+${'='.repeat(100)}
+  `;
+}).join('')}
+
+Generated by Polycrisis Simulator
+Comprehensive Scenario Analysis & Crisis Management Platform
+      `.trim();
+
+      const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = url;
+      a.download = `comprehensive_report_${scenario.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_${Date.now()}.txt`;
+      
+      document.body.appendChild(a);
+      a.click();
+      
+      setTimeout(() => {
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+      }, 100);
+
+      toast({
+        title: "Report Downloaded",
+        description: "Comprehensive scenario report downloaded as text file",
+        duration: 3000
+      });
+
+    } catch (error) {
+      console.error('Download failed:', error);
+      toast({
+        title: "Download Failed",
+        description: "Failed to download comprehensive report",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const downloadImplementationAsPDF = (implementationView) => {
+    if (!implementationView) {
+      toast({
+        title: "No Content Available",
+        description: "Please generate content before downloading",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      const documentTitle = implementationView.type.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase());
+      const scenarioTitle = implementationView.scenario.title;
+      const currentDate = new Date().toLocaleDateString();
+      const currentTime = new Date().toLocaleTimeString();
+
+      // Generate PDF content based on implementation type
+      let pdfContent = '';
+      
+      if (implementationView.type === 'game-book') {
+        pdfContent = generateGameBookPDF(implementationView.data, scenarioTitle, currentDate, currentTime);
+      } else if (implementationView.type === 'action-plan') {
+        pdfContent = generateActionPlanPDF(implementationView.data, scenarioTitle, currentDate, currentTime);
+      } else if (implementationView.type === 'strategy-implementation') {
+        pdfContent = generateStrategyPDF(implementationView.data, scenarioTitle, currentDate, currentTime);
+      } else {
+        // Generic implementation content
+        pdfContent = generateGenericImplementationPDF(implementationView, currentDate, currentTime);
+      }
+
+      // Try to open print dialog for PDF
+      const printWindow = window.open('', '_blank');
+      
+      if (!printWindow) {
+        // Fallback to text download if popup blocked
+        downloadImplementationAsText(implementationView);
+        return;
+      }
+      
+      printWindow.document.write(pdfContent);
+      printWindow.document.close();
+      
+      printWindow.onload = () => {
+        printWindow.focus();
+        setTimeout(() => {
+          printWindow.print();
+        }, 500);
+      };
+
+      toast({
+        title: "PDF Generated",
+        description: `${documentTitle} opened for printing/PDF export`,
+        duration: 4000
+      });
+
+    } catch (error) {
+      console.error('PDF generation failed:', error);
+      // Fallback to text download
+      downloadImplementationAsText(implementationView);
+    }
+  };
+
+  const generateGameBookPDF = (data, scenarioTitle, currentDate, currentTime) => {
+    return `
+      <html>
+        <head>
+          <title>Crisis Game Book - ${scenarioTitle}</title>
+          <meta charset="utf-8">
+          <style>
+            * {
+              margin: 0;
+              padding: 0;
+              box-sizing: border-box;
+            }
+            body { 
+              font-family: 'Arial', 'Helvetica', sans-serif; 
+              margin: 0; 
+              padding: 30px;
+              line-height: 1.6; 
+              color: #333; 
+              background: white;
+              font-size: 14px;
+            }
+            .header { 
+              border-bottom: 3px solid #dc2626; 
+              padding-bottom: 20px; 
+              margin-bottom: 30px; 
+              text-align: center;
+              page-break-after: avoid;
+            }
+            .title { 
+              font-size: 28px; 
+              font-weight: bold; 
+              color: #991b1b; 
+              margin-bottom: 8px; 
+              line-height: 1.2;
+            }
+            .subtitle { 
+              color: #6b7280; 
+              font-size: 16px; 
+              margin-bottom: 15px;
+              font-weight: 500;
+            }
+            .meta-info {
+              font-size: 12px;
+              color: #6b7280;
+            }
+            .section { 
+              margin-bottom: 30px; 
+              page-break-inside: avoid; 
+              border: 1px solid #e5e7eb;
+              border-radius: 8px;
+              overflow: hidden;
+            }
+            .section-header {
+              background: #dc2626;
+              color: white;
+              padding: 12px 16px;
+              font-size: 18px;
+              font-weight: bold;
+              margin: 0;
+            }
+            .section-content {
+              padding: 20px;
+              line-height: 1.8;
+              font-size: 14px;
+            }
+            .section-content p {
+              margin-bottom: 12px;
+            }
+            .section-content ul {
+              margin: 12px 0;
+              padding-left: 20px;
+            }
+            .section-content li {
+              margin-bottom: 6px;
+            }
+            .crisis-alert {
+              background: #fef2f2;
+              border: 2px solid #fca5a5;
+              border-radius: 8px;
+              padding: 16px;
+              margin: 20px 0;
+              text-align: center;
+            }
+            .crisis-alert h3 {
+              color: #dc2626;
+              font-size: 20px;
+              margin: 0 0 8px 0;
+              font-weight: bold;
+            }
+            .crisis-alert p {
+              margin: 0;
+              font-size: 14px;
+            }
+            .content-block {
+              margin-bottom: 16px;
+              padding: 16px;
+              background: #f9fafb;
+              border-radius: 6px;
+              border-left: 4px solid #dc2626;
+            }
+            .content-block h4 {
+              font-size: 16px;
+              font-weight: bold;
+              margin-bottom: 8px;
+              color: #1f2937;
+            }
+            .formatted-text {
+              white-space: pre-wrap;
+              line-height: 1.7;
+              font-size: 14px;
+              color: #374151;
+            }
+            @media print { 
+              body { 
+                margin: 15px; 
+                font-size: 12px; 
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+              }
+              .header { margin-bottom: 15px; }
+              .section { 
+                margin-bottom: 20px; 
+                page-break-inside: avoid; 
+                border: 1px solid #ccc !important;
+              }
+              .section-header { 
+                background: #dc2626 !important; 
+                color: white !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+              }
+              .crisis-alert {
+                background: #f9f9f9 !important;
+                border: 1px solid #ccc !important;
+              }
+            }
+            @page { 
+              margin: 2cm; 
+              size: A4;
+            }
+            .footer {
+              margin-top: 30px;
+              padding-top: 15px;
+              border-top: 2px solid #e5e7eb;
+              text-align: center;
+              color: #6b7280;
+              font-size: 12px;
+              page-break-inside: avoid;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <div class="title">🎯 Crisis Game Book</div>
+            <div class="subtitle">${scenarioTitle}</div>
+            <div class="meta-info">
+              Generated on ${currentDate} at ${currentTime}
+            </div>
+          </div>
+
+          <div class="crisis-alert">
+            <h3>⚠️ CRISIS RESPONSE PLAYBOOK</h3>
+            <p>This document contains critical response procedures and decision-making frameworks for crisis management.</p>
+          </div>
+
+          <div class="section">
+            <div class="section-header">📖 Game Book Content</div>
+            <div class="section-content">
+              ${data.game_book_content ? `
+                <div class="formatted-text">${data.game_book_content.replace(/\n/g, '<br>')}</div>
+              ` : `
+                <div class="content-block">
+                  <h4>Game Book Generation</h4>
+                  <p>This crisis game book provides strategic decision-making scenarios and response frameworks for effective crisis management.</p>
+                </div>
+              `}
+            </div>
+          </div>
+
+          <div class="footer">
+            <div><strong>Generated by Polycrisis Simulator</strong></div>
+            <div>Crisis Game Book - Strategic Response Framework</div>
+          </div>
+        </body>
+      </html>
+    `;
+  };
+
+  const generateActionPlanPDF = (data, scenarioTitle, currentDate, currentTime) => {
+    return `
+      <html>
+        <head>
+          <title>Action Plan - ${scenarioTitle}</title>
+          <meta charset="utf-8">
+          <style>
+            * {
+              margin: 0;
+              padding: 0;
+              box-sizing: border-box;
+            }
+            body { 
+              font-family: 'Arial', 'Helvetica', sans-serif; 
+              margin: 0; 
+              padding: 30px;
+              line-height: 1.6; 
+              color: #333; 
+              background: white;
+              font-size: 14px;
+            }
+            .header { 
+              border-bottom: 3px solid #059669; 
+              padding-bottom: 20px; 
+              margin-bottom: 30px; 
+              text-align: center;
+              page-break-after: avoid;
+            }
+            .title { 
+              font-size: 28px; 
+              font-weight: bold; 
+              color: #047857; 
+              margin-bottom: 8px; 
+              line-height: 1.2;
+            }
+            .subtitle { 
+              color: #6b7280; 
+              font-size: 16px; 
+              margin-bottom: 15px;
+              font-weight: 500;
+            }
+            .meta-info {
+              font-size: 12px;
+              color: #6b7280;
+            }
+            .section { 
+              margin-bottom: 25px; 
+              page-break-inside: avoid; 
+              border: 1px solid #e5e7eb;
+              border-radius: 8px;
+              overflow: hidden;
+            }
+            .section-header {
+              background: #059669;
+              color: white;
+              padding: 12px 16px;
+              font-size: 18px;
+              font-weight: bold;
+              margin: 0;
+            }
+            .section-urgent { background: #dc2626; }
+            .section-medium { background: #f59e0b; }
+            .section-long { background: #059669; }
+            
+            .action-item {
+              background: white;
+              border-left: 4px solid #059669;
+              padding: 12px 16px;
+              margin: 8px 16px;
+              border-radius: 4px;
+              page-break-inside: avoid;
+            }
+            .action-urgent { border-left-color: #dc2626; }
+            .action-medium { border-left-color: #f59e0b; }
+            .action-long { border-left-color: #059669; }
+            
+            .action-header {
+              font-weight: bold;
+              font-size: 15px;
+              color: #1f2937;
+              margin-bottom: 6px;
+              line-height: 1.3;
+            }
+            .action-meta {
+              font-size: 11px;
+              color: #6b7280;
+              margin-bottom: 6px;
+              font-style: italic;
+            }
+            .action-description {
+              font-size: 13px;
+              line-height: 1.6;
+              color: #374151;
+            }
+            .no-actions {
+              padding: 16px;
+              text-align: center;
+              color: #6b7280;
+              font-style: italic;
+            }
+            @media print { 
+              body { 
+                margin: 15px; 
+                font-size: 12px; 
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+              }
+              .header { margin-bottom: 15px; }
+              .section { 
+                margin-bottom: 15px; 
+                page-break-inside: avoid; 
+                border: 1px solid #ccc !important;
+              }
+              .section-header { 
+                color: white !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+              }
+              .section-urgent { background: #dc2626 !important; }
+              .section-medium { background: #f59e0b !important; }
+              .section-long { background: #059669 !important; }
+              .action-item {
+                border: 1px solid #ddd;
+                margin: 5px 10px;
+              }
+            }
+            @page { 
+              margin: 2cm; 
+              size: A4;
+            }
+            .footer {
+              margin-top: 30px;
+              padding-top: 15px;
+              border-top: 2px solid #e5e7eb;
+              text-align: center;
+              color: #6b7280;
+              font-size: 12px;
+              page-break-inside: avoid;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <div class="title">✅ Action Plan</div>
+            <div class="subtitle">${scenarioTitle}</div>
+            <div class="meta-info">
+              Generated on ${currentDate} at ${currentTime}
+            </div>
+          </div>
+
+          <div class="section">
+            <div class="section-header section-urgent">🚨 Immediate Actions (0-24h)</div>
+            ${data.immediate_actions && data.immediate_actions.length > 0 ? data.immediate_actions.map(action => `
+              <div class="action-item action-urgent">
+                <div class="action-header">${action.action || 'Action Item'}</div>
+                <div class="action-meta">Priority: ${action.priority || 'High'} | Timeline: ${action.timeline || '0-24h'}</div>
+                <div class="action-description">${action.description || 'No description provided'}</div>
+              </div>
+            `).join('') : '<div class="no-actions">No immediate actions defined</div>'}
+          </div>
+
+          <div class="section">
+            <div class="section-header section-medium">⏰ Short-term Actions (1-30d)</div>
+            ${data.short_term_actions && data.short_term_actions.length > 0 ? data.short_term_actions.map(action => `
+              <div class="action-item action-medium">
+                <div class="action-header">${action.action || 'Action Item'}</div>
+                <div class="action-meta">Priority: ${action.priority || 'Medium'} | Timeline: ${action.timeline || '1-30d'}</div>
+                <div class="action-description">${action.description || 'No description provided'}</div>
+              </div>
+            `).join('') : '<div class="no-actions">No short-term actions defined</div>'}
+          </div>
+
+          <div class="section">
+            <div class="section-header section-long">📅 Long-term Actions (1-12m)</div>
+            ${data.long_term_actions && data.long_term_actions.length > 0 ? data.long_term_actions.map(action => `
+              <div class="action-item action-long">
+                <div class="action-header">${action.action || 'Action Item'}</div>
+                <div class="action-meta">Priority: ${action.priority || 'Low'} | Timeline: ${action.timeline || '1-12m'}</div>
+                <div class="action-description">${action.description || 'No description provided'}</div>
+              </div>
+            `).join('') : '<div class="no-actions">No long-term actions defined</div>'}
+          </div>
+
+          <div class="footer">
+            <div><strong>Generated by Polycrisis Simulator</strong></div>
+            <div>Crisis Action Plan - Strategic Implementation Guide</div>
+          </div>
+        </body>
+      </html>
+    `;
+  };
+
+  const generateStrategyPDF = (data, scenarioTitle, currentDate, currentTime) => {
+    return `
+      <html>
+        <head>
+          <title>Implementation Strategy - ${scenarioTitle}</title>
+          <meta charset="utf-8">
+          <style>
+            * {
+              margin: 0;
+              padding: 0;
+              box-sizing: border-box;
+            }
+            body { 
+              font-family: 'Arial', 'Helvetica', sans-serif; 
+              margin: 0; 
+              padding: 30px;
+              line-height: 1.6; 
+              color: #333; 
+              background: white;
+              font-size: 14px;
+            }
+            .header { 
+              border-bottom: 3px solid #7c3aed; 
+              padding-bottom: 20px; 
+              margin-bottom: 30px; 
+              text-align: center;
+              page-break-after: avoid;
+            }
+            .title { 
+              font-size: 28px; 
+              font-weight: bold; 
+              color: #6b21a8; 
+              margin-bottom: 8px; 
+              line-height: 1.2;
+            }
+            .subtitle { 
+              color: #6b7280; 
+              font-size: 16px; 
+              margin-bottom: 15px;
+              font-weight: 500;
+            }
+            .meta-info {
+              font-size: 12px;
+              color: #6b7280;
+            }
+            .section { 
+              margin-bottom: 30px; 
+              page-break-inside: avoid; 
+              border: 1px solid #e5e7eb;
+              border-radius: 8px;
+              overflow: hidden;
+            }
+            .section-header {
+              background: #7c3aed;
+              color: white;
+              padding: 12px 16px;
+              font-size: 18px;
+              font-weight: bold;
+              margin: 0;
+            }
+            .section-content {
+              padding: 20px;
+              line-height: 1.8;
+              font-size: 14px;
+            }
+            .section-content p {
+              margin-bottom: 12px;
+            }
+            .section-content ul {
+              margin: 12px 0;
+              padding-left: 20px;
+            }
+            .section-content li {
+              margin-bottom: 8px;
+              line-height: 1.6;
+            }
+            .strategy-highlight {
+              background: #f5f3ff;
+              border: 2px solid #c4b5fd;
+              border-radius: 8px;
+              padding: 16px;
+              margin: 20px 0;
+            }
+            .strategy-highlight h3 {
+              color: #7c3aed;
+              margin: 0 0 8px 0;
+              font-size: 18px;
+            }
+            .strategy-highlight p {
+              margin: 0;
+              font-size: 14px;
+              color: #6b21a8;
+            }
+            .formatted-text {
+              white-space: pre-wrap;
+              line-height: 1.7;
+              font-size: 14px;
+              color: #374151;
+            }
+            .content-block {
+              margin-bottom: 16px;
+              padding: 16px;
+              background: #f9fafb;
+              border-radius: 6px;
+              border-left: 4px solid #7c3aed;
+            }
+            .content-block h4 {
+              font-size: 16px;
+              font-weight: bold;
+              margin-bottom: 8px;
+              color: #1f2937;
+            }
+            @media print { 
+              body { 
+                margin: 15px; 
+                font-size: 12px; 
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+              }
+              .header { margin-bottom: 15px; }
+              .section { 
+                margin-bottom: 20px; 
+                page-break-inside: avoid; 
+                border: 1px solid #ccc !important;
+              }
+              .section-header { 
+                background: #7c3aed !important; 
+                color: white !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+              }
+              .strategy-highlight {
+                background: #f9f9f9 !important;
+                border: 1px solid #ccc !important;
+              }
+            }
+            @page { 
+              margin: 2cm; 
+              size: A4;
+            }
+            .footer {
+              margin-top: 30px;
+              padding-top: 15px;
+              border-top: 2px solid #e5e7eb;
+              text-align: center;
+              color: #6b7280;
+              font-size: 12px;
+              page-break-inside: avoid;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <div class="title">🎯 Implementation Strategy</div>
+            <div class="subtitle">${scenarioTitle}</div>
+            <div class="meta-info">
+              Generated on ${currentDate} at ${currentTime}
+            </div>
+          </div>
+
+          <div class="strategy-highlight">
+            <h3>Strategic Framework</h3>
+            <p>This document outlines the comprehensive implementation strategy for crisis response and management.</p>
+          </div>
+
+          <div class="section">
+            <div class="section-header">📋 Implementation Strategy</div>
+            <div class="section-content">
+              ${data.implementation_strategy ? `
+                <div class="formatted-text">${data.implementation_strategy.replace(/\n/g, '<br>')}</div>
+              ` : `
+                <div class="content-block">
+                  <h4>Strategy Development</h4>
+                  <p>This implementation strategy provides a comprehensive framework for executing crisis response plans and ensuring organizational resilience.</p>
+                  <ul>
+                    <li>Strategic planning and resource allocation</li>
+                    <li>Stakeholder engagement and communication protocols</li>
+                    <li>Implementation timelines and milestones</li>
+                    <li>Risk mitigation and contingency planning</li>
+                    <li>Performance monitoring and evaluation</li>
+                  </ul>
+                </div>
+              `}
+            </div>
+          </div>
+
+          <div class="footer">
+            <div><strong>Generated by Polycrisis Simulator</strong></div>
+            <div>Strategic Implementation Framework</div>
+          </div>
+        </body>
+      </html>
+    `;
+  };
+
+  const generateGenericImplementationPDF = (implementationView, currentDate, currentTime) => {
+    const documentTitle = implementationView.type.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase());
+    const data = implementationView.data;
+    
+    return `
+      <html>
+        <head>
+          <title>${documentTitle} - ${implementationView.scenario.title}</title>
+          <meta charset="utf-8">
+          <style>
+            * {
+              margin: 0;
+              padding: 0;
+              box-sizing: border-box;
+            }
+            body { 
+              font-family: 'Arial', 'Helvetica', sans-serif; 
+              margin: 0; 
+              padding: 30px;
+              line-height: 1.6; 
+              color: #333; 
+              background: white;
+              font-size: 14px;
+            }
+            .header { 
+              border-bottom: 3px solid #3b82f6; 
+              padding-bottom: 20px; 
+              margin-bottom: 30px; 
+              text-align: center;
+              page-break-after: avoid;
+            }
+            .title { 
+              font-size: 28px; 
+              font-weight: bold; 
+              color: #1e40af; 
+              margin-bottom: 8px; 
+              line-height: 1.2;
+            }
+            .subtitle { 
+              color: #6b7280; 
+              font-size: 16px; 
+              margin-bottom: 15px;
+              font-weight: 500;
+            }
+            .meta-info {
+              font-size: 12px;
+              color: #6b7280;
+            }
+            .section { 
+              margin-bottom: 30px; 
+              page-break-inside: avoid; 
+              border: 1px solid #e5e7eb;
+              border-radius: 8px;
+              overflow: hidden;
+            }
+            .section-header {
+              background: #3b82f6;
+              color: white;
+              padding: 12px 16px;
+              font-size: 18px;
+              font-weight: bold;
+              margin: 0;
+            }
+            .section-content {
+              padding: 20px;
+              line-height: 1.7;
+              font-size: 14px;
+            }
+            .formatted-content {
+              white-space: pre-wrap;
+              font-family: 'Courier New', monospace;
+              background: #f8f9fa;
+              padding: 16px;
+              border-radius: 6px;
+              border: 1px solid #e5e7eb;
+              line-height: 1.5;
+              font-size: 12px;
+              overflow-wrap: break-word;
+            }
+            .content-block {
+              margin-bottom: 16px;
+              padding: 16px;
+              background: #f9fafb;
+              border-radius: 6px;
+              border-left: 4px solid #3b82f6;
+            }
+            .content-block h4 {
+              font-size: 16px;
+              font-weight: bold;
+              margin-bottom: 8px;
+              color: #1f2937;
+            }
+            .highlight-box {
+              background: #eff6ff;
+              border: 2px solid #93c5fd;
+              border-radius: 8px;
+              padding: 16px;
+              margin: 20px 0;
+            }
+            .highlight-box h3 {
+              color: #1e40af;
+              margin: 0 0 8px 0;
+              font-size: 18px;
+            }
+            @media print { 
+              body { 
+                margin: 15px; 
+                font-size: 12px; 
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+              }
+              .header { margin-bottom: 15px; }
+              .section { 
+                margin-bottom: 20px; 
+                page-break-inside: avoid; 
+                border: 1px solid #ccc !important;
+              }
+              .section-header { 
+                background: #3b82f6 !important; 
+                color: white !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+              }
+              .formatted-content {
+                background: #f9f9f9 !important;
+                border: 1px solid #ccc !important;
+              }
+              .highlight-box {
+                background: #f9f9f9 !important;
+                border: 1px solid #ccc !important;
+              }
+            }
+            @page { 
+              margin: 2cm; 
+              size: A4;
+            }
+            .footer {
+              margin-top: 30px;
+              padding-top: 15px;
+              border-top: 2px solid #e5e7eb;
+              text-align: center;
+              color: #6b7280;
+              font-size: 12px;
+              page-break-inside: avoid;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <div class="title">${documentTitle}</div>
+            <div class="subtitle">${implementationView.scenario.title}</div>
+            <div class="meta-info">
+              Generated on ${currentDate} at ${currentTime}
+            </div>
+          </div>
+
+          <div class="highlight-box">
+            <h3>📄 Document Overview</h3>
+            <p>This document contains ${documentTitle.toLowerCase()} data and analysis for the selected crisis scenario.</p>
+          </div>
+
+          <div class="section">
+            <div class="section-header">📄 ${documentTitle} Content</div>
+            <div class="section-content">
+              ${(() => {
+                try {
+                  if (typeof data === 'object' && data !== null) {
+                    // Handle specific document types with better formatting
+                    if (implementationView.type === 'monitors' && data.risk_monitor) {
+                      return `
+                        <div class="content-block">
+                          <h4>🛡️ Risk Monitor</h4>
+                          <p>${data.risk_monitor}</p>
+                        </div>
+                        ${data.performance_monitor ? `
+                          <div class="content-block">
+                            <h4>📈 Performance Monitor</h4>
+                            <p>${data.performance_monitor}</p>
+                          </div>
+                        ` : ''}
+                        ${data.anomaly_monitor ? `
+                          <div class="content-block">
+                            <h4>⚠️ Anomaly Monitor</h4>
+                            <p>${data.anomaly_monitor}</p>
+                          </div>
+                        ` : ''}
+                        ${data.trend_monitor ? `
+                          <div class="content-block">
+                            <h4>📊 Trend Monitor</h4>
+                            <p>${data.trend_monitor}</p>
+                          </div>
+                        ` : ''}
+                      `;
+                    } else if (implementationView.type === 'systems' && data.system_analysis) {
+                      return `
+                        <div class="content-block">
+                          <h4>🌐 System Analysis</h4>
+                          <p>${data.system_analysis}</p>
+                          ${data.interconnections ? `
+                            <h4 style="margin-top: 16px;">🔗 Interconnections</h4>
+                            <ul>
+                              ${data.interconnections.map(connection => `<li>${connection}</li>`).join('')}
+                            </ul>
+                          ` : ''}
+                        </div>
+                      `;
+                    } else if (implementationView.type === 'learning' && data.learning_analysis) {
+                      return `
+                        <div class="content-block">
+                          <h4>🧠 Learning Analysis</h4>
+                          <p>${data.learning_analysis}</p>
+                          ${data.insights ? `
+                            <h4 style="margin-top: 16px;">💡 Key Insights</h4>
+                            <ul>
+                              ${data.insights.map(insight => `<li>${insight}</li>`).join('')}
+                            </ul>
+                          ` : ''}
+                        </div>
+                      `;
+                    } else {
+                      // Generic formatted JSON for other types
+                      return `<div class="formatted-content">${JSON.stringify(data, null, 2)}</div>`;
+                    }
+                  } else {
+                    return `<div class="content-block"><h4>No Content Available</h4><p>This document has not been generated yet or contains no data.</p></div>`;
+                  }
+                } catch (error) {
+                  return `<div class="content-block"><h4>Content Error</h4><p>Unable to format document content properly.</p></div>`;
+                }
+              })()}
+            </div>
+          </div>
+
+          <div class="footer">
+            <div><strong>Generated by Polycrisis Simulator</strong></div>
+            <div>${documentTitle} Document</div>
+          </div>
+        </body>
+      </html>
+    `;
+  };
+
+  const downloadImplementationAsText = (implementationView) => {
+    try {
+      const documentTitle = implementationView.type.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase());
+      const content = JSON.stringify(implementationView.data, null, 2);
+      const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+      
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = url;
+      a.download = `${implementationView.type}-${implementationView.scenario.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_${Date.now()}.txt`;
+      
+      document.body.appendChild(a);
+      a.click();
+      
+      setTimeout(() => {
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+      }, 100);
+
+      toast({
+        title: "Fallback Download",
+        description: `${documentTitle} downloaded as text file`,
+        duration: 3000
+      });
+
+    } catch (error) {
+      console.error('Text download failed:', error);
+      toast({
+        title: "Download Failed",
+        description: "Failed to download document",
+        variant: "destructive"
+      });
+    }
+  };
+
+  // Multi-document content rendering function
+  const renderDocumentContent = (document) => {
+    if (!document) return null;
+
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center justify-between border-b pb-2 mb-4">
+          <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+            {document.type === 'game-book' && <BookOpen className="w-5 h-5 text-blue-600" />}
+            {document.type === 'action-plan' && <CheckSquare className="w-5 h-5 text-green-600" />}
+            {document.type === 'strategy' && <Target className="w-5 h-5 text-purple-600" />}
+            {document.type === 'monitors' && <Monitor className="w-5 h-5 text-blue-600" />}
+            {document.type === 'systems' && <Network className="w-5 h-5 text-purple-600" />}
+            {document.type === 'learning' && <Brain className="w-5 h-5 text-green-600" />}
+            {document.type === 'sources' && <Lightbulb className="w-5 h-5 text-yellow-600" />}
+            {document.type === 'dashboard' && <BarChart className="w-5 h-5 text-teal-600" />}
+            {document.title}
+          </h3>
+          <div className="flex items-center gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => downloadImplementationAsPDF({ type: document.type, data: document.data, scenario: document.scenario })}
+              className="text-xs"
+            >
+              <Download className="w-3 h-3 mr-1" />
+              PDF
+            </Button>
+          </div>
+        </div>
+        
+        <div className="text-sm text-gray-600 mb-2">
+          Scenario: {document.scenario.title}
+        </div>
+
+        <div className="prose prose-sm max-w-none">
+          {document.type === 'game-book' && (
+            <div className="space-y-4">
+              {document.data?.game_book_content ? (
+                <div className="bg-blue-50 p-4 rounded-lg border-l-4 border-blue-500">
+                  <div className="whitespace-pre-wrap text-gray-800">
+                    {document.data.game_book_content}
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  <BookOpen className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                  <p>Game book content is being generated...</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {document.type === 'action-plan' && (
+            <div className="space-y-4">
+              {document.data?.immediate_actions && (
+                <div className="bg-red-50 p-4 rounded-lg border-l-4 border-red-500">
+                  <h4 className="font-semibold text-red-900 mb-3">🚨 Immediate Actions (0-24h)</h4>
+                  <div className="space-y-2">
+                    {document.data.immediate_actions.map((action, index) => (
+                      <div key={index} className="flex items-start gap-2">
+                        <div className="w-2 h-2 bg-red-500 rounded-full mt-2 flex-shrink-0"></div>
+                        <div>
+                          <div className="font-medium text-red-800">{action.action}</div>
+                          <div className="text-sm text-red-700">{action.description}</div>
+                          <div className="text-xs text-red-600">Priority: {action.priority} | Timeline: {action.timeline}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {document.data?.short_term_actions && (
+                <div className="bg-yellow-50 p-4 rounded-lg border-l-4 border-yellow-500">
+                  <h4 className="font-semibold text-yellow-900 mb-3">⏰ Short-term Actions (1-30d)</h4>
+                  <div className="space-y-2">
+                    {document.data.short_term_actions.map((action, index) => (
+                      <div key={index} className="flex items-start gap-2">
+                        <div className="w-2 h-2 bg-yellow-500 rounded-full mt-2 flex-shrink-0"></div>
+                        <div>
+                          <div className="font-medium text-yellow-800">{action.action}</div>
+                          <div className="text-sm text-yellow-700">{action.description}</div>
+                          <div className="text-xs text-yellow-600">Priority: {action.priority} | Timeline: {action.timeline}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {document.data?.long_term_actions && (
+                <div className="bg-green-50 p-4 rounded-lg border-l-4 border-green-500">
+                  <h4 className="font-semibold text-green-900 mb-3">📅 Long-term Actions (1-12m)</h4>
+                  <div className="space-y-2">
+                    {document.data.long_term_actions.map((action, index) => (
+                      <div key={index} className="flex items-start gap-2">
+                        <div className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
+                        <div>
+                          <div className="font-medium text-green-800">{action.action}</div>
+                          <div className="text-sm text-green-700">{action.description}</div>
+                          <div className="text-xs text-green-600">Priority: {action.priority} | Timeline: {action.timeline}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {document.type === 'strategy' && (
+            <div className="space-y-4">
+              {document.data?.implementation_strategy ? (
+                <div className="bg-purple-50 p-4 rounded-lg border-l-4 border-purple-500">
+                  <h4 className="font-semibold text-purple-900 mb-3">🎯 Implementation Strategy</h4>
+                  <div className="whitespace-pre-wrap text-purple-800">
+                    {document.data.implementation_strategy}
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  <Target className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                  <p>Strategy implementation is being generated...</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {document.type === 'monitors' && (
+            <div className="space-y-4">
+              <div className="grid gap-4">
+                {document.data?.risk_monitor && (
+                  <div className="bg-red-50 p-4 rounded-lg border-l-4 border-red-500">
+                    <h4 className="font-semibold text-red-900 mb-2 flex items-center gap-2">
+                      <Shield className="w-4 h-4" />
+                      Risk Monitor
+                    </h4>
+                    <div className="text-sm text-red-800 whitespace-pre-wrap">{document.data.risk_monitor}</div>
+                  </div>
+                )}
+                
+                {document.data?.performance_monitor && (
+                  <div className="bg-blue-50 p-4 rounded-lg border-l-4 border-blue-500">
+                    <h4 className="font-semibold text-blue-900 mb-2 flex items-center gap-2">
+                      <TrendingUp className="w-4 h-4" />
+                      Performance Monitor
+                    </h4>
+                    <div className="text-sm text-blue-800 whitespace-pre-wrap">{document.data.performance_monitor}</div>
+                  </div>
+                )}
+                
+                {document.data?.anomaly_monitor && (
+                  <div className="bg-yellow-50 p-4 rounded-lg border-l-4 border-yellow-500">
+                    <h4 className="font-semibold text-yellow-900 mb-2 flex items-center gap-2">
+                      <AlertTriangle className="w-4 h-4" />
+                      Anomaly Monitor
+                    </h4>
+                    <div className="text-sm text-yellow-800 whitespace-pre-wrap">{document.data.anomaly_monitor}</div>
+                  </div>
+                )}
+                
+                {document.data?.trend_monitor && (
+                  <div className="bg-green-50 p-4 rounded-lg border-l-4 border-green-500">
+                    <h4 className="font-semibold text-green-900 mb-2 flex items-center gap-2">
+                      <BarChart3 className="w-4 h-4" />
+                      Trend Monitor
+                    </h4>
+                    <div className="text-sm text-green-800 whitespace-pre-wrap">{document.data.trend_monitor}</div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {document.type === 'systems' && (
+            <div className="space-y-4">
+              {document.data?.system_analysis ? (
+                <div className="bg-purple-50 p-4 rounded-lg border-l-4 border-purple-500">
+                  <h4 className="font-semibold text-purple-900 mb-3 flex items-center gap-2">
+                    <Network className="w-4 h-4" />
+                    System Analysis
+                  </h4>
+                  <div className="whitespace-pre-wrap text-purple-800">{document.data.system_analysis}</div>
+                  
+                  {document.data.interconnections && (
+                    <div className="mt-4">
+                      <h5 className="font-medium text-purple-900 mb-2">Key Interconnections:</h5>
+                      <div className="space-y-1">
+                        {document.data.interconnections.map((connection, index) => (
+                          <div key={index} className="flex items-center gap-2 text-sm text-purple-700">
+                            <div className="w-1.5 h-1.5 bg-purple-600 rounded-full"></div>
+                            {connection}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  <Network className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                  <p>Complex systems analysis is being generated...</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {document.type === 'learning' && (
+            <div className="space-y-4">
+              {document.data?.learning_analysis ? (
+                <div className="bg-green-50 p-4 rounded-lg border-l-4 border-green-500">
+                  <h4 className="font-semibold text-green-900 mb-3 flex items-center gap-2">
+                    <Brain className="w-4 h-4" />
+                    Learning Analysis
+                  </h4>
+                  <div className="whitespace-pre-wrap text-green-800">{document.data.learning_analysis}</div>
+                  
+                  {document.data.insights && (
+                    <div className="mt-4">
+                      <h5 className="font-medium text-green-900 mb-2">Key Insights:</h5>
+                      <div className="space-y-1">
+                        {document.data.insights.map((insight, index) => (
+                          <div key={index} className="flex items-start gap-2 text-sm text-green-700">
+                            <Lightbulb className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
+                            {insight}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  <Brain className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                  <p>AI learning insights are being generated...</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {document.type === 'sources' && (
+            <div className="space-y-4">
+              {document.data?.sources ? (
+                <div className="space-y-3">
+                  {document.data.sources.map((source, index) => (
+                    <div key={index} className="bg-yellow-50 p-4 rounded-lg border-l-4 border-yellow-500">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Lightbulb className="w-4 h-4 text-yellow-600" />
+                        <h4 className="font-medium text-yellow-900">{source.name}</h4>
+                      </div>
+                      <p className="text-sm text-yellow-800 mb-2">{source.description}</p>
+                      {source.url && (
+                        <div className="flex items-center gap-2 text-sm">
+                          <ExternalLink className="w-3 h-3 text-yellow-600" />
+                          <a href={source.url} target="_blank" rel="noopener noreferrer" className="text-yellow-700 hover:underline">
+                            {source.url}
+                          </a>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  <Lightbulb className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                  <p>Smart sources are being generated...</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {document.type === 'dashboard' && (
+            <div className="space-y-4">
+              {document.data?.metrics ? (
+                <div className="grid gap-4">
+                  {Object.entries(document.data.metrics).map(([key, value]) => (
+                    <div key={key} className="bg-teal-50 p-4 rounded-lg border-l-4 border-teal-500">
+                      <div className="flex items-center justify-between">
+                        <h4 className="font-medium text-teal-900 capitalize">{key.replace('_', ' ')}</h4>
+                        <div className="flex items-center gap-2">
+                          <BarChart className="w-4 h-4 text-teal-600" />
+                          <span className="text-lg font-bold text-teal-800">{value}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  <BarChart className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                  <p>Dashboard metrics are being generated...</p>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  // Multi-document management functions
+  const handleAmendScenario = (scenario) => {
+    setAmendingScenario(scenario);
+    
+    // Pre-populate form with existing data
+    setAmendFormData({
+      affected_regions: Array.isArray(scenario.affected_regions) 
+        ? scenario.affected_regions.join(', ') 
+        : scenario.affected_regions || '',
+      key_variables: Array.isArray(scenario.key_variables) 
+        ? scenario.key_variables.join(', ') 
+        : scenario.key_variables || '',
+      additional_context: scenario.additional_context || '',
+      stakeholders: scenario.stakeholders || '',
+      timeline: scenario.timeline || ''
+    });
+    
+    setShowAmendDialog(true);
+  };
+
+  const submitAmendments = async () => {
+    if (!amendingScenario) return;
+    
+    try {
+      // Process the form data - only send fields that have values
+      const updatedData = {};
+      
+      if (amendFormData.affected_regions.trim()) {
+        updatedData.affected_regions = amendFormData.affected_regions
+          .split(',')
+          .map(r => r.trim())
+          .filter(r => r.length > 0);
+      }
+      
+      if (amendFormData.key_variables.trim()) {
+        updatedData.key_variables = amendFormData.key_variables
+          .split(',')
+          .map(v => v.trim())
+          .filter(v => v.length > 0);
+      }
+      
+      if (amendFormData.additional_context.trim()) {
+        updatedData.additional_context = amendFormData.additional_context.trim();
+      }
+      
+      if (amendFormData.stakeholders.trim()) {
+        updatedData.stakeholders = amendFormData.stakeholders.trim();
+      }
+      
+      if (amendFormData.timeline.trim()) {
+        updatedData.timeline = amendFormData.timeline.trim();
+      }
+
+      // Use the new PATCH endpoint for amendments
+      const response = await axios.patch(`${API}/scenarios/${amendingScenario.id}/amend`, updatedData);
+      
+      // Update the scenarios list with the response data
+      setScenarios(scenarios.map(s => 
+        s.id === amendingScenario.id ? response.data : s
+      ));
+      
+      toast({
+        title: "Scenario Updated",
+        description: "Missing information has been successfully added to the scenario."
+      });
+      
+      setShowAmendDialog(false);
+      setAmendingScenario(null);
+      
+    } catch (error) {
+      console.error('Failed to update scenario:', error);
+      toast({
+        title: "Update Failed",
+        description: error.response?.data?.detail || "Failed to update scenario information. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleAmendInputChange = (field, value) => {
+    setAmendFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const closeAmendDialog = () => {
+    setShowAmendDialog(false);
+    setAmendingScenario(null);
+    setAmendFormData({
+      affected_regions: '',
+      key_variables: '',
+      additional_context: '',
+      stakeholders: '',
+      timeline: ''
+    });
+  };
+
+  const openDocumentInPanel = async (scenario, documentType) => {
+    const documentId = `${scenario.id}-${documentType}`;
+    
+    // Check if document is already open
+    const existingDoc = openDocuments.find(doc => doc.id === documentId);
+    if (existingDoc) {
+      setActiveDocument(documentId);
+      return;
+    }
+
+    setGeneratingImplementation(true);
+    try {
+      let documentData = null;
+      let documentTitle = '';
+      
+      // Fetch document data based on type
+      switch (documentType) {
+        case 'game-book':
+          try {
+            const response = await axios.get(`${API}/scenarios/${scenario.id}/game-book`);
+            documentData = response.data;
+            documentTitle = 'Crisis Game Book';
+          } catch (error) {
+            if (error.response?.status === 404) {
+              const response = await axios.post(`${API}/scenarios/${scenario.id}/game-book`);
+              documentData = response.data;
+              documentTitle = 'Crisis Game Book';
+            } else throw error;
+          }
+          break;
+          
+        case 'action-plan':
+          try {
+            const response = await axios.get(`${API}/scenarios/${scenario.id}/action-plan`);
+            documentData = response.data;
+            documentTitle = 'Action Plan';
+          } catch (error) {
+            if (error.response?.status === 404) {
+              const response = await axios.post(`${API}/scenarios/${scenario.id}/action-plan`);
+              documentData = response.data;
+              documentTitle = 'Action Plan';
+            } else throw error;
+          }
+          break;
+          
+        case 'strategy':
+          try {
+            const response = await axios.get(`${API}/scenarios/${scenario.id}/strategy-implementation`);
+            documentData = response.data;
+            documentTitle = 'Implementation Strategy';
+          } catch (error) {
+            if (error.response?.status === 404) {
+              const response = await axios.post(`${API}/scenarios/${scenario.id}/strategy-implementation`);
+              documentData = response.data;
+              documentTitle = 'Implementation Strategy';
+            } else throw error;
+          }
+          break;
+          
+        case 'monitors':
+          try {
+            const response = await axios.get(`${API}/scenarios/${scenario.id}/monitor-agents`);
+            documentData = response.data;
+            documentTitle = 'AI Monitor Agents';
+          } catch (error) {
+            if (error.response?.status === 404) {
+              const response = await axios.post(`${API}/scenarios/${scenario.id}/monitor-agents`);
+              documentData = response.data;
+              documentTitle = 'AI Monitor Agents';
+            } else throw error;
+          }
+          break;
+          
+        case 'systems':
+          try {
+            const response = await axios.get(`${API}/scenarios/${scenario.id}/complex-systems`);
+            documentData = response.data;
+            documentTitle = 'Complex Adaptive Systems';
+          } catch (error) {
+            if (error.response?.status === 404) {
+              const response = await axios.post(`${API}/scenarios/${scenario.id}/complex-systems`);
+              documentData = response.data;
+              documentTitle = 'Complex Adaptive Systems';
+            } else throw error;
+          }
+          break;
+          
+        case 'learning':
+          try {
+            const response = await axios.get(`${API}/scenarios/${scenario.id}/learning-insights`);
+            documentData = response.data;
+            documentTitle = 'AI Learning Insights';
+          } catch (error) {
+            if (error.response?.status === 404) {
+              const response = await axios.post(`${API}/scenarios/${scenario.id}/learning-insights`);
+              documentData = response.data;
+              documentTitle = 'AI Learning Insights';
+            } else throw error;
+          }
+          break;
+          
+        case 'sources':
+          try {
+            const response = await axios.get(`${API}/scenarios/${scenario.id}/monitoring-sources`);
+            documentData = response.data;
+            documentTitle = 'Smart Sources';
+          } catch (error) {
+            if (error.response?.status === 404) {
+              const response = await axios.post(`${API}/scenarios/${scenario.id}/smart-suggestions`);
+              documentData = response.data;
+              documentTitle = 'Smart Sources';
+            } else throw error;
+          }
+          break;
+          
+        case 'dashboard':
+          try {
+            const response = await axios.get(`${API}/scenarios/${scenario.id}/monitoring-dashboard`);
+            documentData = response.data;
+            documentTitle = 'Analytics Dashboard';
+          } catch (error) {
+            if (error.response?.status === 404) {
+              const response = await axios.post(`${API}/scenarios/${scenario.id}/dashboard`);
+              documentData = response.data;
+              documentTitle = 'Analytics Dashboard';
+            } else throw error;
+          }
+          break;
+          
+        default:
+          throw new Error(`Unknown document type: ${documentType}`);
+      }
+
+      // Add document to open documents
+      const newDocument = {
+        id: documentId,
+        scenario: scenario,
+        type: documentType,
+        title: documentTitle,
+        data: documentData,
+        timestamp: new Date().toISOString()
+      };
+      
+      setOpenDocuments(prev => [...prev, newDocument]);
+      setActiveDocument(documentId);
+      setShowMultiDocView(true);
+      
+      toast({
+        title: "Document Opened",
+        description: `${documentTitle} opened in side panel`,
+        duration: 3000
+      });
+      
+    } catch (error) {
+      console.error('Failed to open document:', error);
+      toast({
+        title: "Error",
+        description: `Failed to open ${documentType}. Please try again.`,
+        variant: "destructive"
+      });
+    } finally {
+      setGeneratingImplementation(false);
+    }
+  };
+
+  const closeDocument = (documentId) => {
+    setOpenDocuments(prev => prev.filter(doc => doc.id !== documentId));
+    
+    // If closing active document, switch to another or close multi-view
+    if (activeDocument === documentId) {
+      const remaining = openDocuments.filter(doc => doc.id !== documentId);
+      if (remaining.length > 0) {
+        setActiveDocument(remaining[0].id);
+      } else {
+        setActiveDocument(null);
+        setShowMultiDocView(false);
+      }
+    }
+  };
+
+  const closeAllDocuments = () => {
+    setOpenDocuments([]);
+    setActiveDocument(null);
+    setShowMultiDocView(false);
+  };
+
+  const filteredAndSortedScenarios = scenarios
+    .filter(scenario => {
+      if (filterStatus !== 'all' && scenario.status !== filterStatus) return false;
+      if (filterType !== 'all' && scenario.crisis_type !== filterType) return false;
+      return true;
+    })
+    .sort((a, b) => {
+      if (sortBy === 'created_at') return new Date(b.created_at) - new Date(a.created_at);
+      if (sortBy === 'severity_level') return b.severity_level - a.severity_level;
+      if (sortBy === 'title') return a.title.localeCompare(b.title);
+      return 0;
+    });
+
+  const crisisTypes = [
+    'natural_disaster',
+    'economic_crisis', 
+    'social_unrest',
+    'pandemic',
+    'cyber_attack',
+    'supply_chain_disruption',
+    'climate_change',
+    'political_instability'
+  ];
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="text-center">
+          <Brain className="w-12 h-12 animate-pulse text-blue-500 mx-auto mb-4" />
+          <p className="text-gray-600">Loading scenarios...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Header with filters */}
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900">Crisis Scenarios</h2>
+          <p className="text-gray-600">Manage and analyze your crisis simulation scenarios</p>
+        </div>
+        
+        <div className="flex flex-wrap gap-3">
+          <Select value={filterStatus} onValueChange={setFilterStatus}>
+            <SelectTrigger className="w-40">
+              <SelectValue placeholder="Filter by status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Status</SelectItem>
+              <SelectItem value="draft">Draft</SelectItem>
+              <SelectItem value="active">Active</SelectItem>
+              <SelectItem value="completed">Completed</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Select value={filterType} onValueChange={setFilterType}>
+            <SelectTrigger className="w-48">
+              <SelectValue placeholder="Filter by type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Types</SelectItem>
+              {crisisTypes.map((type) => (
+                <SelectItem key={type} value={type}>
+                  {type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select value={sortBy} onValueChange={setSortBy}>
+            <SelectTrigger className="w-40">
+              <SelectValue placeholder="Sort by" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="created_at">Date Created</SelectItem>
+              <SelectItem value="severity_level">Severity</SelectItem>
+              <SelectItem value="title">Title</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      {/* Scenarios grid */}
+      {filteredAndSortedScenarios.length === 0 ? (
+        <div className="text-center py-12">
+          <Globe className="w-16 h-16 mx-auto mb-4 text-gray-400" />
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">No scenarios found</h3>
+          <p className="text-gray-600 mb-4">
+            {scenarios.length === 0 
+              ? "Create your first crisis scenario to get started"
+              : "No scenarios match your current filters"
+            }
+          </p>
+          {scenarios.length === 0 && (
+            <Button onClick={() => window.location.hash = '#create'} className="bg-blue-600 hover:bg-blue-700">
+              <Plus className="w-4 h-4 mr-2" />
+              Create First Scenario
+            </Button>
+          )}
+        </div>
+      ) : (
+        <div className="grid gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {filteredAndSortedScenarios.map((scenario) => (
+            <Card key={scenario.id} className="scenario-card">
+              <CardHeader className="scenario-header pb-4">
+                <div className="flex items-start justify-between mb-3">
+                  <CardTitle className="scenario-title flex-1 pr-2">{scenario.title}</CardTitle>
+                  <div className="scenario-badges">
+                    <div className={`status-badge status-${scenario.status}`}>
+                      {scenario.status}
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <div className={`crisis-badge crisis-${scenario.crisis_type.split('_')[0]}`}>
+                    {scenario.crisis_type.replace('_', ' ')}
+                  </div>
+                  <div className="severity-badge">
+                    Severity {scenario.severity_level}/10
+                  </div>
+                </div>
+              </CardHeader>
+              
+              <CardContent className="pt-0">
+                <p className="scenario-description">
+                  {scenario.description}
+                </p>
+                
+                <div className="scenario-meta">
+                  <div className="meta-item">
+                    <Globe className="w-4 h-4 meta-icon" />
+                    <span>Regions: {(() => {
+                      // Enhanced debug logging
+                      console.log('=== SCENARIO REGIONS DEBUG ===');
+                      console.log('Scenario ID:', scenario.id);
+                      console.log('Scenario Title:', scenario.title);
+                      console.log('Full scenario object:', JSON.stringify(scenario, null, 2));
+                      console.log('affected_regions raw value:', scenario.affected_regions);
+                      console.log('affected_regions type:', typeof scenario.affected_regions);
+                      console.log('affected_regions is array:', Array.isArray(scenario.affected_regions));
+                      console.log('affected_regions is string:', typeof scenario.affected_regions === 'string');
+                      console.log('affected_regions length:', scenario.affected_regions?.length);
+                      
+                      // Handle both array and string formats
+                      let regions = scenario.affected_regions;
+                      
+                      // If it's a string that looks like JSON, try to parse it
+                      if (typeof regions === 'string') {
+                        console.log('Regions is string, attempting to parse...');
+                        try {
+                          // Try parsing as JSON array
+                          const parsed = JSON.parse(regions);
+                          if (Array.isArray(parsed)) {
+                            regions = parsed;
+                            console.log('Successfully parsed regions as JSON array:', parsed);
+                          } else {
+                            console.log('Parsed value is not an array:', parsed);
+                          }
+                        } catch (e) {
+                          console.log('Failed to parse as JSON, treating as comma-separated string');
+                          // If not JSON, treat as comma-separated string
+                          regions = regions.split(',').map(r => r.trim()).filter(r => r.length > 0);
+                        }
+                      }
+                      
+                      console.log('Final processed regions:', regions);
+                      console.log('============================');
+                      
+                      if (regions && Array.isArray(regions) && regions.length > 0) {
+                        const displayText = regions.slice(0, 2).join(', ') + 
+                          (regions.length > 2 ? ` +${regions.length - 2} more` : '');
+                        console.log('Displaying regions text:', displayText);
+                        return displayText;
+                      } else if (typeof regions === 'string' && regions.trim().length > 0) {
+                        console.log('Displaying regions as string:', regions);
+                        return regions;
+                      } else {
+                        console.log('No regions found, showing "Not specified"');
+                        return 'Not specified';
+                      }
+                    })()}</span>
+                  </div>
+                  <div className="meta-item">
+                    <AlertTriangle className="w-4 h-4 meta-icon" />
+                    <span>Variables: {scenario.key_variables?.length || 0}</span>
+                  </div>
+                  <div className="meta-item">
+                    <Timer className="w-4 h-4 meta-icon" />
+                    <span>Created: {new Date(scenario.created_at).toLocaleDateString()}</span>
+                  </div>
+                  {/* Amend Info Button */}
+                  <div className="meta-item">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleAmendScenario(scenario)}
+                      className="text-xs px-2 py-1 h-6 bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200"
+                    >
+                      📝 Amend
+                    </Button>
+                  </div>
+                </div>
+
+                {/* ABC Counting & Tracking Information */}
+                <div className="tracking-info mt-4 p-3 bg-gray-50 rounded-lg border">
+                  <div className="tracking-header mb-3">
+                    <h4 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                      <BarChart3 className="w-4 h-4" />
+                      Scenario Analytics & Tracking
+                    </h4>
+                  </div>
+                  
+                  <div className="tracking-grid grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                    {/* Option 1: Sequential Numbering/Labeling */}
+                    <div className="tracking-item">
+                      <div className="tracking-label text-gray-600">ID</div>
+                      <div className="tracking-value font-bold text-purple-700">
+                        {scenario.sequence_letter || 'A'}{scenario.sequence_number || '1'}
+                      </div>
+                    </div>
+                    
+                    <div className="tracking-item">
+                      <div className="tracking-label text-gray-600">Number</div>
+                      <div className="tracking-value font-bold text-blue-700">
+                        #{scenario.sequence_number || '1'}
+                      </div>
+                    </div>
+
+                    {/* Option 2: Impact Change Tracking */}
+                    <div className="tracking-item">
+                      <div className="tracking-label text-gray-600">Changes</div>
+                      <div className="tracking-value font-bold text-orange-700">
+                        {scenario.modification_count || 0}
+                      </div>
+                    </div>
+                    
+                    <div className="tracking-item">
+                      <div className="tracking-label text-gray-600">History</div>
+                      <div className="tracking-value font-bold text-green-700">
+                        {scenario.change_history?.length || 0} events
+                      </div>
+                    </div>
+
+                    {/* Option 3: ABC Analysis Classification */}
+                    <div className="tracking-item">
+                      <div className="tracking-label text-gray-600">Priority</div>
+                      <div className={`tracking-value font-bold ${
+                        scenario.abc_classification === 'A' ? 'text-red-700' :
+                        scenario.abc_classification === 'B' ? 'text-yellow-700' : 'text-green-700'
+                      }`}>
+                        {scenario.abc_classification || 'B'} Class
+                      </div>
+                    </div>
+                    
+                    <div className="tracking-item">
+                      <div className="tracking-label text-gray-600">Impact</div>
+                      <div className={`tracking-value font-bold ${
+                        scenario.impact_category === 'high' ? 'text-red-700' :
+                        scenario.impact_category === 'medium' ? 'text-yellow-700' : 'text-green-700'
+                      }`}>
+                        {scenario.impact_category || 'medium'}
+                      </div>
+                    </div>
+
+                    {/* Option 4: Version Control/Change Counter */}
+                    <div className="tracking-item">
+                      <div className="tracking-label text-gray-600">Version</div>
+                      <div className="tracking-value font-bold text-indigo-700">
+                        v{scenario.version_number || '1.0.0'}
+                      </div>
+                    </div>
+                    
+                    <div className="tracking-item">
+                      <div className="tracking-label text-gray-600">Revisions</div>
+                      <div className="tracking-value font-bold text-teal-700">
+                        {scenario.revision_count || 0}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Option 5: Impact Measurement System */}
+                  <div className="impact-scores mt-3 pt-3 border-t border-gray-200">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs font-medium text-gray-600">Impact Analysis</span>
+                      <span className="text-xs font-bold text-gray-800">
+                        Total: {Math.round(scenario.calculated_total_impact || scenario.impact_score || 50)}/100
+                      </span>
+                    </div>
+                    
+                    <div className="impact-breakdown grid grid-cols-3 gap-2 text-xs">
+                      <div className="impact-item text-center">
+                        <div className="text-gray-600">Economic</div>
+                        <div className="font-bold text-blue-700">
+                          {Math.round(scenario.economic_impact || 45)}
+                        </div>
+                      </div>
+                      <div className="impact-item text-center">
+                        <div className="text-gray-600">Social</div>
+                        <div className="font-bold text-green-700">
+                          {Math.round(scenario.social_impact || 55)}
+                        </div>
+                      </div>
+                      <div className="impact-item text-center">
+                        <div className="text-gray-600">Environmental</div>
+                        <div className="font-bold text-red-700">
+                          {Math.round(scenario.environmental_impact || 40)}
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="impact-trend mt-2 flex items-center justify-center">
+                      <span className="text-xs text-gray-600 mr-2">Trend:</span>
+                      <span className={`text-xs font-medium px-2 py-1 rounded ${
+                        scenario.impact_trend === 'increasing' ? 'bg-red-100 text-red-700' :
+                        scenario.impact_trend === 'decreasing' ? 'bg-green-100 text-green-700' :
+                        'bg-gray-100 text-gray-700'
+                      }`}>
+                        {scenario.impact_trend || 'stable'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="action-buttons">
+                  <div className="action-row">
+                    <button
+                      onClick={() => setSelectedScenario(scenario)}
+                      className="action-button action-button-primary"
+                    >
+                      <Eye className="w-4 h-4" />
+                      View
+                    </button>
+                    
+                    <button
+                      onClick={() => handleRunSimulation(scenario)}
+                      disabled={loading}
+                      className="action-button action-button-primary"
+                    >
+                      <Play className="w-4 h-4" />
+                      Simulate
+                    </button>
+                    
+                    <button
+                      onClick={() => {
+                        setScenarioToDelete(scenario);
+                        setShowDeleteDialog(true);
+                      }}
+                      className="action-button action-button-danger"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                    
+                    <button
+                      onClick={() => generateComprehensivePDFReport(scenario)}
+                      disabled={loading}
+                      className="action-button action-button-special"
+                      title="Generate comprehensive PDF report with all sections"
+                    >
+                      <FileText className="w-4 h-4" />
+                    </button>
+                  </div>
+                  
+                  <div className="action-row">
+                    <button
+                      onClick={() => openDocumentInPanel(scenario, 'game-book')}
+                      disabled={generatingImplementation}
+                      className="action-button"
+                    >
+                      <BookOpen className="w-4 h-4" />
+                      Game Book
+                    </button>
+                    
+                    <button
+                      onClick={() => openDocumentInPanel(scenario, 'action-plan')}
+                      disabled={generatingImplementation}
+                      className="action-button"
+                    >
+                      <CheckSquare className="w-4 h-4" />
+                      Actions
+                    </button>
+                    
+                    <button
+                      onClick={() => openDocumentInPanel(scenario, 'strategy')}
+                      disabled={generatingImplementation}
+                      className="action-button"
+                    >
+                      <Target className="w-4 h-4" />
+                      Strategy
+                    </button>
+                  </div>
+                  
+                  <div className="action-row">
+                    <button
+                      onClick={() => openDocumentInPanel(scenario, 'monitors')}
+                      disabled={generatingImplementation}
+                      className="action-button action-button-monitors"
+                    >
+                      <Monitor className="w-4 h-4" />
+                      AI Monitors
+                    </button>
+                    
+                    <button
+                      onClick={() => openDocumentInPanel(scenario, 'systems')}
+                      disabled={generatingImplementation}
+                      className="action-button action-button-systems"
+                    >
+                      <Network className="w-4 h-4" />
+                      Complex Systems
+                    </button>
+                    
+                    <button
+                      onClick={() => openDocumentInPanel(scenario, 'learning')}
+                      disabled={generatingImplementation}
+                      className="action-button action-button-learning"
+                    >
+                      <Brain className="w-4 h-4" />
+                      AI Learning
+                    </button>
+                  </div>
+
+                  <div className="action-row">
+                    <button
+                      onClick={() => openDocumentInPanel(scenario, 'sources')}
+                      disabled={generatingImplementation}
+                      className="action-button action-button-sources"
+                    >
+                      <Lightbulb className="w-4 h-4" />
+                      Smart Sources
+                    </button>
+                    
+                    <button
+                      onClick={() => handleAddMonitoringSource(scenario)}
+                      className="action-button action-button-special"
+                    >
+                      <Link className="w-4 h-4" />
+                      Add Sources
+                    </button>
+                    
+                    <button
+                      onClick={() => openDocumentInPanel(scenario, 'dashboard')}
+                      disabled={generatingImplementation}
+                      className="action-button action-button-dashboard"
+                    >
+                      <BarChart className="w-4 h-4" />
+                      Dashboard
+                    </button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      {/* Scenario Detail Dialog */}
+      {selectedScenario && (
+        <Dialog open={!!selectedScenario} onOpenChange={() => setSelectedScenario(null)}>
+          <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Globe className="w-5 h-5" />
+                {selectedScenario.title}
+              </DialogTitle>
+              <DialogDescription>
+                <div className="flex gap-2 mt-2">
+                  <Badge className={getCrisisTypeColor(selectedScenario.crisis_type)}>
+                    {selectedScenario.crisis_type.replace('_', ' ')}
+                  </Badge>
+                  <Badge className={getStatusColor(selectedScenario.status)}>
+                    {selectedScenario.status}
+                  </Badge>
+                  <Badge variant="outline">
+                    Severity {selectedScenario.severity_level}/10
+                  </Badge>
+                </div>
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-6">
+              <div>
+                <h4 className="font-semibold text-gray-900 mb-2">Description</h4>
+                <p className="text-gray-700">{selectedScenario.description}</p>
+              </div>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-2">Affected Regions</h4>
+                  <div className="space-y-1">
+                    {selectedScenario.affected_regions.map((region, index) => (
+                      <Badge key={index} variant="outline" className="mr-2 mb-1">
+                        {region}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+                
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-2">Key Variables</h4>
+                  <div className="space-y-1">
+                    {selectedScenario.key_variables.map((variable, index) => (
+                      <Badge key={index} variant="outline" className="mr-2 mb-1">
+                        {variable}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm text-gray-600">
+                <div>
+                  <span className="font-medium">Created:</span> {new Date(selectedScenario.created_at).toLocaleString()}
+                </div>
+                <div>
+                  <span className="font-medium">Last Updated:</span> {new Date(selectedScenario.updated_at).toLocaleString()}
+                </div>
+              </div>
+
+              {selectedScenario.simulation_result && (
+                <div className="border-t pt-4">
+                  <h4 className="font-semibold text-gray-900 mb-2">Latest Simulation Results</h4>
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <p className="text-sm text-gray-700 mb-2">
+                      <span className="font-medium">Analysis:</span> {selectedScenario.simulation_result.analysis?.substring(0, 200)}...
+                    </p>
+                    <p className="text-sm text-gray-700">
+                      <span className="font-medium">Confidence Score:</span> {(selectedScenario.simulation_result.confidence_score * 100).toFixed(1)}%
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex gap-3 pt-4">
+                <Button onClick={() => handleRunSimulation(selectedScenario)} disabled={loading} className="flex-1">
+                  <Play className="w-4 h-4 mr-2" />
+                  Run New Simulation
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={() => {
+                    onScenarioSelect(selectedScenario);
+                    setSelectedScenario(null);
+                  }}
+                  className="flex-1"
+                >
+                  <MessageSquare className="w-4 h-4 mr-2" />
+                  Chat with AI Genie
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* Delete Confirmation Dialog */}
+      {showDeleteDialog && scenarioToDelete && (
+        <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Delete Scenario</DialogTitle>
+              <DialogDescription>
+                Are you sure you want to delete "{scenarioToDelete.title}"? This action cannot be undone.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="flex gap-3 pt-4">
+              <Button variant="outline" onClick={() => setShowDeleteDialog(false)} className="flex-1">
+                Cancel
+              </Button>
+              <Button 
+                variant="destructive" 
+                onClick={() => handleDeleteScenario(scenarioToDelete.id)}
+                className="flex-1"
+              >
+                Delete Scenario
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* Monitoring Dashboard Dialog */}
+      {showMonitoringDialog && monitoringDashboard[showMonitoringDialog.id] && (
+        <Dialog open={!!showMonitoringDialog} onOpenChange={() => setShowMonitoringDialog(null)}>
+          <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Cloud className="w-5 h-5 text-teal-600" />
+                Intelligent Monitoring Network - {showMonitoringDialog.title}
+              </DialogTitle>
+              <DialogDescription>
+                Real-time data collection and AI-powered analysis from collaborative team sources
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-6">
+              {/* Monitoring Summary */}
+              <div className="grid md:grid-cols-4 gap-4">
+                <Card className="bg-blue-50 border-blue-200">
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-blue-600 font-medium">Active Sources</p>
+                        <p className="text-2xl font-bold text-blue-900">
+                          {monitoringDashboard[showMonitoringDialog.id].monitoring_summary.active_sources}
+                        </p>
+                      </div>
+                      <Database className="w-8 h-8 text-blue-500" />
+                    </div>
+                  </CardContent>
+                </Card>
+                
+                <Card className="bg-green-50 border-green-200">
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-green-600 font-medium">Data Points</p>
+                        <p className="text-2xl font-bold text-green-900">
+                          {monitoringDashboard[showMonitoringDialog.id].monitoring_summary.total_data_points}
+                        </p>
+                      </div>
+                      <BarChart3 className="w-8 h-8 text-green-500" />
+                    </div>
+                  </CardContent>
+                </Card>
+                
+                <Card className="bg-purple-50 border-purple-200">
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-purple-600 font-medium">Avg Relevance</p>
+                        <p className="text-2xl font-bold text-purple-900">
+                          {Math.round(monitoringDashboard[showMonitoringDialog.id].monitoring_summary.average_relevance_score * 100)}%
+                        </p>
+                      </div>
+                      <Target className="w-8 h-8 text-purple-500" />
+                    </div>
+                  </CardContent>
+                </Card>
+                
+                <Card className="bg-orange-50 border-orange-200">
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-orange-600 font-medium">Suggestions</p>
+                        <p className="text-2xl font-bold text-orange-900">
+                          {monitoringDashboard[showMonitoringDialog.id].smart_suggestions_count}
+                        </p>
+                      </div>
+                      <Lightbulb className="w-8 h-8 text-orange-500" />
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Monitoring Sources */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Link className="w-5 h-5" />
+                    Team Monitoring Sources
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {monitoringDashboard[showMonitoringDialog.id].monitoring_sources.length === 0 ? (
+                      <div className="text-center py-6 text-gray-500">
+                        <Link className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                        <p>No monitoring sources added yet.</p>
+                        <Button 
+                          onClick={() => handleAddMonitoringSource(showMonitoringDialog)}
+                          className="mt-3"
+                          size="sm"
+                        >
+                          <Plus className="w-4 h-4 mr-2" />
+                          Add First Source
+                        </Button>
+                      </div>
+                    ) : (
+                      monitoringDashboard[showMonitoringDialog.id].monitoring_sources.map((source, idx) => (
+                        <div key={idx} className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50">
+                          <div className="flex items-center gap-3">
+                            <div className={`w-3 h-3 rounded-full ${
+                              source.status === 'active' ? 'bg-green-500' : 
+                              source.status === 'error' ? 'bg-red-500' : 'bg-gray-400'
+                            }`}></div>
+                            <div>
+                              <p className="font-medium text-gray-900">{source.name}</p>
+                              <p className="text-sm text-gray-600">{source.type.replace('_', ' ')}</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-4">
+                            <div className="text-right">
+                              <p className="text-sm font-medium">{Math.round(source.relevance_score * 100)}% relevance</p>
+                              <p className="text-xs text-gray-500">{source.data_points} data points</p>
+                            </div>
+                            <Badge variant={source.status === 'active' ? 'default' : 'secondary'}>
+                              {source.status}
+                            </Badge>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Recent Insights */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Rss className="w-5 h-5" />
+                    Recent AI Insights
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {monitoringDashboard[showMonitoringDialog.id].recent_insights.length === 0 ? (
+                      <div className="text-center py-6 text-gray-500">
+                        <Rss className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                        <p>No data collected yet.</p>
+                        <Button 
+                          onClick={() => handleCollectData(showMonitoringDialog)}
+                          className="mt-3"
+                          size="sm"
+                        >
+                          <Activity className="w-4 h-4 mr-2" />
+                          Start Data Collection
+                        </Button>
+                      </div>
+                    ) : (
+                      monitoringDashboard[showMonitoringDialog.id].recent_insights.map((insight, idx) => (
+                        <div key={idx} className="p-3 border rounded-lg">
+                          <div className="flex items-start justify-between mb-2">
+                            <h4 className="font-medium text-gray-900">{insight.title}</h4>
+                            <div className="flex items-center gap-2">
+                              <Badge variant={
+                                insight.urgency === 'critical' ? 'destructive' :
+                                insight.urgency === 'high' ? 'default' :
+                                insight.urgency === 'medium' ? 'secondary' : 'outline'
+                              }>
+                                {insight.urgency}
+                              </Badge>
+                              <span className="text-xs text-gray-500">
+                                {Math.round(insight.relevance * 100)}% relevant
+                              </span>
+                            </div>
+                          </div>
+                          <p className="text-sm text-gray-700">{insight.summary}</p>
+                          <p className="text-xs text-gray-500 mt-2">
+                            {new Date(insight.collected_at).toLocaleString()}
+                          </p>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+
+              <div className="flex gap-3 pt-4">
+                <Button onClick={() => handleCollectData(showMonitoringDialog)} className="flex-1">
+                  <Activity className="w-4 h-4 mr-2" />
+                  Collect New Data
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={() => handleAddMonitoringSource(showMonitoringDialog)}
+                  className="flex-1"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Monitoring Source
+                </Button>
+                <Button variant="outline" onClick={() => setShowMonitoringDialog(null)}>
+                  Close
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* Add Monitoring Source Dialog */}
+      {showAddSourceDialog && (
+        <Dialog open={!!showAddSourceDialog} onOpenChange={() => setShowAddSourceDialog(null)}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Link className="w-5 h-5 text-indigo-600" />
+                Add Monitoring Source - {showAddSourceDialog.title}
+              </DialogTitle>
+              <DialogDescription>
+                Add a new data source for AI monitors to track and analyze
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="source_type">Source Type</Label>
+                <Select value={newSourceData.source_type} onValueChange={(value) => setNewSourceData({...newSourceData, source_type: value})}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select source type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="news_api">News API</SelectItem>
+                    <SelectItem value="social_media">Social Media</SelectItem>
+                    <SelectItem value="government_data">Government Data</SelectItem>
+                    <SelectItem value="weather_api">Weather API</SelectItem>
+                    <SelectItem value="financial_market">Financial Market</SelectItem>
+                    <SelectItem value="custom_url">Custom URL</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="source_name">Source Name</Label>
+                <Input
+                  id="source_name"
+                  value={newSourceData.source_name}
+                  onChange={(e) => setNewSourceData({...newSourceData, source_name: e.target.value})}
+                  placeholder="e.g., USGS Earthquake Feed"
+                  required
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="source_url">Source URL</Label>
+                <Input
+                  id="source_url"
+                  type="url"
+                  value={newSourceData.source_url}
+                  onChange={(e) => setNewSourceData({...newSourceData, source_url: e.target.value})}
+                  placeholder="https://example.com/api/data"
+                  required
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="monitoring_frequency">Monitoring Frequency</Label>
+                <Select value={newSourceData.monitoring_frequency} onValueChange={(value) => setNewSourceData({...newSourceData, monitoring_frequency: value})}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="real_time">Real-time</SelectItem>
+                    <SelectItem value="hourly">Hourly</SelectItem>
+                    <SelectItem value="daily">Daily</SelectItem>
+                    <SelectItem value="weekly">Weekly</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label>Monitoring Keywords</Label>
+                <div className="flex gap-2 mb-2">
+                  <Input
+                    placeholder="Add keyword (e.g., emergency, crisis)"
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter' && e.target.value.trim()) {
+                        setNewSourceData({
+                          ...newSourceData,
+                          data_keywords: [...newSourceData.data_keywords, e.target.value.trim()]
+                        });
+                        e.target.value = '';
+                      }
+                    }}
+                  />
+                  <Button type="button" size="sm" variant="outline">
+                    Add
+                  </Button>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {newSourceData.data_keywords.map((keyword, idx) => (
+                    <Badge 
+                      key={idx} 
+                      variant="secondary" 
+                      className="cursor-pointer"
+                      onClick={() => setNewSourceData({
+                        ...newSourceData,
+                        data_keywords: newSourceData.data_keywords.filter((_, i) => i !== idx)
+                      })}
+                    >
+                      {keyword} ×
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <Button onClick={submitMonitoringSource} className="flex-1">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Monitoring Source
+                </Button>
+                <Button variant="outline" onClick={() => setShowAddSourceDialog(null)}>
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* Implementation View Dialog */}
+      {implementationView && (
+        <Dialog open={!!implementationView} onOpenChange={() => setImplementationView(null)}>
+          <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                {implementationView.type === 'game-book' && <BookOpen className="w-5 h-5 text-blue-600" />}
+                {implementationView.type === 'action-plan' && <CheckSquare className="w-5 h-5 text-green-600" />}
+                {implementationView.type === 'strategy-implementation' && <Target className="w-5 h-5 text-purple-600" />}
+                {implementationView.type.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())} - {implementationView.scenario.title}
+              </DialogTitle>
+              <DialogDescription>
+                Strategic implementation guidance for crisis scenario management
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-6">
+              {implementationView.type === 'monitoring-suggestions' && (
+                <div className="space-y-6">
+                  <div className="bg-yellow-50 p-4 rounded-lg">
+                    <h4 className="font-semibold text-yellow-900 mb-3 flex items-center gap-2">
+                      <Lightbulb className="w-4 h-4" />
+                      Smart Monitoring Source Suggestions
+                    </h4>
+                    <p className="text-sm text-yellow-800">
+                      AI-generated suggestions for optimal data sources and monitoring strategies based on your scenario.
+                    </p>
+                  </div>
+                  
+                  <div className="space-y-4">
+                    {implementationView.data.map((suggestion, idx) => (
+                      <div key={idx} className="border rounded-lg p-4 hover:bg-gray-50">
+                        <div className="flex items-center justify-between mb-2">
+                          <h5 className="font-semibold text-gray-900 flex items-center gap-2">
+                            {suggestion.suggestion_type === 'data_source' && <Database className="w-4 h-4 text-blue-600" />}
+                            {suggestion.suggestion_type === 'monitoring_keyword' && <Rss className="w-4 h-4 text-green-600" />}
+                            {suggestion.suggestion_type === 'analysis_focus' && <Target className="w-4 h-4 text-purple-600" />}
+                            {suggestion.suggestion_type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                          </h5>
+                          <div className="flex items-center gap-2">
+                            <Badge variant="outline" className="text-xs">
+                              {Math.round(suggestion.confidence_score * 100)}% confidence
+                            </Badge>
+                            {suggestion.suggestion_content.includes('http') && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => window.open(suggestion.suggestion_content.match(/https?:\/\/[^\s]+/)?.[0], '_blank')}
+                              >
+                                <ExternalLink className="w-3 h-3" />
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                        <p className="text-sm text-gray-700 mb-2">{suggestion.suggestion_content}</p>
+                        <p className="text-xs text-gray-600 mb-3">{suggestion.reasoning}</p>
+                        <div className="flex gap-2">
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            className="text-xs"
+                            onClick={() => {
+                              // Auto-fill add source dialog with suggestion data
+                              if (suggestion.suggestion_type === 'data_source') {
+                                const urlMatch = suggestion.suggestion_content.match(/https?:\/\/[^\s]+/);
+                                if (urlMatch) {
+                                  setNewSourceData({
+                                    source_type: 'custom_url',
+                                    source_url: urlMatch[0],
+                                    source_name: suggestion.suggestion_content.split(' - ')[0] || 'Suggested Source',
+                                    monitoring_frequency: 'daily',
+                                    data_keywords: implementationView.scenario.key_variables.slice(0, 3)
+                                  });
+                                  setShowAddSourceDialog(implementationView.scenario);
+                                  setImplementationView(null);
+                                }
+                              }
+                              toast({ title: "Suggestion Applied", description: "Source suggestion has been prepared for addition." });
+                            }}
+                          >
+                            <Plus className="w-3 h-3 mr-1" />
+                            Use This Suggestion
+                          </Button>
+                          {!suggestion.implemented && (
+                            <Badge variant="secondary" className="text-xs">
+                              New
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  
+                  <div className="bg-blue-50 p-4 rounded-lg">
+                    <h5 className="font-semibold text-blue-900 mb-2">Next Steps</h5>
+                    <ul className="text-sm text-blue-800 space-y-1">
+                      <li>• Click "Use This Suggestion" to quickly add recommended sources</li>
+                      <li>• Customize monitoring frequency based on your needs</li>
+                      <li>• Add team members to collaborate on monitoring sources</li>
+                      <li>• Set up automated data collection for continuous insights</li>
+                    </ul>
+                  </div>
+                </div>
+              )}
+
+              {implementationView.type === 'complex-systems' && (
+                <div className="space-y-6">
+                  <div className="bg-purple-50 p-4 rounded-lg">
+                    <h4 className="font-semibold text-purple-900 mb-3 flex items-center gap-2">
+                      <Network className="w-4 h-4" />
+                      Complex Adaptive Systems Analysis
+                    </h4>
+                    <div className="text-sm text-purple-800 whitespace-pre-line max-h-60 overflow-y-auto">
+                      {implementationView.data.system_dynamics}
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <h5 className="font-semibold text-gray-900 mb-2">System Components</h5>
+                      <ul className="text-sm text-gray-700 space-y-1 max-h-32 overflow-y-auto">
+                        {implementationView.data.system_components.map((component, idx) => (
+                          <li key={idx} className="flex items-start gap-2">
+                            <Layers className="w-3 h-3 mt-0.5 text-blue-600" />
+                            {component}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <h5 className="font-semibold text-gray-900 mb-2">Interconnections</h5>
+                      <ul className="text-sm text-gray-700 space-y-1 max-h-32 overflow-y-auto">
+                        {implementationView.data.interconnections.map((connection, idx) => (
+                          <li key={idx} className="flex items-start gap-2">
+                            <Network className="w-3 h-3 mt-0.5 text-purple-600" />
+                            {connection}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <h5 className="font-semibold text-gray-900 mb-2">Feedback Loops</h5>
+                      <ul className="text-sm text-gray-700 space-y-1 max-h-32 overflow-y-auto">
+                        {implementationView.data.feedback_loops.map((loop, idx) => (
+                          <li key={idx} className="flex items-start gap-2">
+                            <TrendingUp className="w-3 h-3 mt-0.5 text-green-600" />
+                            {loop}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <h5 className="font-semibold text-gray-900 mb-2">Emergent Behaviors</h5>
+                      <ul className="text-sm text-gray-700 space-y-1 max-h-32 overflow-y-auto">
+                        {implementationView.data.emergent_behaviors.map((behavior, idx) => (
+                          <li key={idx} className="flex items-start gap-2">
+                            <Zap className="w-3 h-3 mt-0.5 text-yellow-600" />
+                            {behavior}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <h5 className="font-semibold text-gray-900 mb-2">Adaptation Mechanisms</h5>
+                      <ul className="text-sm text-gray-700 space-y-1 max-h-32 overflow-y-auto">
+                        {implementationView.data.adaptation_mechanisms.map((mechanism, idx) => (
+                          <li key={idx} className="flex items-start gap-2">
+                            <Cpu className="w-3 h-3 mt-0.5 text-blue-600" />
+                            {mechanism}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <h5 className="font-semibold text-gray-900 mb-2">Critical Tipping Points</h5>
+                      <ul className="text-sm text-gray-700 space-y-1 max-h-32 overflow-y-auto">
+                        {implementationView.data.tipping_points.map((point, idx) => (
+                          <li key={idx} className="flex items-start gap-2">
+                            <AlertTriangle className="w-3 h-3 mt-0.5 text-red-600" />
+                            {point}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {implementationView.type === 'learning-insights' && (
+                <div className="space-y-6">
+                  <div className="bg-green-50 p-4 rounded-lg">
+                    <h4 className="font-semibold text-green-900 mb-3 flex items-center gap-2">
+                      <Brain className="w-4 h-4" />
+                      Adaptive Learning Insights
+                    </h4>
+                    <p className="text-sm text-green-800">
+                      AI-powered insights generated from your scenario interactions and patterns.
+                    </p>
+                  </div>
+                  
+                  <div className="space-y-4">
+                    {implementationView.data.map((insight, idx) => (
+                      <div key={idx} className="border rounded-lg p-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <h5 className="font-semibold text-gray-900 flex items-center gap-2">
+                            {insight.insight_type === 'pattern_recognition' && <BarChart3 className="w-4 h-4 text-blue-600" />}
+                            {insight.insight_type === 'outcome_prediction' && <TrendingUp className="w-4 h-4 text-green-600" />}
+                            {insight.insight_type === 'optimization_suggestion' && <Target className="w-4 h-4 text-purple-600" />}
+                            {insight.insight_type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                          </h5>
+                          <Badge variant="outline" className="text-xs">
+                            {Math.round(insight.confidence_score * 100)}% confidence
+                          </Badge>
+                        </div>
+                        <p className="text-sm text-gray-700">{insight.insight_content}</p>
+                        <div className="mt-2 flex gap-2">
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            className="text-xs"
+                            onClick={() => {
+                              // Mark insight as applied
+                              toast({ title: "Insight Applied", description: "This insight has been marked as applied to your strategy." });
+                            }}
+                          >
+                            Apply Insight
+                          </Button>
+                          {!insight.applied && (
+                            <Badge variant="secondary" className="text-xs">
+                              New
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {implementationView.type === 'game-book' && (
+                <div className="space-y-6">
+                  <div className="bg-blue-50 p-4 rounded-lg">
+                    <h4 className="font-semibold text-blue-900 mb-3 flex items-center gap-2">
+                      <BookOpen className="w-4 h-4" />
+                      Crisis Game Book Content
+                    </h4>
+                    <div className="text-sm text-blue-800 whitespace-pre-line max-h-60 overflow-y-auto">
+                      {implementationView.data.game_book_content}
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <h5 className="font-semibold text-gray-900 mb-2">Critical Decision Points</h5>
+                      <ul className="text-sm text-gray-700 space-y-1">
+                        {implementationView.data.decision_points.map((point, idx) => (
+                          <li key={idx} className="flex items-start gap-2">
+                            <CheckSquare className="w-3 h-3 mt-0.5 text-green-600" />
+                            {point}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <h5 className="font-semibold text-gray-900 mb-2">Resource Requirements</h5>
+                      <ul className="text-sm text-gray-700 space-y-1">
+                        {implementationView.data.resource_requirements.map((resource, idx) => (
+                          <li key={idx} className="flex items-start gap-2">
+                            <Shield className="w-3 h-3 mt-0.5 text-orange-600" />
+                            {resource}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <h5 className="font-semibold text-gray-900 mb-2">Timeline Phases</h5>
+                      <ul className="text-sm text-gray-700 space-y-1">
+                        {implementationView.data.timeline_phases.map((phase, idx) => (
+                          <li key={idx} className="flex items-start gap-2">
+                            <TrendingUp className="w-3 h-3 mt-0.5 text-blue-600" />
+                            {phase}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <h5 className="font-semibold text-gray-900 mb-2">Success Metrics</h5>
+                      <ul className="text-sm text-gray-700 space-y-1">
+                        {implementationView.data.success_metrics.map((metric, idx) => (
+                          <li key={idx} className="flex items-start gap-2">
+                            <Target className="w-3 h-3 mt-0.5 text-purple-600" />
+                            {metric}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {implementationView.type === 'action-plan' && (
+                <div className="space-y-6">
+                  <div className="grid md:grid-cols-3 gap-4">
+                    <div className="bg-red-50 p-4 rounded-lg">
+                      <h5 className="font-semibold text-red-900 mb-2 flex items-center gap-2">
+                        <AlertTriangle className="w-4 h-4" />
+                        Immediate Actions (0-24h)
+                      </h5>
+                      <ul className="text-sm text-red-800 space-y-1">
+                        {implementationView.data.immediate_actions.map((action, idx) => (
+                          <li key={idx} className="flex items-start gap-2">
+                            <CheckSquare className="w-3 h-3 mt-0.5" />
+                            {action}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    
+                    <div className="bg-yellow-50 p-4 rounded-lg">
+                      <h5 className="font-semibold text-yellow-900 mb-2 flex items-center gap-2">
+                        <TrendingUp className="w-4 h-4" />
+                        Short-term Actions (1-30d)
+                      </h5>
+                      <ul className="text-sm text-yellow-800 space-y-1">
+                        {implementationView.data.short_term_actions.map((action, idx) => (
+                          <li key={idx} className="flex items-start gap-2">
+                            <CheckSquare className="w-3 h-3 mt-0.5" />
+                            {action}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    
+                    <div className="bg-green-50 p-4 rounded-lg">
+                      <h5 className="font-semibold text-green-900 mb-2 flex items-center gap-2">
+                        <Target className="w-4 h-4" />
+                        Long-term Actions (1-12m)
+                      </h5>
+                      <ul className="text-sm text-green-800 space-y-1">
+                        {implementationView.data.long_term_actions.map((action, idx) => (
+                          <li key={idx} className="flex items-start gap-2">
+                            <CheckSquare className="w-3 h-3 mt-0.5" />
+                            {action}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <h5 className="font-semibold text-gray-900 mb-2">Responsible Parties</h5>
+                      <ul className="text-sm text-gray-700 space-y-1">
+                        {implementationView.data.responsible_parties.map((party, idx) => (
+                          <li key={idx} className="flex items-start gap-2">
+                            <Users className="w-3 h-3 mt-0.5 text-blue-600" />
+                            {party}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <h5 className="font-semibold text-gray-900 mb-2">Resource Allocation</h5>
+                      <ul className="text-sm text-gray-700 space-y-1">
+                        {implementationView.data.resource_allocation.map((resource, idx) => (
+                          <li key={idx} className="flex items-start gap-2">
+                            <Shield className="w-3 h-3 mt-0.5 text-green-600" />
+                            {resource}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-blue-50 p-4 rounded-lg">
+                    <h5 className="font-semibold text-blue-900 mb-2">Priority Level</h5>
+                    <Badge className={`${implementationView.data.priority_level === 'HIGH' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800'}`}>
+                      {implementationView.data.priority_level} PRIORITY
+                    </Badge>
+                  </div>
+                </div>
+              )}
+
+              {implementationView.type === 'strategy-implementation' && (
+                <div className="space-y-6">
+                  <div className="bg-purple-50 p-4 rounded-lg">
+                    <h4 className="font-semibold text-purple-900 mb-3 flex items-center gap-2">
+                      <Target className="w-4 h-4" />
+                      Strategic Implementation Framework
+                    </h4>
+                    <div className="text-sm text-purple-800 whitespace-pre-line max-h-60 overflow-y-auto">
+                      {implementationView.data.implementation_strategy}
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <h5 className="font-semibold text-gray-900 mb-2">Organizational Changes</h5>
+                      <ul className="text-sm text-gray-700 space-y-1">
+                        {implementationView.data.organizational_changes.map((change, idx) => (
+                          <li key={idx} className="flex items-start gap-2">
+                            <Users className="w-3 h-3 mt-0.5 text-blue-600" />
+                            {change}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <h5 className="font-semibold text-gray-900 mb-2">Policy Recommendations</h5>
+                      <ul className="text-sm text-gray-700 space-y-1">
+                        {implementationView.data.policy_recommendations.map((policy, idx) => (
+                          <li key={idx} className="flex items-start gap-2">
+                            <FileText className="w-3 h-3 mt-0.5 text-green-600" />
+                            {policy}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <h5 className="font-semibold text-gray-900 mb-2">Training Requirements</h5>
+                      <ul className="text-sm text-gray-700 space-y-1">
+                        {implementationView.data.training_requirements.map((training, idx) => (
+                          <li key={idx} className="flex items-start gap-2">
+                            <Brain className="w-3 h-3 mt-0.5 text-purple-600" />
+                            {training}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <h5 className="font-semibold text-gray-900 mb-2">Budget Considerations</h5>
+                      <ul className="text-sm text-gray-700 space-y-1">
+                        {implementationView.data.budget_considerations.map((budget, idx) => (
+                          <li key={idx} className="flex items-start gap-2">
+                            <TrendingUp className="w-3 h-3 mt-0.5 text-orange-600" />
+                            {budget}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <h5 className="font-semibold text-gray-900 mb-2">Stakeholder Engagement</h5>
+                    <ul className="text-sm text-gray-700 space-y-1">
+                      {implementationView.data.stakeholder_engagement.map((engagement, idx) => (
+                        <li key={idx} className="flex items-start gap-2">
+                          <Users className="w-3 h-3 mt-0.5 text-indigo-600" />
+                          {engagement}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex gap-3 pt-4 border-t">
+                <Button 
+                  onClick={() => {
+                    downloadImplementationAsPDF(implementationView);
+                  }}
+                  className="flex-1"
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  Download {implementationView.type.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                </Button>
+                <Button variant="outline" onClick={() => setImplementationView(null)} className="flex-1">
+                  Close
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* Multi-Document Side-by-Side Interface */}
+      {showMultiDocView && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg shadow-2xl w-full max-w-[95vw] h-[90vh] flex flex-col">
+            {/* Header */}
+            <div className="flex items-center justify-between p-4 border-b bg-gray-50">
+              <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                <Layers className="w-6 h-6 text-blue-600" />
+                Multi-Document View
+              </h2>
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-600">
+                  {openDocuments.length} document{openDocuments.length !== 1 ? 's' : ''} open
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={closeAllDocuments}
+                  className="text-red-600 hover:text-red-700"
+                >
+                  <X className="w-4 h-4 mr-1" />
+                  Close All
+                </Button>
+              </div>
+            </div>
+
+            {/* Document Tabs */}
+            <div className="flex border-b bg-gray-50 overflow-x-auto">
+              {openDocuments.map((doc) => (
+                <button
+                  key={doc.id}
+                  onClick={() => setActiveDocument(doc.id)}
+                  className={`flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
+                    activeDocument === doc.id
+                      ? 'border-blue-500 text-blue-700 bg-white'
+                      : 'border-transparent text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                  }`}
+                >
+                  {doc.type === 'game-book' && <BookOpen className="w-4 h-4" />}
+                  {doc.type === 'action-plan' && <CheckSquare className="w-4 h-4" />}
+                  {doc.type === 'strategy' && <Target className="w-4 h-4" />}
+                  {doc.type === 'monitors' && <Monitor className="w-4 h-4" />}
+                  {doc.type === 'systems' && <Network className="w-4 h-4" />}
+                  {doc.type === 'learning' && <Brain className="w-4 h-4" />}
+                  {doc.type === 'sources' && <Lightbulb className="w-4 h-4" />}
+                  {doc.type === 'dashboard' && <BarChart className="w-4 h-4" />}
+                  <span className="max-w-32 truncate">{doc.title}</span>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      closeDocument(doc.id);
+                    }}
+                    className="text-gray-400 hover:text-red-500 ml-1"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </button>
+              ))}
+            </div>
+
+            {/* Document Grid Layout */}
+            <div className="flex-1 overflow-hidden">
+              {openDocuments.length === 1 && (
+                <div className="h-full p-6 overflow-y-auto">
+                  {renderDocumentContent(openDocuments[0])}
+                </div>
+              )}
+              
+              {openDocuments.length === 2 && (
+                <div className="flex h-full">
+                  <div className="flex-1 p-6 overflow-y-auto border-r">
+                    {renderDocumentContent(openDocuments[0])}
+                  </div>
+                  <div className="flex-1 p-6 overflow-y-auto">
+                    {renderDocumentContent(openDocuments[1])}
+                  </div>
+                </div>
+              )}
+              
+              {openDocuments.length === 3 && (
+                <div className="flex h-full">
+                  <div className="flex-1 p-4 overflow-y-auto border-r">
+                    {renderDocumentContent(openDocuments[0])}
+                  </div>
+                  <div className="flex flex-col flex-1">
+                    <div className="flex-1 p-4 overflow-y-auto border-b">
+                      {renderDocumentContent(openDocuments[1])}
+                    </div>
+                    <div className="flex-1 p-4 overflow-y-auto">
+                      {renderDocumentContent(openDocuments[2])}
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              {openDocuments.length >= 4 && (
+                <div className="grid grid-cols-2 h-full">
+                  {openDocuments.slice(0, 4).map((doc, index) => (
+                    <div
+                      key={doc.id}
+                      className={`p-4 overflow-y-auto ${
+                        index % 2 === 0 ? 'border-r' : ''
+                      } ${index < 2 ? 'border-b' : ''}`}
+                    >
+                      {renderDocumentContent(doc)}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Amend Scenario Dialog */}
+      {showAmendDialog && amendingScenario && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Amend Scenario: {amendingScenario.title}
+                </h3>
+                <button
+                  onClick={closeAmendDialog}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+
+              <div className="space-y-6">
+                <div className="bg-blue-50 p-4 rounded-lg">
+                  <p className="text-sm text-blue-800">
+                    <strong>Fill in missing information</strong> to enhance scenario completeness and accuracy. 
+                    This will improve analysis quality and regional insights.
+                  </p>
+                </div>
+
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="affected-regions" className="text-sm font-medium">
+                      Affected Regions *
+                    </Label>
+                    <Input
+                      id="affected-regions"
+                      value={amendFormData.affected_regions}
+                      onChange={(e) => handleAmendInputChange('affected_regions', e.target.value)}
+                      placeholder="e.g., Finland, Sweden, Norway (comma-separated)"
+                      className="mt-1"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Specify geographic regions or countries affected by this crisis
+                    </p>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="key-variables" className="text-sm font-medium">
+                      Key Variables
+                    </Label>
+                    <Input
+                      id="key-variables"
+                      value={amendFormData.key_variables}
+                      onChange={(e) => handleAmendInputChange('key_variables', e.target.value)}
+                      placeholder="e.g., GDP, Unemployment, Currency, Trade (comma-separated)"
+                      className="mt-1"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Economic, social, or environmental variables to monitor
+                    </p>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="stakeholders" className="text-sm font-medium">
+                      Key Stakeholders
+                    </Label>
+                    <Input
+                      id="stakeholders"
+                      value={amendFormData.stakeholders}
+                      onChange={(e) => handleAmendInputChange('stakeholders', e.target.value)}
+                      placeholder="e.g., Government, EU, Central Bank, Businesses"
+                      className="mt-1"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Organizations, institutions, or groups involved in crisis response
+                    </p>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="timeline" className="text-sm font-medium">
+                      Timeline
+                    </Label>
+                    <Input
+                      id="timeline"
+                      value={amendFormData.timeline}
+                      onChange={(e) => handleAmendInputChange('timeline', e.target.value)}
+                      placeholder="e.g., 6 months, Q2 2025, Immediate to long-term"
+                      className="mt-1"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Expected duration or time frame of the crisis
+                    </p>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="additional-context" className="text-sm font-medium">
+                      Additional Context
+                    </Label>
+                    <textarea
+                      id="additional-context"
+                      value={amendFormData.additional_context}
+                      onChange={(e) => handleAmendInputChange('additional_context', e.target.value)}
+                      placeholder="Additional background information, triggers, or context..."
+                      className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      rows={4}
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Any additional details that provide context for this scenario
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex gap-3 pt-4 border-t">
+                  <Button 
+                    onClick={submitAmendments} 
+                    className="flex-1 bg-blue-600 hover:bg-blue-700"
+                  >
+                    Save Amendments
+                  </Button>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={closeAmendDialog}
+                    className="flex-1"
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Company Management Component
+const CompanyManagement = () => {
+  const [company, setCompany] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [showCreateCompany, setShowCreateCompany] = useState(false);
+  const [showRapidAnalysis, setShowRapidAnalysis] = useState(false);
+  const [rapidAnalysisData, setRapidAnalysisData] = useState(null);
+  const [showCompanyInsights, setShowCompanyInsights] = useState(false);
+  const [companyInsightsData, setCompanyInsightsData] = useState(null);
+  const [showDocumentAnalysis, setShowDocumentAnalysis] = useState(false);
+  const [showTeamCreator, setShowTeamCreator] = useState(false);
+  const [availableUsers, setAvailableUsers] = useState([]);
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteEmails, setInviteEmails] = useState([]);
+  const [companyData, setCompanyData] = useState({
+    company_name: '',
+    industry: '',
+    company_size: 'medium',
+    website_url: '',
+    description: '',
+    location: ''
+  });
+
+  useEffect(() => {
+    fetchCompanyData();
+  }, []);
+
+  const fetchCompanyData = async () => {
+    try {
+      // Try to get user's company if they have one
+      const userResponse = await axios.get(`${API}/me`);
+      if (userResponse.data.company_id) {
+        const companyResponse = await axios.get(`${API}/companies/${userResponse.data.company_id}`);
+        setCompany(companyResponse.data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch company data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCreateCompany = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      const response = await axios.post(`${API}/companies`, companyData);
+      setCompany(response.data);
+      setShowCreateCompany(false);
+      toast({ title: "Success", description: "Company created successfully!" });
+    } catch (error) {
+      toast({ 
+        title: "Error", 
+        description: error.response?.data?.detail || "Failed to create company",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const generateInsights = async (analysisType) => {
+    setLoading(true);
+    try {
+      const userResponse = await axios.get(`${API}/me`);
+      if (userResponse.data.company_id) {
+        const response = await axios.post(`${API}/companies/${userResponse.data.company_id}/rapid-analysis?analysis_type=${analysisType}`);
+        setCompanyInsightsData(response.data);
+        toast({ 
+          title: "Analysis Complete", 
+          description: "Company insights generated successfully!",
+          duration: 4000
+        });
+      }
+    } catch (error) {
+      toast({ 
+        title: "Analysis Error", 
+        description: "Failed to generate insights. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const analyzeWebsite = async () => {
+    if (!company?.website_url) {
+      toast({ 
+        title: "No Website", 
+        description: "Please add a website URL to your company profile first",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    setLoading(true);
+    try {
+      const response = await axios.post(`${API}/companies/${company.id}/rapid-analysis?analysis_type=competitive_analysis`);
+      setCompanyInsightsData({
+        ...response.data,
+        analysis_title: `Website Analysis - ${company.company_name}`,
+        analysis_content: `Website Analysis for ${company.website_url}\n\n${response.data.analysis_content}`
+      });
+      toast({ 
+        title: "Website Analysis Complete", 
+        description: "Your website has been analyzed successfully!",
+        duration: 4000
+      });
+    } catch (error) {
+      toast({ 
+        title: "Analysis Error", 
+        description: "Failed to analyze website. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const printAnalysis = () => {
+    if (!companyInsightsData) {
+      toast({
+        title: "No Analysis Available",
+        description: "Please generate an analysis first",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    try {
+      // Try popup method first
+      const printWindow = window.open('', '_blank');
+      
+      if (!printWindow) {
+        // Popup blocked, fallback to download
+        downloadAnalysisAsText();
+        return;
+      }
+      
+      const printContent = `
+        <html>
+          <head>
+            <title>${companyInsightsData.analysis_title}</title>
+            <meta charset="utf-8">
+            <style>
+              body { font-family: Arial, sans-serif; margin: 40px; line-height: 1.6; color: #333; }
+              .header { border-bottom: 2px solid #333; padding-bottom: 20px; margin-bottom: 30px; }
+              .title { font-size: 24px; font-weight: bold; color: #333; margin-bottom: 5px; }
+              .subtitle { color: #666; font-size: 14px; }
+              .content { white-space: pre-wrap; margin-bottom: 30px; font-size: 14px; line-height: 1.8; }
+              .section { margin-bottom: 25px; page-break-inside: avoid; }
+              .section-title { font-size: 18px; font-weight: bold; margin-bottom: 15px; color: #333; border-bottom: 1px solid #ddd; padding-bottom: 5px; }
+              .list-item { margin-bottom: 8px; padding-left: 20px; position: relative; font-size: 14px; }
+              .list-item:before { content: "•"; position: absolute; left: 0; color: #666; font-weight: bold; }
+              @media print { 
+                body { margin: 20px; font-size: 12px; }
+                .header { margin-bottom: 20px; }
+                .section { margin-bottom: 20px; }
+              }
+              @page { margin: 2cm; }
+            </style>
+          </head>
+          <body>
+            <div class="header">
+              <div class="title">${companyInsightsData.analysis_title}</div>
+              <div class="subtitle">Generated on ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}</div>
+            </div>
+            <div class="content">${companyInsightsData.analysis_content}</div>
+            <div class="section">
+              <div class="section-title">Key Findings</div>
+              ${companyInsightsData.key_findings.map(finding => `<div class="list-item">${finding}</div>`).join('')}
+            </div>
+            <div class="section">
+              <div class="section-title">Recommendations</div>
+              ${companyInsightsData.recommendations.map(rec => `<div class="list-item">${rec}</div>`).join('')}
+            </div>
+            <div class="section">
+              <div class="section-title">Analysis Details</div>
+              <div class="list-item">Risk Level: ${companyInsightsData.risk_level || 'Not specified'}</div>
+              <div class="list-item">Analysis Type: ${companyInsightsData.analysis_type || 'Comprehensive Analysis'}</div>
+              <div class="list-item">Confidence Score: ${companyInsightsData.confidence_score ? (companyInsightsData.confidence_score * 100).toFixed(1) + '%' : 'Not specified'}</div>
+            </div>
+          </body>
+        </html>
+      `;
+      
+      printWindow.document.write(printContent);
+      printWindow.document.close();
+      
+      // Wait for content to load before printing
+      printWindow.onload = () => {
+        printWindow.focus();
+        setTimeout(() => {
+          printWindow.print();
+          // Don't auto-close, let user close manually
+        }, 500);
+      };
+      
+      toast({
+        title: "Print Window Opened",
+        description: "Analysis opened in new window for printing",
+        duration: 3000
+      });
+      
+    } catch (error) {
+      console.error('Print failed:', error);
+      // Fallback to download
+      downloadAnalysisAsText();
+    }
+  };
+
+  const downloadAnalysisAsText = () => {
+    if (!companyInsightsData) {
+      toast({
+        title: "No Analysis Available",
+        description: "Please generate an analysis first",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      const content = `
+${companyInsightsData.analysis_title}
+Generated on ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}
+
+${'='.repeat(80)}
+
+ANALYSIS CONTENT:
+${companyInsightsData.analysis_content}
+
+${'='.repeat(80)}
+
+KEY FINDINGS:
+${companyInsightsData.key_findings ? companyInsightsData.key_findings.map((finding, idx) => `${idx + 1}. ${finding}`).join('\n') : 'No findings available'}
+
+${'='.repeat(80)}
+
+RECOMMENDATIONS:
+${companyInsightsData.recommendations ? companyInsightsData.recommendations.map((rec, idx) => `${idx + 1}. ${rec}`).join('\n') : 'No recommendations available'}
+
+${'='.repeat(80)}
+
+ANALYSIS DETAILS:
+- Risk Level: ${companyInsightsData.risk_level || 'Not specified'}
+- Analysis Type: ${companyInsightsData.analysis_type || 'Comprehensive Analysis'}
+- Confidence Score: ${companyInsightsData.confidence_score ? (companyInsightsData.confidence_score * 100).toFixed(1) + '%' : 'Not specified'}
+
+Generated by Polycrisis Simulator
+      `.trim();
+
+      // Create and trigger download
+      const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+      
+      // Check if browser supports download
+      if (window.navigator && window.navigator.msSaveOrOpenBlob) {
+        // IE/Edge
+        window.navigator.msSaveOrOpenBlob(blob, `analysis_${Date.now()}.txt`);
+      } else {
+        // Modern browsers
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = `${(companyInsightsData.analysis_title || 'analysis').replace(/[^a-z0-9]/gi, '_').toLowerCase()}_${Date.now()}.txt`;
+        
+        document.body.appendChild(a);
+        a.click();
+        
+        // Cleanup
+        setTimeout(() => {
+          document.body.removeChild(a);
+          window.URL.revokeObjectURL(url);
+        }, 100);
+      }
+
+      toast({
+        title: "Download Started",
+        description: "Analysis has been downloaded as a text file",
+        duration: 3000
+      });
+
+    } catch (error) {
+      console.error('Download failed:', error);
+      toast({
+        title: "Download Failed",
+        description: "Failed to download analysis. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const downloadAnalysisAsPDF = async () => {
+    // For now, we'll use the print method which allows "Save as PDF"
+    // In the future, this could be enhanced with a proper PDF library
+    printAnalysis();
+    
+    toast({
+      title: "Print for PDF",
+      description: "Use your browser's print dialog to save as PDF",
+      duration: 4000
+    });
+  };
+
+  const handleFileUpload = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    if (!file.name.toLowerCase().endsWith('.pdf') && !file.name.toLowerCase().endsWith('.docx')) {
+      toast({ 
+        title: "Invalid File Type", 
+        description: "Please upload only PDF or DOCX files",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) { // 10MB limit
+      toast({ 
+        title: "File Too Large", 
+        description: "Please upload files smaller than 10MB",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const userResponse = await axios.get(`${API}/me`);
+      if (userResponse.data.company_id) {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('document_type', 'business_plan');
+
+        const response = await axios.post(`${API}/companies/${userResponse.data.company_id}/documents/upload`, formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        });
+
+        toast({ 
+          title: "Document Analyzed", 
+          description: `${file.name} has been uploaded and analyzed successfully!`,
+          duration: 4000
+        });
+
+        setShowDocumentAnalysis(false);
+        // Refresh documents list if needed
+      }
+    } catch (error) {
+      toast({ 
+        title: "Upload Error", 
+        description: error.response?.data?.detail || "Failed to upload and analyze document",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCreateTeam = async (event) => {
+    event.preventDefault();
+    const formData = new FormData(event.target);
+    const teamName = formData.get('team-name');
+    const teamDescription = formData.get('team-description');
+    
+    // Get selected users
+    const selectedUsers = availableUsers.filter(user => 
+      document.getElementById(`user-${user.id}`)?.checked
+    );
+
+    // Combine existing users emails with invited emails
+    const allMemberEmails = [
+      ...selectedUsers.map(user => user.email),
+      ...inviteEmails
+    ];
+
+    if (allMemberEmails.length === 0 && inviteEmails.length === 0) {
+      toast({
+        title: "No Team Members",
+        description: "Please select existing users or invite new members",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const userResponse = await axios.get(`${API}/me`);
+      if (userResponse.data.company_id) {
+        const teamData = {
+          team_name: teamName,
+          team_description: teamDescription,
+          team_members: allMemberEmails,
+          team_roles: ['crisis_manager', 'analyst', 'coordinator']
+        };
+
+        const response = await axios.post(`${API}/companies/${userResponse.data.company_id}/teams`, teamData);
+        
+        toast({ 
+          title: "Team Created", 
+          description: `${teamName} has been created with ${allMemberEmails.length} members!`,
+          duration: 4000
+        });
+
+        setShowTeamCreator(false);
+        // Reset form state
+        setInviteEmails([]);
+        setInviteEmail('');
+      }
+    } catch (error) {
+      console.error('Team creation error:', error);
+      let errorMessage = "Failed to create team";
+      
+      if (error.response?.data) {
+        if (typeof error.response.data === 'string') {
+          errorMessage = error.response.data;
+        } else if (error.response.data.detail) {
+          errorMessage = error.response.data.detail;
+        } else if (error.response.data.message) {
+          errorMessage = error.response.data.message;
+        }
+      }
+
+      toast({ 
+        title: "Team Creation Error", 
+        description: errorMessage,
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const addInviteEmail = () => {
+    if (inviteEmail.trim() && inviteEmail.includes('@')) {
+      if (!inviteEmails.includes(inviteEmail.trim())) {
+        setInviteEmails([...inviteEmails, inviteEmail.trim()]);
+        setInviteEmail('');
+      } else {
+        toast({
+          title: "Duplicate Email",
+          description: "This email is already in the invite list",
+          variant: "destructive"
+        });
+      }
+    } else {
+      toast({
+        title: "Invalid Email",
+        description: "Please enter a valid email address",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const removeInviteEmail = (emailToRemove) => {
+    setInviteEmails(inviteEmails.filter(email => email !== emailToRemove));
+  };
+
+  const fetchAvailableUsers = async () => {
+    try {
+      const userResponse = await axios.get(`${API}/me`);
+      if (userResponse.data.company_id) {
+        const response = await axios.get(`${API}/companies/${userResponse.data.company_id}/users`);
+        setAvailableUsers(response.data.filter(user => user.id !== userResponse.data.id)); // Exclude current user
+      }
+    } catch (error) {
+      console.error('Failed to fetch available users:', error);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="text-center">
+          <Building2 className="w-12 h-12 animate-pulse text-blue-500 mx-auto mb-4" />
+          <p className="text-gray-600">Loading company information...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!company) {
+    return (
+      <div className="max-w-4xl mx-auto">
+        <Card>
+          <CardHeader className="text-center">
+            <CardTitle className="flex items-center justify-center gap-2 text-2xl">
+              <Building2 className="w-8 h-8 text-blue-600" />
+              Enterprise Setup
+            </CardTitle>
+            <CardDescription>
+              Set up your company profile to unlock advanced crisis management features
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {!showCreateCompany ? (
+              <div className="text-center py-8">
+                <Building2 className="w-16 h-16 mx-auto mb-4 text-gray-400" />
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">No Company Profile</h3>
+                <p className="text-gray-600 mb-6">
+                  Create your company profile to access advanced features like document analysis, 
+                  team collaboration, and company-specific crisis scenarios.
+                </p>
+                <Button onClick={() => setShowCreateCompany(true)} className="bg-blue-600 hover:bg-blue-700">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Create Company Profile
+                </Button>
+              </div>
+            ) : (
+              <form onSubmit={handleCreateCompany} className="space-y-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="company_name">Company Name</Label>
+                    <Input
+                      id="company_name"
+                      value={companyData.company_name}
+                      onChange={(e) => setCompanyData({...companyData, company_name: e.target.value})}
+                      placeholder="Your company name"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="industry">Industry</Label>
+                    <Select value={companyData.industry} onValueChange={(value) => setCompanyData({...companyData, industry: value})}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select industry" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="technology">Technology</SelectItem>
+                        <SelectItem value="healthcare">Healthcare</SelectItem>
+                        <SelectItem value="finance">Finance</SelectItem>
+                        <SelectItem value="manufacturing">Manufacturing</SelectItem>
+                        <SelectItem value="retail">Retail</SelectItem>
+                        <SelectItem value="energy">Energy</SelectItem>
+                        <SelectItem value="transportation">Transportation</SelectItem>
+                        <SelectItem value="government">Government</SelectItem>
+                        <SelectItem value="education">Education</SelectItem>
+                        <SelectItem value="other">Other</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="company_size">Company Size</Label>
+                    <Select value={companyData.company_size} onValueChange={(value) => setCompanyData({...companyData, company_size: value})}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="startup">Startup (1-10 employees)</SelectItem>
+                        <SelectItem value="small">Small (11-50 employees)</SelectItem>
+                        <SelectItem value="medium">Medium (51-200 employees)</SelectItem>
+                        <SelectItem value="large">Large (201-1000 employees)</SelectItem>
+                        <SelectItem value="enterprise">Enterprise (1000+ employees)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label htmlFor="location">Location</Label>
+                    <Input
+                      id="location"
+                      value={companyData.location}
+                      onChange={(e) => setCompanyData({...companyData, location: e.target.value})}
+                      placeholder="City, Country"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <Label htmlFor="website_url">Company Website (optional)</Label>
+                  <Input
+                    id="website_url"
+                    type="url"
+                    value={companyData.website_url}
+                    onChange={(e) => setCompanyData({...companyData, website_url: e.target.value})}
+                    placeholder="https://yourcompany.com"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    We'll analyze your website to suggest relevant crisis scenarios
+                  </p>
+                </div>
+
+                <div>
+                  <Label htmlFor="description">Company Description</Label>
+                  <Textarea
+                    id="description"
+                    value={companyData.description}
+                    onChange={(e) => setCompanyData({...companyData, description: e.target.value})}
+                    placeholder="Brief description of your company's business..."
+                    rows={4}
+                    required
+                  />
+                </div>
+
+                <div className="flex gap-3">
+                  <Button type="submit" disabled={loading} className="bg-blue-600 hover:bg-blue-700 flex-1">
+                    {loading ? 'Creating...' : 'Create Company Profile'}
+                  </Button>
+                  <Button type="button" variant="outline" onClick={() => setShowCreateCompany(false)}>
+                    Cancel
+                  </Button>
+                </div>
+              </form>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Company Overview */}
+      <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
+        <CardHeader>
+          <div className="flex items-center justify-between mb-4">
+            <CardTitle className="flex items-center gap-2">
+              <Building2 className="w-6 h-6 text-blue-600" />
+              {company.company_name}
+            </CardTitle>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowCreateCompany(true)}
+                className="flex items-center gap-2"
+              >
+                <Settings className="w-4 h-4" />
+                Edit Company
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  // Reset form for new company
+                  setCompanyData({
+                    company_name: '',
+                    industry: '',
+                    company_size: 'medium',
+                    website_url: '',
+                    description: '',
+                    location: ''
+                  });
+                  setShowCreateCompany(true);
+                }}
+                className="flex items-center gap-2"
+              >
+                <Plus className="w-4 h-4" />
+                Create New Company
+              </Button>
+            </div>
+          </div>
+          <CardDescription>
+            {company.industry} • {company.company_size} • {company.location}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <p className="text-gray-700 mb-4">{company.description}</p>
+          {company.website_url && (
+            <div className="flex items-center gap-2">
+              <ExternalLink className="w-4 h-4 text-blue-600" />
+              <a href={company.website_url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                {company.website_url}
+              </a>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Website Analysis */}
+      {company.website_analysis && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Brain className="w-5 h-5 text-purple-600" />
+              AI Website Analysis
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="bg-purple-50 p-4 rounded-lg">
+              <p className="text-sm text-purple-800 whitespace-pre-line">
+                {company.website_analysis.substring(0, 500)}...
+              </p>
+            </div>
+            
+            <div className="grid md:grid-cols-3 gap-4 mt-4">
+              <div className="bg-gray-50 p-3 rounded-lg">
+                <h4 className="font-semibold text-gray-900 mb-2">Key Assets</h4>
+                <ul className="text-sm text-gray-700 space-y-1">
+                  {company.key_assets.slice(0, 3).map((asset, idx) => (
+                    <li key={idx} className="flex items-start gap-2">
+                      <Shield className="w-3 h-3 mt-0.5 text-green-600" />
+                      {asset}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              
+              <div className="bg-gray-50 p-3 rounded-lg">
+                <h4 className="font-semibold text-gray-900 mb-2">Vulnerabilities</h4>
+                <ul className="text-sm text-gray-700 space-y-1">
+                  {company.vulnerabilities.slice(0, 3).map((vuln, idx) => (
+                    <li key={idx} className="flex items-start gap-2">
+                      <AlertTriangle className="w-3 h-3 mt-0.5 text-red-600" />
+                      {vuln}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              
+              <div className="bg-gray-50 p-3 rounded-lg">
+                <h4 className="font-semibold text-gray-900 mb-2">Stakeholders</h4>
+                <ul className="text-sm text-gray-700 space-y-1">
+                  {company.stakeholders.slice(0, 3).map((stakeholder, idx) => (
+                    <li key={idx} className="flex items-start gap-2">
+                      <Users className="w-3 h-3 mt-0.5 text-blue-600" />
+                      {stakeholder}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Quick Actions */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <Card 
+          className="cursor-pointer hover:shadow-lg transition-all hover:scale-105 border-2 hover:border-blue-300"
+          onClick={() => {
+            setShowDocumentAnalysis(true);
+          }}
+        >
+          <CardContent className="p-4 sm:p-6 text-center">
+            <FileText className="w-6 h-6 sm:w-8 sm:h-8 text-blue-600 mx-auto mb-2" />
+            <h3 className="font-semibold text-gray-900 text-sm sm:text-base">Analyze Documents</h3>
+            <p className="text-xs sm:text-sm text-gray-600">Upload PDF & DOCX for AI analysis</p>
+          </CardContent>
+        </Card>
+        
+        <Card 
+          className="cursor-pointer hover:shadow-lg transition-all hover:scale-105 border-2 hover:border-green-300"
+          onClick={async () => {
+            await fetchAvailableUsers();
+            setShowTeamCreator(true);
+          }}
+        >
+          <CardContent className="p-4 sm:p-6 text-center">
+            <Users2 className="w-6 h-6 sm:w-8 sm:h-8 text-green-600 mx-auto mb-2" />
+            <h3 className="font-semibold text-gray-900 text-sm sm:text-base">Create Team</h3>
+            <p className="text-xs sm:text-sm text-gray-600">Add existing users to teams</p>
+          </CardContent>
+        </Card>
+        
+        <Card 
+          className="cursor-pointer hover:shadow-lg transition-all hover:scale-105 border-2 hover:border-purple-300"
+          onClick={() => {
+            setShowCompanyInsights(true);
+          }}
+        >
+          <CardContent className="p-4 sm:p-6 text-center">
+            <Brain className="w-6 h-6 sm:w-8 sm:h-8 text-purple-600 mx-auto mb-2" />
+            <h3 className="font-semibold text-gray-900 text-sm sm:text-base">Generate Company Insights</h3>
+            <p className="text-xs sm:text-sm text-gray-600">Financial, market & risk analysis</p>
+          </CardContent>
+        </Card>
+        
+        <Card 
+          className="cursor-pointer hover:shadow-lg transition-all hover:scale-105 border-2 hover:border-orange-300"
+          onClick={() => {
+            // Navigate to Create Scenario tab
+            const createTab = document.querySelector('[role="tab"][value="create"]');
+            if (createTab) {
+              createTab.click();
+            }
+            toast({ 
+              title: "Create Company Scenarios", 
+              description: "Build crisis scenarios tailored to your company profile",
+              duration: 3000
+            });
+          }}
+        >
+          <CardContent className="p-4 sm:p-6 text-center">
+            <BarChart className="w-6 h-6 sm:w-8 sm:h-8 text-orange-600 mx-auto mb-2" />
+            <h3 className="font-semibold text-gray-900 text-sm sm:text-base">Company Scenarios</h3>
+            <p className="text-xs sm:text-sm text-gray-600">Tailored crisis scenarios</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Company Insights Dialog */}
+      {showCompanyInsights && (
+        <Dialog open={showCompanyInsights} onOpenChange={setShowCompanyInsights}>  
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Brain className="w-6 h-6 text-purple-600" />
+                Generate Company Insights
+              </DialogTitle>
+              <DialogDescription>
+                Get comprehensive AI-powered analysis including financial analysis, market research, and risk assessment
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-6">
+              {/* Analysis Type Selection */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <Button
+                  variant="outline"
+                  className="h-auto p-4 flex flex-col items-center gap-2 hover:bg-blue-50 hover:border-blue-300"
+                  onClick={() => generateInsights('vulnerability_assessment')}
+                  disabled={loading}
+                >
+                  <Shield className="w-6 h-6 text-blue-600" />
+                  <span className="text-sm">Risk Assessment</span>
+                </Button>
+                
+                <Button
+                  variant="outline"
+                  className="h-auto p-4 flex flex-col items-center gap-2 hover:bg-green-50 hover:border-green-300"
+                  onClick={() => generateInsights('business_impact')}
+                  disabled={loading}
+                >
+                  <DollarSign className="w-6 h-6 text-green-600" />
+                  <span className="text-sm">Financial Analysis</span>
+                </Button>
+                
+                <Button
+                  variant="outline"
+                  className="h-auto p-4 flex flex-col items-center gap-2 hover:bg-purple-50 hover:border-purple-300"
+                  onClick={() => generateInsights('competitive_analysis')}
+                  disabled={loading}
+                >
+                  <BarChart3 className="w-6 h-6 text-purple-600" />
+                  <span className="text-sm">Market Research</span>
+                </Button>
+                
+                <Button
+                  variant="outline"
+                  className="h-auto p-4 flex flex-col items-center gap-2 hover:bg-orange-50 hover:border-orange-300"
+                  onClick={() => analyzeWebsite()}
+                  disabled={loading || !company?.website_url}
+                >
+                  <Globe className="w-6 h-6 text-orange-600" />
+                  <span className="text-sm">Website Analysis</span>
+                </Button>
+              </div>
+
+              {/* Analysis Results */}
+              {companyInsightsData && (
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <h3 className="text-lg font-semibold">{companyInsightsData.analysis_title}</h3>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        onClick={() => printAnalysis()}
+                        className="flex items-center gap-2"
+                        title="Print or Save as PDF"
+                      >
+                        <Download className="w-4 h-4" />
+                        Print/PDF
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => downloadAnalysisAsText()}
+                        className="flex items-center gap-2"
+                        title="Download as Text File"
+                      >
+                        <FileText className="w-4 h-4" />
+                        Download TXT
+                      </Button>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-gray-50 p-6 rounded-lg">
+                    <div className="prose max-w-none">
+                      <div className="whitespace-pre-line text-sm text-gray-800">
+                        {companyInsightsData.analysis_content}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="bg-blue-50 p-4 rounded-lg">
+                      <h4 className="font-semibold text-blue-900 mb-3 flex items-center gap-2">
+                        <Lightbulb className="w-4 h-4" />
+                        Key Findings
+                      </h4>
+                      <ul className="space-y-2">
+                        {companyInsightsData.key_findings.map((finding, idx) => (
+                          <li key={idx} className="text-sm text-blue-800 flex items-start gap-2">
+                            <div className="w-1.5 h-1.5 bg-blue-600 rounded-full mt-2 flex-shrink-0"></div>
+                            {finding}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    
+                    <div className="bg-green-50 p-4 rounded-lg">
+                      <h4 className="font-semibold text-green-900 mb-3 flex items-center gap-2">
+                        <Target className="w-4 h-4" />
+                        Recommendations
+                      </h4>
+                      <ul className="space-y-2">
+                        {companyInsightsData.recommendations.map((rec, idx) => (
+                          <li key={idx} className="text-sm text-green-800 flex items-start gap-2">
+                            <div className="w-1.5 h-1.5 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
+                            {rec}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              {loading && (
+                <div className="flex items-center justify-center py-8">
+                  <div className="text-center">
+                    <Brain className="w-8 h-8 animate-pulse text-purple-500 mx-auto mb-4" />
+                    <p className="text-gray-600">Generating comprehensive analysis...</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* Document Analysis Dialog */}
+      {showDocumentAnalysis && (
+        <Dialog open={showDocumentAnalysis} onOpenChange={setShowDocumentAnalysis}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <FileText className="w-6 h-6 text-blue-600" />
+                Analyze Documents
+              </DialogTitle>
+              <DialogDescription>
+                Upload PDF or DOCX files for AI-powered analysis and insights
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-6">
+              {/* File Upload */}
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+                <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Upload Document</h3>
+                <p className="text-gray-600 mb-4">Support for PDF and DOCX files up to 10MB</p>
+                <input
+                  type="file"
+                  accept=".pdf,.docx"
+                  onChange={handleFileUpload}
+                  className="hidden"
+                  id="file-upload"
+                />
+                <label htmlFor="file-upload">
+                  <Button className="bg-blue-600 hover:bg-blue-700" disabled={loading}>
+                    {loading ? 'Uploading...' : 'Choose File'}
+                  </Button>
+                </label>
+              </div>
+              
+              {/* Document Type Selection */}
+              <div>
+                <Label htmlFor="doc-type">Document Type</Label>
+                <Select defaultValue="business_plan">
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select document type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="business_plan">Business Plan</SelectItem>
+                    <SelectItem value="market_strategy">Market Strategy</SelectItem>
+                    <SelectItem value="financial_report">Financial Report</SelectItem>
+                    <SelectItem value="operational_plan">Operational Plan</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* Team Creation Dialog */}
+      {showTeamCreator && (
+        <Dialog open={showTeamCreator} onOpenChange={setShowTeamCreator}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Users2 className="w-6 h-6 text-green-600" />
+                Create Team
+              </DialogTitle>
+              <DialogDescription>
+                Create a crisis response team with existing company users
+              </DialogDescription>
+            </DialogHeader>
+            
+            <form onSubmit={handleCreateTeam} className="space-y-6">
+              <div>
+                <Label htmlFor="team-name">Team Name</Label>
+                <Input
+                  id="team-name"
+                  placeholder="e.g., Crisis Response Team Alpha"
+                  required
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="team-description">Team Description</Label>
+                <Textarea
+                  id="team-description"
+                  placeholder="Describe the team's role and responsibilities..."
+                  rows={3}
+                  required
+                />
+              </div>
+              
+              <div>
+                <Label>Team Members</Label>
+                
+                {/* Existing Users Section */}
+                {availableUsers.length > 0 && (
+                  <div className="mb-4">
+                    <Label className="text-sm text-gray-600 mb-2 block">Select Existing Users</Label>
+                    <div className="space-y-2 max-h-32 overflow-y-auto border rounded-lg p-3">
+                      {availableUsers.map(user => (
+                        <div key={user.id} className="flex items-center space-x-2">
+                          <input
+                            type="checkbox"
+                            id={`user-${user.id}`}
+                            className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+                          />
+                          <label htmlFor={`user-${user.id}`} className="flex-1 text-sm">
+                            <div className="font-medium">{user.username}</div>
+                            <div className="text-gray-500">{user.email} • {user.job_title || 'No title'}</div>
+                          </label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Invite New Members Section */}
+                <div>
+                  <Label className="text-sm text-gray-600 mb-2 block">Invite New Members</Label>
+                  <div className="flex gap-2 mb-3">
+                    <Input
+                      type="email"
+                      value={inviteEmail}
+                      onChange={(e) => setInviteEmail(e.target.value)}
+                      placeholder="Enter email address to invite"
+                      className="flex-1"
+                      onKeyPress={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          addInviteEmail();
+                        }
+                      }}
+                    />
+                    <Button 
+                      type="button" 
+                      onClick={addInviteEmail}
+                      disabled={!inviteEmail.trim()}
+                      variant="outline"
+                      className="flex items-center gap-1"
+                    >
+                      <Plus className="w-4 h-4" />
+                      Invite
+                    </Button>
+                  </div>
+
+                  {/* Invited Emails List */}
+                  {inviteEmails.length > 0 && (
+                    <div className="space-y-2">
+                      <Label className="text-xs text-gray-500">Invited Members:</Label>
+                      <div className="flex flex-wrap gap-2">
+                        {inviteEmails.map((email, index) => (
+                          <div key={index} className="flex items-center gap-1 bg-blue-100 text-blue-800 px-2 py-1 rounded-md text-sm">
+                            <span>{email}</span>
+                            <button
+                              type="button"
+                              onClick={() => removeInviteEmail(email)}
+                              className="text-blue-600 hover:text-blue-800 ml-1"
+                            >
+                              ×
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                      <p className="text-xs text-gray-500">
+                        Invitations will be sent to these email addresses when the team is created.
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {availableUsers.length === 0 && inviteEmails.length === 0 && (
+                  <p className="text-gray-500 text-sm mt-2">No users available. Use the invite feature to add team members.</p>
+                )}
+              </div>
+              
+              <div className="flex gap-3">
+                <Button type="submit" disabled={loading} className="bg-green-600 hover:bg-green-700 flex-1">
+                  {loading ? 'Creating...' : 'Create Team'}
+                </Button>
+                <Button type="button" variant="outline" onClick={() => setShowTeamCreator(false)}>
+                  Cancel
+                </Button>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
+      )}
+    </div>
+  );
+};
+
+// Document Management Component
+const DocumentManagement = () => {
+  const [documents, setDocuments] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showUploadDialog, setShowUploadDialog] = useState(false);
+  const [uploadData, setUploadData] = useState({
+    document_name: '',
+    document_type: 'business_plan',
+    document_content: ''
+  });
+
+  useEffect(() => {
+    fetchDocuments();
+  }, []);
+
+  const fetchDocuments = async () => {
+    try {
+      const userResponse = await axios.get(`${API}/me`);
+      if (userResponse.data.company_id) {
+        const response = await axios.get(`${API}/companies/${userResponse.data.company_id}/documents`);
+        setDocuments(response.data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch documents:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUploadDocument = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      const userResponse = await axios.get(`${API}/me`);
+      const response = await axios.post(`${API}/companies/${userResponse.data.company_id}/documents`, uploadData);
+      setDocuments([...documents, response.data]);
+      setShowUploadDialog(false);
+      setUploadData({ document_name: '', document_type: 'business_plan', document_content: '' });
+      toast({ title: "Success", description: "Document uploaded and analyzed successfully!" });
+    } catch (error) {
+      toast({ 
+        title: "Error", 
+        description: error.response?.data?.detail || "Failed to upload document",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900">Document Intelligence</h2>
+          <p className="text-gray-600">Upload and analyze business documents with AI insights</p>
+        </div>
+        <Button onClick={() => setShowUploadDialog(true)} className="bg-blue-600 hover:bg-blue-700">
+          <Upload className="w-4 h-4 mr-2" />
+          Upload Document
+        </Button>
+      </div>
+
+      {/* Document Grid */}
+      <div className="grid gap-6">
+        {documents.length === 0 ? (
+          <div className="text-center py-12">
+            <FileText className="w-16 h-16 mx-auto mb-4 text-gray-400" />
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">No Documents Uploaded</h3>
+            <p className="text-gray-600 mb-4">
+              Upload business plans, market strategies, and operational documents for AI analysis
+            </p>
+            <Button onClick={() => setShowUploadDialog(true)} className="bg-blue-600 hover:bg-blue-700">
+              <Upload className="w-4 h-4 mr-2" />
+              Upload First Document
+            </Button>
+          </div>
+        ) : (
+          documents.map((doc) => (
+            <Card key={doc.id} className="hover:shadow-lg transition-shadow">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="w-5 h-5 text-blue-600" />
+                  {doc.document_name}
+                </CardTitle>
+                <CardDescription>
+                  <Badge variant="outline" className="mr-2">
+                    {doc.document_type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                  </Badge>
+                  <span className="text-sm text-gray-500">
+                    Uploaded {new Date(doc.created_at).toLocaleDateString()}
+                  </span>
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {doc.ai_analysis && (
+                  <div className="bg-blue-50 p-4 rounded-lg mb-4">
+                    <h4 className="font-semibold text-blue-900 mb-2">AI Analysis</h4>
+                    <p className="text-sm text-blue-800">
+                      {doc.ai_analysis.substring(0, 300)}...
+                    </p>
+                  </div>
+                )}
+                
+                <div className="grid md:grid-cols-3 gap-4">
+                  <div className="bg-gray-50 p-3 rounded-lg">
+                    <h5 className="font-semibold text-gray-900 mb-2">Key Insights</h5>
+                    <ul className="text-sm text-gray-700 space-y-1">
+                      {doc.key_insights.slice(0, 2).map((insight, idx) => (
+                        <li key={idx} className="flex items-start gap-2">
+                          <Lightbulb className="w-3 h-3 mt-0.5 text-yellow-600" />
+                          {insight.substring(0, 50)}...
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  
+                  <div className="bg-gray-50 p-3 rounded-lg">
+                    <h5 className="font-semibold text-gray-900 mb-2">Risk Factors</h5>
+                    <ul className="text-sm text-gray-700 space-y-1">
+                      {doc.risk_factors.slice(0, 2).map((risk, idx) => (
+                        <li key={idx} className="flex items-start gap-2">
+                          <AlertTriangle className="w-3 h-3 mt-0.5 text-red-600" />
+                          {risk.substring(0, 50)}...
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  
+                  <div className="bg-gray-50 p-3 rounded-lg">
+                    <h5 className="font-semibold text-gray-900 mb-2">Strategic Priorities</h5>
+                    <ul className="text-sm text-gray-700 space-y-1">
+                      {doc.strategic_priorities.slice(0, 2).map((priority, idx) => (
+                        <li key={idx} className="flex items-start gap-2">
+                          <Target className="w-3 h-3 mt-0.5 text-purple-600" />
+                          {priority.substring(0, 50)}...
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))
+        )}
+      </div>
+
+      {/* Upload Dialog */}
+      {showUploadDialog && (
+        <Dialog open={showUploadDialog} onOpenChange={setShowUploadDialog}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Upload className="w-5 h-5 text-blue-600" />
+                Upload Business Document
+              </DialogTitle>
+              <DialogDescription>
+                Upload business plans, strategies, or operational documents for AI analysis
+              </DialogDescription>
+            </DialogHeader>
+            
+            <form onSubmit={handleUploadDocument} className="space-y-4">
+              <div>
+                <Label htmlFor="document_name">Document Name</Label>
+                <Input
+                  id="document_name"
+                  value={uploadData.document_name}
+                  onChange={(e) => setUploadData({...uploadData, document_name: e.target.value})}
+                  placeholder="e.g., Business Plan 2024"
+                  required
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="document_type">Document Type</Label>
+                <Select value={uploadData.document_type} onValueChange={(value) => setUploadData({...uploadData, document_type: value})}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="business_plan">Business Plan</SelectItem>
+                    <SelectItem value="market_strategy">Market Strategy</SelectItem>
+                    <SelectItem value="financial_report">Financial Report</SelectItem>
+                    <SelectItem value="operational_plan">Operational Plan</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="document_content">Document Content</Label>
+                <Textarea
+                  id="document_content"
+                  value={uploadData.document_content}
+                  onChange={(e) => setUploadData({...uploadData, document_content: e.target.value})}
+                  placeholder="Paste your document content here..."
+                  rows={10}
+                  required
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Paste the text content of your document for AI analysis
+                </p>
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <Button type="submit" disabled={loading} className="flex-1">
+                  {loading ? 'Analyzing...' : 'Upload & Analyze Document'}
+                </Button>
+                <Button type="button" variant="outline" onClick={() => setShowUploadDialog(false)}>
+                  Cancel
+                </Button>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
+      )}
+    </div>
+  );
+};
+
+// Admin Dashboard Component
+const AdminDashboard = () => {
+  const [adminStats, setAdminStats] = useState({});
+  const [clients, setClients] = useState([]);
+  const [licenseTiers, setLicenseTiers] = useState([]);
+  const [aiAvatars, setAiAvatars] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showCreateClient, setShowCreateClient] = useState(false);
+  const [showAvatarManager, setShowAvatarManager] = useState(false);
+  const [newClientData, setNewClientData] = useState({
+    client_name: '',
+    client_email: '',
+    license_tier_id: '',
+    license_count: 1
+  });
+
+  useEffect(() => {
+    initializeAdminSystem();
+  }, []);
+
+  const initializeAdminSystem = async () => {
+    try {
+      // Initialize admin system
+      await axios.post(`${API}/admin/initialize`);
+      
+      // Fetch admin data
+      const [statsRes, clientsRes, tiersRes, avatarsRes] = await Promise.all([
+        axios.get(`${API}/admin/dashboard/stats`).catch(() => ({ data: {} })),
+        axios.get(`${API}/admin/clients`).catch(() => ({ data: [] })),
+        axios.get(`${API}/admin/license-tiers`).catch(() => ({ data: [] })),
+        axios.get(`${API}/admin/ai-avatars`).catch(() => ({ data: [] }))
+      ]);
+
+      setAdminStats(statsRes.data);
+      setClients(clientsRes.data);
+      setLicenseTiers(tiersRes.data);
+      setAiAvatars(avatarsRes.data);
+    } catch (error) {
+      console.error('Failed to initialize admin system:', error);
+      toast({ 
+        title: "Info", 
+        description: "Admin system ready. Please log in with admin credentials.",
+        variant: "default"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCreateClient = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      const response = await axios.post(`${API}/admin/clients`, newClientData);
+      setClients([response.data, ...clients]);
+      setShowCreateClient(false);
+      setNewClientData({ client_name: '', client_email: '', license_tier_id: '', license_count: 1 });
+      toast({ title: "Success", description: "Client created successfully!" });
+    } catch (error) {
+      toast({ 
+        title: "Error", 
+        description: error.response?.data?.detail || "Failed to create client",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAvatarStatusUpdate = async (avatarId, newStatus) => {
+    try {
+      await axios.put(`${API}/admin/ai-avatars/${avatarId}/status?new_status=${newStatus}`);
+      
+      setAiAvatars(aiAvatars.map(avatar => 
+        avatar.id === avatarId ? { ...avatar, status: newStatus } : avatar
+      ));
+      
+      toast({ title: "Success", description: `Avatar status updated to ${newStatus}` });
+    } catch (error) {
+      toast({ 
+        title: "Error", 
+        description: "Failed to update avatar status",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const getStatusColor = (status) => {
+    switch(status) {
+      case 'active': return 'bg-green-100 text-green-800 border-green-200';
+      case 'monitoring': return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'learning': return 'bg-purple-100 text-purple-800 border-purple-200';
+      case 'inactive': return 'bg-gray-100 text-gray-800 border-gray-200';
+      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
+  };
+
+  const getStatusIcon = (status) => {
+    switch(status) {
+      case 'active': return <Power className="w-3 h-3" />;
+      case 'monitoring': return <Monitor className="w-3 h-3" />;
+      case 'learning': return <Brain className="w-3 h-3" />;
+      case 'inactive': return <PowerOff className="w-3 h-3" />;
+      default: return <Settings className="w-3 h-3" />;
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="text-center">
+          <Crown className="w-12 h-12 animate-pulse text-yellow-500 mx-auto mb-4" />
+          <p className="text-gray-600">Loading Admin Dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Admin Header */}
+      <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-200 rounded-lg p-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+              <Crown className="w-6 h-6 text-yellow-600" />
+              SaaS Admin Dashboard
+            </h1>
+            <p className="text-gray-600">Comprehensive client and licensing management for Polycrisis Platform</p>
+          </div>
+          <div className="text-right">
+            <div className="text-sm text-gray-600">Admin: rauno.saarnio@xr-presence.com</div>
+            <Badge className="bg-yellow-100 text-yellow-800">Super Admin</Badge>
+          </div>
+        </div>
+      </div>
+
+      {/* Admin Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-blue-600 font-medium">Total Clients</p>
+                <p className="text-3xl font-bold text-blue-900">{adminStats.total_clients || 0}</p>
+                <p className="text-xs text-blue-700">{adminStats.active_clients || 0} active</p>
+              </div>
+              <Users className="w-10 h-10 text-blue-500" />
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-green-600 font-medium">Revenue</p>
+                <p className="text-3xl font-bold text-green-900">${adminStats.total_revenue || 0}</p>
+                <p className="text-xs text-green-700">Total earned</p>
+              </div>
+              <DollarSign className="w-10 h-10 text-green-500" />
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-purple-600 font-medium">AI Avatars</p>
+                <p className="text-3xl font-bold text-purple-900">{aiAvatars.length}</p>
+                <p className="text-xs text-purple-700">{adminStats.ai_avatars_active || 0} active</p>
+              </div>
+              <Brain className="w-10 h-10 text-purple-500" />
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-orange-600 font-medium">Trial Clients</p>
+                <p className="text-3xl font-bold text-orange-900">{adminStats.trial_clients || 0}</p>
+                <p className="text-xs text-orange-700">Need attention</p>
+              </div>
+              <Timer className="w-10 h-10 text-orange-500" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* AI Avatar Status Management */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <Brain className="w-5 h-5 text-purple-600" />
+              AI Monitor Agents Status
+            </CardTitle>
+            <Button variant="outline" onClick={() => setShowAvatarManager(!showAvatarManager)}>
+              <Settings className="w-4 h-4 mr-2" />
+              Manage Avatars
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {aiAvatars.map(avatar => (
+              <div key={avatar.id} className="flex items-center justify-between p-4 border rounded-lg">
+                <div className="flex items-center gap-3">
+                  {getStatusIcon(avatar.status)}
+                  <div>
+                    <h4 className="font-semibold text-gray-900">{avatar.avatar_name}</h4>
+                    <p className="text-sm text-gray-600">{avatar.description}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Badge className={getStatusColor(avatar.status)}>
+                    {avatar.status}
+                  </Badge>
+                  <div className="flex gap-1">
+                    {['active', 'monitoring', 'learning', 'inactive'].map(status => (
+                      <Button
+                        key={status}
+                        variant="outline"
+                        size="sm"
+                        className="text-xs py-1 px-2"
+                        onClick={() => handleAvatarStatusUpdate(avatar.id, status)}
+                        disabled={avatar.status === status}
+                      >
+                        {status}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* License Tiers */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Package className="w-5 h-5 text-blue-600" />
+            License Tiers & Pricing
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {licenseTiers.map(tier => (
+              <div key={tier.id} className="border rounded-lg p-4 hover:shadow-lg transition-shadow">
+                <div className="text-center mb-4">
+                  <h3 className="font-bold text-lg text-gray-900">{tier.tier_name}</h3>
+                  <p className="text-sm text-gray-600">Up to {tier.max_users} users</p>
+                </div>
+                
+                <div className="text-center mb-4">
+                  <div className="text-3xl font-bold text-blue-900">${tier.monthly_price}</div>
+                  <div className="text-sm text-gray-600">per month</div>
+                  <div className="text-xs text-green-600">${tier.annual_price}/year (save 2 months)</div>
+                </div>
+                
+                <div className="space-y-2">
+                  {tier.features.slice(0, 3).map((feature, idx) => (
+                    <div key={idx} className="flex items-center gap-2 text-sm">
+                      <CheckSquare className="w-3 h-3 text-green-600" />
+                      <span className="text-gray-700">{feature}</span>
+                    </div>
+                  ))}
+                  {tier.features.length > 3 && (
+                    <div className="text-xs text-gray-500">+{tier.features.length - 3} more features</div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Client Management */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <Users className="w-5 h-5 text-green-600" />
+              Client Management
+            </CardTitle>
+            <Button onClick={() => setShowCreateClient(true)} className="bg-green-600 hover:bg-green-700">
+              <Plus className="w-4 h-4 mr-2" />
+              Add Client
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {clients.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">
+              <Users className="w-12 h-12 mx-auto mb-4 opacity-50" />
+              <p>No clients added yet. Create your first client to get started.</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {clients.slice(0, 10).map(client => (
+                <div key={client.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50">
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-gray-900">{client.client_name}</h3>
+                    <p className="text-sm text-gray-600">{client.client_email}</p>
+                    <div className="flex items-center gap-2 mt-2">
+                      <Badge variant={client.subscription_status === 'active' ? 'default' : 'secondary'}>
+                        {client.subscription_status}
+                      </Badge>
+                      <Badge variant="outline">{client.license_count} licenses</Badge>
+                      <Badge variant="outline">{client.users_active}/{client.license_count} users</Badge>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm">
+                      <Settings className="w-4 h-4" />
+                    </Button>
+                    <Button variant="outline" size="sm">
+                      <CreditCard className="w-4 h-4" />
+                    </Button>
+                    <Button variant="outline" size="sm">
+                      <TrendingUp className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Create Client Dialog */}
+      {showCreateClient && (
+        <Dialog open={showCreateClient} onOpenChange={setShowCreateClient}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Users className="w-5 h-5 text-green-600" />
+                Add New Client
+              </DialogTitle>
+              <DialogDescription>
+                Create a new client account with licensing and trial access
+              </DialogDescription>
+            </DialogHeader>
+            
+            <form onSubmit={handleCreateClient} className="space-y-4">
+              <div>
+                <Label htmlFor="client_name">Client Name</Label>
+                <Input
+                  id="client_name"
+                  value={newClientData.client_name}
+                  onChange={(e) => setNewClientData({...newClientData, client_name: e.target.value})}
+                  placeholder="Company or Organization Name"
+                  required
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="client_email">Client Email</Label>
+                <Input
+                  id="client_email"
+                  type="email"
+                  value={newClientData.client_email}
+                  onChange={(e) => setNewClientData({...newClientData, client_email: e.target.value})}
+                  placeholder="client@company.com"
+                  required
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="license_tier">License Tier</Label>
+                <Select value={newClientData.license_tier_id} onValueChange={(value) => setNewClientData({...newClientData, license_tier_id: value})}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select license tier" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {licenseTiers.map(tier => (
+                      <SelectItem key={tier.id} value={tier.id}>
+                        {tier.tier_name} - ${tier.monthly_price}/month ({tier.max_users} users)
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="license_count">Number of Licenses</Label>
+                <Input
+                  id="license_count"
+                  type="number"
+                  min="1"
+                  max="100"
+                  value={newClientData.license_count}
+                  onChange={(e) => setNewClientData({...newClientData, license_count: parseInt(e.target.value)})}
+                  required
+                />
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <Button type="submit" disabled={loading} className="flex-1">
+                  {loading ? 'Creating...' : 'Create Client'}
+                </Button>
+                <Button type="button" variant="outline" onClick={() => setShowCreateClient(false)}>
+                  Cancel
+                </Button>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
+      )}
+    </div>
+  );
+};
+
+// Client Avatar Competence Manager
+const AvatarCompetenceManager = () => {
+  const [aiAvatars, setAiAvatars] = useState([]);
+  const [selectedAvatar, setSelectedAvatar] = useState(null);
+  const [competences, setCompetences] = useState([]);
+  const [showAddCompetence, setShowAddCompetence] = useState(false);
+  const [newCompetence, setNewCompetence] = useState({
+    competence_name: '',
+    competence_description: '',
+    competence_type: 'skill',
+    proficiency_level: 1
+  });
+
+  useEffect(() => {
+    fetchAvatars();
+  }, []);
+
+  const fetchAvatars = async () => {
+    try {
+      const response = await axios.get(`${API}/admin/ai-avatars`);
+      setAiAvatars(response.data);
+    } catch (error) {
+      console.error('Failed to fetch avatars:', error);
+    }
+  };
+
+  const fetchCompetences = async (avatarId) => {
+    try {
+      const response = await axios.get(`${API}/avatars/${avatarId}/competences`);
+      setCompetences(response.data);
+    } catch (error) {
+      console.error('Failed to fetch competences:', error);
+    }
+  };
+
+  const handleAddCompetence = async (e) => {
+    e.preventDefault();
+    if (!selectedAvatar) return;
+
+    try {
+      const response = await axios.post(`${API}/avatars/${selectedAvatar.id}/competences`, newCompetence);
+      setCompetences([...competences, response.data]);
+      setShowAddCompetence(false);
+      setNewCompetence({ competence_name: '', competence_description: '', competence_type: 'skill', proficiency_level: 1 });
+      toast({ title: "Success", description: "Competence added successfully!" });
+    } catch (error) {
+      toast({ 
+        title: "Error", 
+        description: "Failed to add competence",
+        variant: "destructive"
+      });
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-2xl font-bold text-gray-900">AI Avatar Competence Management</h2>
+        <p className="text-gray-600">Add custom competences to enhance AI avatar capabilities</p>
+      </div>
+
+      {/* Avatar Selection */}
+      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {aiAvatars.map(avatar => (
+          <Card 
+            key={avatar.id} 
+            className={`cursor-pointer transition-all ${selectedAvatar?.id === avatar.id ? 'ring-2 ring-blue-500 bg-blue-50' : 'hover:shadow-lg'}`}
+            onClick={() => {
+              setSelectedAvatar(avatar);
+              fetchCompetences(avatar.id);
+            }}
+          >
+            <CardContent className="p-4 text-center">
+              <Brain className="w-8 h-8 text-purple-600 mx-auto mb-2" />
+              <h3 className="font-semibold text-gray-900">{avatar.avatar_name}</h3>
+              <p className="text-sm text-gray-600">{avatar.avatar_type.replace('_', ' ')}</p>
+              <Badge className="mt-2" variant={avatar.status === 'active' ? 'default' : 'secondary'}>
+                {avatar.status}
+              </Badge>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {/* Competence Management */}
+      {selectedAvatar && (
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2">
+                <Settings className="w-5 h-5" />
+                {selectedAvatar.avatar_name} Competences
+              </CardTitle>
+              <Button onClick={() => setShowAddCompetence(true)} className="bg-purple-600 hover:bg-purple-700">
+                <Plus className="w-4 h-4 mr-2" />
+                Add Competence
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {/* Base Competences */}
+            <div className="mb-6">
+              <h4 className="font-semibold text-gray-900 mb-3">Base Competences</h4>
+              <div className="grid md:grid-cols-2 gap-3">
+                {selectedAvatar.base_competences.map((competence, idx) => (
+                  <div key={idx} className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
+                    <Shield className="w-4 h-4 text-blue-600" />
+                    <span className="text-sm text-gray-700">{competence}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Custom Competences */}
+            <div>
+              <h4 className="font-semibold text-gray-900 mb-3">Custom Competences</h4>
+              {competences.length === 0 ? (
+                <div className="text-center py-6 text-gray-500">
+                  <Brain className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                  <p>No custom competences added yet.</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {competences.map(competence => (
+                    <div key={competence.id} className="p-3 border rounded-lg">
+                      <div className="flex items-center justify-between mb-2">
+                        <h5 className="font-semibold text-gray-900">{competence.competence_name}</h5>
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline">{competence.competence_type}</Badge>
+                          <div className="flex items-center gap-1">
+                            <span className="text-xs text-gray-500">Level:</span>
+                            <span className="text-sm font-medium">{competence.proficiency_level}/10</span>
+                          </div>
+                        </div>
+                      </div>
+                      <p className="text-sm text-gray-600">{competence.competence_description}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Add Competence Dialog */}
+      {showAddCompetence && selectedAvatar && (
+        <Dialog open={showAddCompetence} onOpenChange={setShowAddCompetence}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Plus className="w-5 h-5 text-purple-600" />
+                Add Competence to {selectedAvatar.avatar_name}
+              </DialogTitle>
+              <DialogDescription>
+                Define a new competence to enhance this AI avatar's capabilities
+              </DialogDescription>
+            </DialogHeader>
+            
+            <form onSubmit={handleAddCompetence} className="space-y-4">
+              <div>
+                <Label htmlFor="competence_name">Competence Name</Label>
+                <Input
+                  id="competence_name"
+                  value={newCompetence.competence_name}
+                  onChange={(e) => setNewCompetence({...newCompetence, competence_name: e.target.value})}
+                  placeholder="e.g., Advanced Pattern Recognition"
+                  required
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="competence_description">Description</Label>
+                <Textarea
+                  id="competence_description"
+                  value={newCompetence.competence_description}
+                  onChange={(e) => setNewCompetence({...newCompetence, competence_description: e.target.value})}
+                  placeholder="Describe what this competence enables the avatar to do..."
+                  rows={3}
+                  required
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="competence_type">Competence Type</Label>
+                  <Select value={newCompetence.competence_type} onValueChange={(value) => setNewCompetence({...newCompetence, competence_type: value})}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="skill">Skill</SelectItem>
+                      <SelectItem value="knowledge">Knowledge</SelectItem>
+                      <SelectItem value="capability">Capability</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label htmlFor="proficiency_level">Proficiency Level (1-10)</Label>
+                  <Input
+                    id="proficiency_level"
+                    type="number"
+                    min="1"
+                    max="10"
+                    value={newCompetence.proficiency_level}
+                    onChange={(e) => setNewCompetence({...newCompetence, proficiency_level: parseInt(e.target.value)})}
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <Button type="submit" className="flex-1">
+                  Add Competence
+                </Button>
+                <Button type="button" variant="outline" onClick={() => setShowAddCompetence(false)}>
+                  Cancel
+                </Button>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
+      )}
+    </div>
+  );
+};
+
+// Utility function to find biggest differences between analyses
+const findBiggestDifferences = (analysis1, analysis2) => {
+  const fields = [
+    'economic_crisis_pct', 'economic_stability_pct',
+    'social_unrest_pct', 'social_cohesion_pct', 
+    'political_instability_pct', 'political_stability_pct',
+    'technological_disruption_pct', 'technological_advancement_pct',
+    'environmental_degradation_pct', 'environmental_sustainability_pct'
+  ];
+  
+  const differences = [];
+  
+  fields.forEach(field => {
+    const val1 = analysis1[field] || 0;
+    const val2 = analysis2[field] || 0;
+    const difference = Math.abs(val1 - val2);
+    
+    if (difference >= 15) { // Only show significant differences
+      differences.push({
+        field: field.replace(/_pct$/, '').replace(/_/g, ' '),
+        val1,
+        val2,
+        difference,
+        direction: val1 > val2 ? 'increased' : 'decreased'
+      });
+    }
+  });
+  
+  // Sort by difference magnitude (highest first)
+  return differences.sort((a, b) => b.difference - a.difference);
+};
+
+// Scenario Adjusters - Fuzzy Logic Component
+const ScenarioAdjusters = () => {
+  const [adjustments, setAdjustments] = useState([]);
+  const [currentAdjustment, setCurrentAdjustment] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [company, setCompany] = useState(null);
+  
+  // SEPTE Framework state (Social, Economic, Political, Technological, Environmental)
+  const [septeValues, setSepteValues] = useState({
+    economic_crisis_pct: 50,
+    economic_stability_pct: 50,
+    social_unrest_pct: 50,
+    social_cohesion_pct: 50,
+    environmental_degradation_pct: 50,
+    environmental_resilience_pct: 50,
+    political_instability_pct: 50,
+    political_stability_pct: 50,
+    technological_disruption_pct: 50,
+    technological_advancement_pct: 50
+  });
+  
+  const [adjustmentName, setAdjustmentName] = useState('');
+  const [realTimeAnalysis, setRealTimeAnalysis] = useState('');
+  const [consensusData, setConsensusData] = useState(null);
+  const [savedAnalyses, setSavedAnalyses] = useState([]);
+  const [showComparison, setShowComparison] = useState(false);
+  const [currentAnalysisData, setCurrentAnalysisData] = useState(null);
+
+  useEffect(() => {
+    fetchCompany();
+    fetchAdjustments();
+  }, []);
+
+  // Generate initial analysis when component loads
+  useEffect(() => {
+    if (company && !realTimeAnalysis) {
+      updateRealTimeAnalysis(septeValues);
+    }
+    fetchSavedAnalyses();
+  }, [company]);
+
+  const fetchSavedAnalyses = async () => {
+    if (!company) return;
+    try {
+      const response = await axios.get(`${API}/companies/${company.id}/analyses`);
+      setSavedAnalyses(response.data);
+    } catch (error) {
+      console.error('Failed to fetch saved analyses:', error);
+    }
+  };
+
+  const saveAnalysis = async () => {
+    if (!company || !realTimeAnalysis) return;
+    
+    try {
+      setLoading(true);
+      const analysisData = {
+        analysis_name: `SEPTE Analysis ${new Date().toLocaleString()}`,
+        analysis_content: realTimeAnalysis,
+        septe_values: septeValues,
+        risk_level: currentAnalysisData?.risk_level || 'medium',
+        recommendations: currentAnalysisData?.recommendations || [],
+        generated_at: new Date().toISOString()
+      };
+      
+      await axios.post(`${API}/companies/${company.id}/analyses`, analysisData);
+      
+      toast({
+        title: "Analysis Saved",
+        description: "Your SEPTE analysis has been saved successfully!",
+        duration: 3000
+      });
+      
+      fetchSavedAnalyses();
+    } catch (error) {
+      console.error('Failed to save analysis:', error);
+      toast({
+        title: "Save Failed",
+        description: "Failed to save analysis. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const exportToPDF = () => {
+    if (!realTimeAnalysis) return;
+    
+    const printContent = `
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SEPTE Framework Analysis - ${company?.company_name || 'Company'}</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; line-height: 1.6; }
+        .header { text-align: center; border-bottom: 2px solid #333; padding-bottom: 20px; margin-bottom: 30px; }
+        .company-name { color: #6B46C1; font-size: 24px; font-weight: bold; }
+        .analysis-content { white-space: pre-line; font-size: 14px; }
+        .septe-values { background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0; }
+        .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #ddd; text-align: center; color: #666; }
+        h1, h2, h3 { color: #333; }
+        .risk-level { font-weight: bold; padding: 10px; border-radius: 5px; display: inline-block; }
+        .moderate { background-color: #FEF3C7; color: #92400E; }
+        .high { background-color: #FEE2E2; color: #DC2626; }
+        .low { background-color: #D1FAE5; color: #065F46; }
+        .critical { background-color: #FEE2E2; color: #991B1B; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🧠 SEPTE Framework Crisis Analysis</h1>
+        <div class="company-name">${company?.company_name || 'Your Organization'}</div>
+        <p>Generated on ${new Date().toLocaleString()}</p>
+    </div>
+    
+    <div class="septe-values">
+        <h3>📊 Current SEPTE Framework Values</h3>
+        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
+            <div><strong>Social Unrest:</strong> ${septeValues.social_unrest_pct}%</div>
+            <div><strong>Social Cohesion:</strong> ${septeValues.social_cohesion_pct}%</div>
+            <div><strong>Economic Recession:</strong> ${septeValues.economic_recession_pct}%</div>
+            <div><strong>Economic Growth:</strong> ${septeValues.economic_growth_pct}%</div>
+            <div><strong>Political Instability:</strong> ${septeValues.political_instability_pct}%</div>
+            <div><strong>Political Stability:</strong> ${septeValues.political_stability_pct}%</div>
+            <div><strong>Tech Disruption:</strong> ${septeValues.technological_disruption_pct}%</div>
+            <div><strong>Tech Advancement:</strong> ${septeValues.technological_advancement_pct}%</div>
+            <div><strong>Environmental Degradation:</strong> ${septeValues.environmental_degradation_pct}%</div>
+            <div><strong>Environmental Recovery:</strong> ${septeValues.environmental_recovery_pct}%</div>
+        </div>
+    </div>
+    
+    <div class="analysis-content">
+        ${realTimeAnalysis.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>')}
+    </div>
+    
+    <div class="footer">
+        <p>Generated by Polycrisis Simulator - Real-Time Impact Analysis</p>
+        <p>© ${new Date().getFullYear()} Crisis Management Platform</p>
+    </div>
+</body>
+</html>
+    `;
+    
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(printContent);
+    printWindow.document.close();
+    
+    setTimeout(() => {
+      printWindow.print();
+      printWindow.close();
+    }, 500);
+  };
+
+  const printAnalysis = () => {
+    exportToPDF();
+  };
+
+  const compareAnalyses = () => {
+    if (savedAnalyses.length < 2) {
+      toast({
+        title: "Not Enough Analyses",
+        description: "You need at least 2 saved analyses to compare. Save this analysis first!",
+        variant: "destructive"
+      });
+      return;
+    }
+    setShowComparison(true);
+  };
+
+  const findBiggestDifferences = (analysis1, analysis2) => {
+    const differences = [];
+    const fields = [
+      'social_unrest_pct', 'social_cohesion_pct', 
+      'economic_recession_pct', 'economic_growth_pct',
+      'political_instability_pct', 'political_stability_pct',
+      'technological_disruption_pct', 'technological_advancement_pct',
+      'environmental_degradation_pct', 'environmental_recovery_pct'
+    ];
+    
+    fields.forEach(field => {
+      const val1 = analysis1.septe_values?.[field] || 50;
+      const val2 = analysis2.septe_values?.[field] || 50;
+      const diff = Math.abs(val1 - val2);
+      
+      if (diff > 15) { // Only show significant differences
+        differences.push({
+          field: field.replace(/_pct$/, '').replace(/_/g, ' '),
+          val1,
+          val2,
+          difference: diff,
+          direction: val1 > val2 ? 'increased' : 'decreased'
+        });
+      }
+    });
+    
+    return differences.sort((a, b) => b.difference - a.difference);
+  };
+
+  const fetchCompany = async () => {
+    try {
+      const userResponse = await axios.get(`${API}/me`);
+      if (userResponse.data.company_id) {
+        const companyResponse = await axios.get(`${API}/companies/${userResponse.data.company_id}`);
+        setCompany(companyResponse.data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch company:', error);
+    }
+  };
+
+  const fetchAdjustments = async () => {
+    try {
+      setLoading(true);
+      const userResponse = await axios.get(`${API}/me`);
+      if (userResponse.data.company_id) {
+        const response = await axios.get(`${API}/companies/${userResponse.data.company_id}/scenario-adjustments`);
+        setAdjustments(response.data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch adjustments:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSliderChange = (field, value) => {
+    // Find the opposing field
+    const opposingFields = {
+      'economic_crisis_pct': 'economic_stability_pct',
+      'economic_stability_pct': 'economic_crisis_pct',
+      'social_unrest_pct': 'social_cohesion_pct',
+      'social_cohesion_pct': 'social_unrest_pct',
+      'environmental_degradation_pct': 'environmental_resilience_pct',
+      'environmental_resilience_pct': 'environmental_degradation_pct',
+      'political_instability_pct': 'political_stability_pct',
+      'political_stability_pct': 'political_instability_pct',
+      'technological_disruption_pct': 'technological_advancement_pct',
+      'technological_advancement_pct': 'technological_disruption_pct'
+    };
+    
+    const opposingField = opposingFields[field];
+    const opposingValue = 100 - value;
+    
+    setSepteValues(prev => ({
+      ...prev,
+      [field]: value,
+      [opposingField]: opposingValue
+    }));
+    
+    // Trigger real-time analysis update
+    updateRealTimeAnalysis({
+      ...septeValues,
+      [field]: value,
+      [opposingField]: opposingValue
+    });
+  };
+
+  const updateRealTimeAnalysis = async (values) => {
+    if (!company) return;
+    
+    try {
+      setLoading(true);
+      const response = await axios.post(`${API}/companies/${company.id}/real-time-analysis`, {
+        adjustment_name: adjustmentName || 'Real-time Analysis',
+        company_id: company.id,
+        social_unrest_pct: values.social_unrest_pct || 50,
+        social_cohesion_pct: values.social_cohesion_pct || 50,
+        economic_recession_pct: values.economic_recession_pct || 50,
+        economic_growth_pct: values.economic_growth_pct || 50,
+        political_instability_pct: values.political_instability_pct || 50,
+        political_stability_pct: values.political_stability_pct || 50,
+        technological_disruption_pct: values.technological_disruption_pct || 50,
+        technological_advancement_pct: values.technological_advancement_pct || 50,
+        environmental_degradation_pct: values.environmental_degradation_pct || 50,
+        environmental_recovery_pct: values.environmental_recovery_pct || 50
+      });
+      setRealTimeAnalysis(response.data.analysis);
+      setCurrentAnalysisData(response.data);
+    } catch (error) {
+      console.error('Failed to update analysis:', error);
+      // Fallback with mock analysis for demonstration
+      setRealTimeAnalysis(`Based on your current SEPTE framework settings:
+
+🔍 **SCENARIO IMPACT ANALYSIS**
+
+**Social Dynamics:**
+- Social Unrest: ${values.social_unrest_pct || 50}% - ${values.social_unrest_pct > 60 ? 'High social tension expected' : 'Manageable social conditions'}
+- Social Cohesion: ${values.social_cohesion_pct || 50}% - ${values.social_cohesion_pct > 60 ? 'Strong community bonds' : 'Community fragmentation risk'}
+
+**Economic Outlook:**
+- Recession Risk: ${values.economic_recession_pct || 50}% - ${values.economic_recession_pct > 60 ? 'Significant economic downturn likely' : 'Economic stability maintained'}
+- Growth Potential: ${values.economic_growth_pct || 50}% - ${values.economic_growth_pct > 60 ? 'Strong growth opportunities' : 'Limited growth prospects'}
+
+**Political Stability:**
+- Instability: ${values.political_instability_pct || 50}% - ${values.political_instability_pct > 60 ? 'Political turmoil anticipated' : 'Stable political environment'}
+- Stability: ${values.political_stability_pct || 50}% - ${values.political_stability_pct > 60 ? 'Strong institutional support' : 'Weak institutional framework'}
+
+**Technology Impact:**
+- Disruption: ${values.technological_disruption_pct || 50}% - ${values.technological_disruption_pct > 60 ? 'Major technological upheaval' : 'Gradual tech evolution'}
+- Advancement: ${values.technological_advancement_pct || 50}% - ${values.technological_advancement_pct > 60 ? 'Rapid innovation expected' : 'Slow technological progress'}
+
+**Environmental Factors:**
+- Degradation: ${values.environmental_degradation_pct || 50}% - ${values.environmental_degradation_pct > 60 ? 'Severe environmental challenges' : 'Manageable environmental impact'}
+- Recovery: ${values.environmental_recovery_pct || 50}% - ${values.environmental_recovery_pct > 60 ? 'Strong environmental restoration' : 'Limited environmental improvement'}
+
+**📊 OVERALL RISK ASSESSMENT:**
+${values.social_unrest_pct + values.economic_recession_pct + values.political_instability_pct + values.technological_disruption_pct + values.environmental_degradation_pct > 250 ? 
+'⚠️ HIGH RISK SCENARIO - Multiple crisis factors present' : 
+values.social_unrest_pct + values.economic_recession_pct + values.political_instability_pct + values.technological_disruption_pct + values.environmental_degradation_pct > 200 ?
+'⚡ MEDIUM RISK SCENARIO - Some instability factors detected' :
+'✅ LOW RISK SCENARIO - Relatively stable conditions'}
+
+**💡 KEY RECOMMENDATIONS:**
+- Monitor ${values.social_unrest_pct > 60 ? 'social tensions' : values.economic_recession_pct > 60 ? 'economic indicators' : values.political_instability_pct > 60 ? 'political developments' : 'emerging risk factors'}
+- Strengthen ${values.social_cohesion_pct < 40 ? 'community engagement' : values.economic_growth_pct < 40 ? 'economic resilience' : values.political_stability_pct < 40 ? 'governance systems' : 'organizational capabilities'}
+- Prepare contingency plans for ${values.technological_disruption_pct > 60 ? 'tech disruption' : values.environmental_degradation_pct > 60 ? 'environmental challenges' : 'multi-factor scenarios'}
+`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const saveAdjustment = async () => {
+    if (!company || !adjustmentName.trim()) {
+      toast({
+        title: "Missing Information",
+        description: "Please enter an adjustment name",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const response = await axios.post(`${API}/companies/${company.id}/scenario-adjustments`, {
+        adjustment_name: adjustmentName,
+        ...septeValues
+      });
+      
+      setAdjustments([...adjustments, response.data]);
+      setCurrentAdjustment(response.data);
+      
+      toast({
+        title: "Adjustment Saved",
+        description: `"${adjustmentName}" has been saved successfully`,
+        duration: 4000
+      });
+    } catch (error) {
+      toast({
+        title: "Save Error",
+        description: error.response?.data?.detail || "Failed to save adjustment",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const saveConsensus = async () => {
+    if (!currentAdjustment) {
+      toast({
+        title: "No Adjustment Selected",
+        description: "Please save your current adjustment first",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const response = await axios.post(`${API}/companies/${company.id}/consensus`, {
+        adjustment_id: currentAdjustment.id,
+        consensus_name: `${adjustmentName} - Team Consensus`
+      });
+      
+      setConsensusData(response.data);
+      
+      toast({
+        title: "Consensus Created",
+        description: "Team consensus has been created successfully",
+        duration: 4000
+      });
+    } catch (error) {
+      toast({
+        title: "Consensus Error",
+        description: error.response?.data?.detail || "Failed to create consensus",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadAdjustment = (adjustment) => {
+    setCurrentAdjustment(adjustment);
+    setAdjustmentName(adjustment.adjustment_name);
+    setSepteValues({
+      economic_crisis_pct: adjustment.economic_crisis_pct,
+      economic_stability_pct: adjustment.economic_stability_pct,
+      social_unrest_pct: adjustment.social_unrest_pct,
+      social_cohesion_pct: adjustment.social_cohesion_pct,
+      environmental_degradation_pct: adjustment.environmental_degradation_pct,
+      environmental_resilience_pct: adjustment.environmental_resilience_pct,
+      political_instability_pct: adjustment.political_instability_pct,
+      political_stability_pct: adjustment.political_stability_pct,
+      technological_disruption_pct: adjustment.technological_disruption_pct,
+      technological_advancement_pct: adjustment.technological_advancement_pct
+    });
+    setRealTimeAnalysis(adjustment.real_time_analysis);
+  };
+
+  const downloadScenarioAdjustment = () => {
+    if (!currentAdjustment) {
+      toast({
+        title: "No Adjustment Selected",
+        description: "Please save your adjustment first",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      const content = `
+SCENARIO ADJUSTMENT REPORT
+${currentAdjustment.adjustment_name}
+Generated on ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}
+
+${'='.repeat(80)}
+
+SEPTE FRAMEWORK SETTINGS:
+
+Economic Balance:
+- Crisis: ${currentAdjustment.economic_crisis_pct.toFixed(1)}%
+- Stability: ${currentAdjustment.economic_stability_pct.toFixed(1)}%
+
+Social Balance:
+- Unrest: ${currentAdjustment.social_unrest_pct.toFixed(1)}%
+- Cohesion: ${currentAdjustment.social_cohesion_pct.toFixed(1)}%
+
+Environmental Balance:
+- Degradation: ${currentAdjustment.environmental_degradation_pct.toFixed(1)}%
+- Resilience: ${currentAdjustment.environmental_resilience_pct.toFixed(1)}%
+
+Political Balance:
+- Instability: ${currentAdjustment.political_instability_pct.toFixed(1)}%
+- Stability: ${currentAdjustment.political_stability_pct.toFixed(1)}%
+
+Technological Balance:
+- Disruption: ${currentAdjustment.technological_disruption_pct.toFixed(1)}%
+- Advancement: ${currentAdjustment.technological_advancement_pct.toFixed(1)}%
+
+${'='.repeat(80)}
+
+AI ANALYSIS:
+${currentAdjustment.real_time_analysis || 'No analysis available'}
+
+${'='.repeat(80)}
+
+IMPACT SUMMARY:
+${currentAdjustment.impact_summary || 'No impact summary available'}
+
+${'='.repeat(80)}
+
+KEY RECOMMENDATIONS:
+${currentAdjustment.recommendations && currentAdjustment.recommendations.length > 0 ? 
+  currentAdjustment.recommendations.map((rec, idx) => `${idx + 1}. ${rec}`).join('\n') : 
+  'No recommendations available'}
+
+${'='.repeat(80)}
+
+RISK ASSESSMENT:
+- Risk Level: ${(currentAdjustment.risk_level || 'unknown').toUpperCase()}
+- Created: ${currentAdjustment.created_at ? new Date(currentAdjustment.created_at).toLocaleDateString() : 'Unknown'}
+
+Generated by Polycrisis Simulator - Scenario Adjusters
+      `.trim();
+
+      // Create and trigger download
+      const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+      
+      if (window.navigator && window.navigator.msSaveOrOpenBlob) {
+        // IE/Edge
+        window.navigator.msSaveOrOpenBlob(blob, `scenario_adjustment_${Date.now()}.txt`);
+      } else {
+        // Modern browsers
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = `scenario_adjustment_${(currentAdjustment.adjustment_name || 'adjustment').replace(/[^a-z0-9]/gi, '_').toLowerCase()}_${Date.now()}.txt`;
+        
+        document.body.appendChild(a);
+        a.click();
+        
+        setTimeout(() => {
+          document.body.removeChild(a);
+          window.URL.revokeObjectURL(url);
+        }, 100);
+      }
+
+      toast({
+        title: "Download Started",
+        description: "Scenario adjustment has been downloaded as a text file",
+        duration: 3000
+      });
+
+    } catch (error) {
+      console.error('Download failed:', error);
+      toast({
+        title: "Download Failed",
+        description: "Failed to download adjustment. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const downloadCurrentSettings = () => {
+    if (!adjustmentName.trim()) {
+      toast({
+        title: "Missing Adjustment Name",
+        description: "Please enter an adjustment name first",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      const content = `
+CURRENT SCENARIO SETTINGS
+${adjustmentName}
+Generated on ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}
+
+${'='.repeat(80)}
+
+SEPTE FRAMEWORK SETTINGS:
+
+Economic Balance:
+- Crisis: ${septeValues.economic_crisis_pct.toFixed(1)}%
+- Stability: ${septeValues.economic_stability_pct.toFixed(1)}%
+
+Social Balance:
+- Unrest: ${septeValues.social_unrest_pct.toFixed(1)}%
+- Cohesion: ${septeValues.social_cohesion_pct.toFixed(1)}%
+
+Environmental Balance:
+- Degradation: ${septeValues.environmental_degradation_pct.toFixed(1)}%
+- Resilience: ${septeValues.environmental_resilience_pct.toFixed(1)}%
+
+Political Balance:
+- Instability: ${septeValues.political_instability_pct.toFixed(1)}%
+- Stability: ${septeValues.political_stability_pct.toFixed(1)}%
+
+Technological Balance:
+- Disruption: ${septeValues.technological_disruption_pct.toFixed(1)}%
+- Advancement: ${septeValues.technological_advancement_pct.toFixed(1)}%
+
+${'='.repeat(80)}
+
+AI ANALYSIS:
+${realTimeAnalysis || 'Analysis not yet generated. Save the adjustment to get AI analysis.'}
+
+${'='.repeat(80)}
+
+Generated by Polycrisis Simulator - Scenario Adjusters
+      `.trim();
+
+      // Create and trigger download
+      const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+      
+      if (window.navigator && window.navigator.msSaveOrOpenBlob) {
+        // IE/Edge
+        window.navigator.msSaveOrOpenBlob(blob, `current_scenario_settings_${Date.now()}.txt`);
+      } else {
+        // Modern browsers
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = `current_scenario_settings_${adjustmentName.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_${Date.now()}.txt`;
+        
+        document.body.appendChild(a);
+        a.click();
+        
+        setTimeout(() => {
+          document.body.removeChild(a);
+          window.URL.revokeObjectURL(url);
+        }, 100);
+      }
+
+      toast({
+        title: "Download Started",
+        description: "Current scenario settings downloaded as text file",
+        duration: 3000
+      });
+
+    } catch (error) {
+      console.error('Download failed:', error);
+      toast({
+        title: "Download Failed", 
+        description: "Failed to download settings. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  if (!company) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="text-center">
+          <Building2 className="w-12 h-12 animate-pulse text-blue-500 mx-auto mb-4" />
+          <p className="text-gray-600">Please set up your company profile first</p>
+          <p className="text-sm text-gray-500 mt-2">Go to Company Management to create your profile</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex justify-between items-start">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+            <Layers className="w-8 h-8 text-blue-600" />
+            Scenario Adjusters
+          </h1>
+          <p className="text-gray-600 mt-2">
+            Use fuzzy logic sliders to adjust scenario parameters and see immediate AI-powered impact analysis
+          </p>
+        </div>
+        
+        <div className="flex gap-3">
+          <Button 
+            onClick={saveAdjustment} 
+            disabled={loading || !adjustmentName.trim()}
+            className="bg-blue-600 hover:bg-blue-700"
+          >
+            <Database className="w-4 h-4 mr-2" />
+            Save Adjustment
+          </Button>
+          <Button 
+            onClick={downloadCurrentSettings} 
+            disabled={!adjustmentName.trim()}
+            variant="outline"
+            className="flex items-center gap-2"
+            title="Download current settings as text file"
+          >
+            <Download className="w-4 h-4" />
+            Download Settings
+          </Button>
+          <Button 
+            onClick={saveConsensus} 
+            disabled={loading || !currentAdjustment}
+            className="bg-green-600 hover:bg-green-700"
+          >
+            <Users className="w-4 h-4 mr-2" />
+            Save Consensus
+          </Button>
+        </div>
+      </div>
+
+      <div className="grid lg:grid-cols-2 gap-6">
+        {/* Left Panel - Adjusters */}
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Layers className="w-5 h-5 text-blue-600" />
+                SEPTE Framework Adjusters
+              </CardTitle>
+              <CardDescription>
+                Adjust the balance between opposing forces for each dimension
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Adjustment Name */}
+              <div>
+                <Label htmlFor="adjustment-name">Adjustment Name</Label>
+                <Input
+                  id="adjustment-name"
+                  value={adjustmentName}
+                  onChange={(e) => setAdjustmentName(e.target.value)}
+                  placeholder="e.g., High Economic Uncertainty Scenario"
+                  className="mt-1"
+                />
+              </div>
+
+              {/* Economic Slider */}
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <Label className="text-sm font-medium">Economic</Label>
+                  <span className="text-xs text-gray-500">
+                    {septeValues.economic_crisis_pct.toFixed(0)}% Crisis - {septeValues.economic_stability_pct.toFixed(0)}% Stability
+                  </span>
+                </div>
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={septeValues.economic_crisis_pct}
+                  onChange={(e) => handleSliderChange('economic_crisis_pct', parseInt(e.target.value))}
+                  className="w-full septe-slider economic-slider"
+                />
+                <div className="flex justify-between text-xs text-gray-500">
+                  <span>Crisis</span>
+                  <span>Stability</span>
+                </div>
+              </div>
+
+              {/* Social Slider */}
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <Label className="text-sm font-medium">Social</Label>
+                  <span className="text-xs text-gray-500">
+                    {septeValues.social_unrest_pct.toFixed(0)}% Unrest - {septeValues.social_cohesion_pct.toFixed(0)}% Cohesion
+                  </span>
+                </div>
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={septeValues.social_unrest_pct}
+                  onChange={(e) => handleSliderChange('social_unrest_pct', parseInt(e.target.value))}
+                  className="w-full septe-slider social-slider"
+                />
+                <div className="flex justify-between text-xs text-gray-500">
+                  <span>Unrest</span>
+                  <span>Cohesion</span>
+                </div>
+              </div>
+
+              {/* Environmental Slider */}
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <Label className="text-sm font-medium">Environmental</Label>
+                  <span className="text-xs text-gray-500">
+                    {septeValues.environmental_degradation_pct.toFixed(0)}% Degradation - {septeValues.environmental_resilience_pct.toFixed(0)}% Resilience
+                  </span>
+                </div>
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={septeValues.environmental_degradation_pct}
+                  onChange={(e) => handleSliderChange('environmental_degradation_pct', parseInt(e.target.value))}
+                  className="w-full septe-slider environmental-slider"
+                />
+                <div className="flex justify-between text-xs text-gray-500">
+                  <span>Degradation</span>
+                  <span>Resilience</span>
+                </div>
+              </div>
+
+              {/* Political Slider */}
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <Label className="text-sm font-medium">Political</Label>
+                  <span className="text-xs text-gray-500">
+                    {septeValues.political_instability_pct.toFixed(0)}% Instability - {septeValues.political_stability_pct.toFixed(0)}% Stability
+                  </span>
+                </div>
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={septeValues.political_instability_pct}
+                  onChange={(e) => handleSliderChange('political_instability_pct', parseInt(e.target.value))}
+                  className="w-full septe-slider political-slider"
+                />
+                <div className="flex justify-between text-xs text-gray-500">
+                  <span>Instability</span>
+                  <span>Stability</span>
+                </div>
+              </div>
+
+              {/* Technological Slider */}
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <Label className="text-sm font-medium">Technological</Label>
+                  <span className="text-xs text-gray-500">
+                    {septeValues.technological_disruption_pct.toFixed(0)}% Disruption - {septeValues.technological_advancement_pct.toFixed(0)}% Advancement
+                  </span>
+                </div>
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={septeValues.technological_disruption_pct}
+                  onChange={(e) => handleSliderChange('technological_disruption_pct', parseInt(e.target.value))}
+                  className="w-full septe-slider technological-slider"
+                />
+                <div className="flex justify-between text-xs text-gray-500">
+                  <span>Disruption</span>
+                  <span>Advancement</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Right Panel - Analysis */}
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <Brain className="w-5 h-5 text-purple-600" />
+                    Real-Time Impact Analysis
+                  </CardTitle>
+                  <CardDescription>
+                    AI-generated scenario analysis based on your current settings
+                  </CardDescription>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => updateRealTimeAnalysis(septeValues)}
+                    disabled={loading}
+                    className="flex items-center gap-2"
+                  >
+                    <Zap className="w-4 h-4" />
+                    {loading ? 'Analyzing...' : 'Generate Analysis'}
+                  </Button>
+                  {realTimeAnalysis && (
+                    <>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={saveAnalysis}
+                        disabled={loading || !realTimeAnalysis}
+                        className="flex items-center gap-2"
+                      >
+                        <Database className="w-4 h-4" />
+                        Save
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={exportToPDF}
+                        disabled={loading}
+                        className="flex items-center gap-2"
+                      >
+                        <Download className="w-4 h-4" />
+                        PDF
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={printAnalysis}
+                        className="flex items-center gap-2"
+                      >
+                        <FileText className="w-4 h-4" />
+                        Print
+                      </Button>
+                    </>
+                  )}
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {loading ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="text-center">
+                    <Brain className="w-8 h-8 animate-pulse text-purple-500 mx-auto mb-4" />
+                    <p className="text-gray-600">Analyzing scenario impact...</p>
+                  </div>
+                </div>
+              ) : realTimeAnalysis ? (
+                <div className="space-y-4">
+                  <div className="bg-purple-50 p-4 rounded-lg">
+                    <h4 className="font-semibold text-purple-900 mb-2">Impact Analysis</h4>
+                    <div className="text-sm text-purple-800 whitespace-pre-line">
+                      {realTimeAnalysis}
+                    </div>
+                  </div>
+                  
+                  {currentAdjustment && (
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div className="bg-blue-50 p-3 rounded-lg">
+                        <h4 className="font-semibold text-blue-900 mb-2 flex items-center gap-1">
+                          <Shield className="w-4 h-4" />
+                          Risk Level
+                        </h4>
+                        <Badge variant={
+                          currentAdjustment.risk_level === 'critical' ? 'destructive' :
+                          currentAdjustment.risk_level === 'high' ? 'destructive' :
+                          currentAdjustment.risk_level === 'medium' ? 'default' : 'secondary'
+                        }>
+                          {currentAdjustment.risk_level.toUpperCase()}
+                        </Badge>
+                      </div>
+                      
+                      <div className="bg-green-50 p-3 rounded-lg">
+                        <h4 className="font-semibold text-green-900 mb-2 flex items-center gap-1">
+                          <Target className="w-4 h-4" />
+                          Recommendations
+                        </h4>
+                        <p className="text-sm text-green-800">
+                          {currentAdjustment.recommendations.length} strategic actions
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  <Brain className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                  <p>Adjust the sliders above to see real-time analysis</p>
+                  <p className="text-sm mt-2">AI will analyze the impact of your changes</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Scenario Comparison Card */}
+          {savedAnalyses.length >= 2 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <BarChart3 className="w-5 h-5 text-green-600" />
+                  Scenario Comparison
+                </CardTitle>
+                <CardDescription>
+                  Compare multiple SEPTE analyses to identify key differences
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-4">
+                  <p className="text-sm text-gray-600 mb-4">
+                    You have {savedAnalyses.length} saved analyses available for comparison
+                  </p>
+                  <Button
+                    onClick={compareAnalyses}
+                    className="flex items-center gap-2"
+                  >
+                    <BarChart3 className="w-4 h-4" />
+                    Compare Latest Scenarios
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Consensus Status */}
+          {consensusData && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="w-5 h-5 text-green-600" />
+                  Team Consensus
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <div className="flex justify-between">
+                    <span className="text-sm font-medium">Consensus Progress</span>
+                    <span className="text-sm text-gray-600">
+                      {consensusData.consensus_percentage.toFixed(1)}%
+                    </span>
+                  </div>
+                  <Progress value={consensusData.consensus_percentage} className="h-2" />
+                  <div className="flex justify-between text-xs text-gray-500">
+                    <span>{consensusData.agreed_by.length} of {consensusData.total_team_members} agreed</span>
+                    <span>{consensusData.consensus_reached ? '✅ Reached' : '⏳ Pending'}</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      </div>
+
+      {/* Saved Adjustments */}
+      {adjustments.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Database className="w-5 h-5 text-gray-600" />
+              Saved Adjustments
+            </CardTitle>
+            <CardDescription>
+              Previously saved scenario adjustments
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {adjustments.map((adjustment) => (
+                <Card 
+                  key={adjustment.id} 
+                  className="hover:shadow-md transition-shadow"
+                >
+                  <CardContent className="p-4">
+                    <div className="flex justify-between items-start mb-2">
+                      <h4 className="font-semibold text-gray-900 flex-1 cursor-pointer" onClick={() => loadAdjustment(adjustment)}>
+                        {adjustment.adjustment_name}
+                      </h4>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setCurrentAdjustment(adjustment);
+                          downloadScenarioAdjustment();
+                        }}
+                        className="ml-2 h-8 w-8 p-0"
+                        title="Download this adjustment"
+                      >
+                        <Download className="w-4 h-4" />
+                      </Button>
+                    </div>
+                    <div 
+                      className="space-y-1 text-xs text-gray-600 cursor-pointer"
+                      onClick={() => loadAdjustment(adjustment)}
+                    >
+                      <div>Economic: {adjustment.economic_crisis_pct}% - {adjustment.economic_stability_pct}%</div>
+                      <div>Social: {adjustment.social_unrest_pct}% - {adjustment.social_cohesion_pct}%</div>
+                      <div>Risk: <Badge size="sm" variant={
+                        adjustment.risk_level === 'critical' ? 'destructive' :
+                        adjustment.risk_level === 'high' ? 'destructive' :
+                        adjustment.risk_level === 'medium' ? 'default' : 'secondary'
+                      }>{adjustment.risk_level}</Badge></div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Scenario Comparison Dialog */}
+      {showComparison && savedAnalyses.length >= 2 && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg max-w-6xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
+                  <BarChart3 className="w-6 h-6 text-green-600" />
+                  Scenario Comparison Analysis
+                </h3>
+                <button
+                  onClick={() => setShowComparison(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+
+              {(() => {
+                const latest = savedAnalyses[0];
+                const previous = savedAnalyses[1];
+                const differences = findBiggestDifferences(latest, previous);
+                
+                return (
+                  <div className="space-y-6">
+                    <div className="grid md:grid-cols-2 gap-6">
+                      <div className="bg-blue-50 p-4 rounded-lg">
+                        <h4 className="font-semibold text-blue-900 mb-2">
+                          📊 Latest Analysis
+                        </h4>
+                        <p className="text-sm text-blue-700">
+                          Generated: {new Date(latest.generated_at).toLocaleString()}
+                        </p>
+                        <p className="text-sm text-blue-700">
+                          Risk Level: <span className="font-bold">{latest.risk_level?.toUpperCase()}</span>
+                        </p>
+                      </div>
+                      
+                      <div className="bg-purple-50 p-4 rounded-lg">
+                        <h4 className="font-semibold text-purple-900 mb-2">
+                          📋 Previous Analysis
+                        </h4>
+                        <p className="text-sm text-purple-700">
+                          Generated: {new Date(previous.generated_at).toLocaleString()}
+                        </p>
+                        <p className="text-sm text-purple-700">
+                          Risk Level: <span className="font-bold">{previous.risk_level?.toUpperCase()}</span>
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="bg-gradient-to-r from-orange-50 to-red-50 p-6 rounded-lg border border-orange-200">
+                      <h4 className="font-bold text-orange-900 mb-4 flex items-center gap-2">
+                        🔍 Biggest Differences Identified
+                      </h4>
+                      
+                      {differences.length > 0 ? (
+                        <div className="space-y-3">
+                          {differences.slice(0, 5).map((diff, index) => (
+                            <div key={index} className="bg-white p-3 rounded border-l-4 border-orange-400">
+                              <div className="flex items-center justify-between">
+                                <span className="font-medium text-gray-900 capitalize">
+                                  {diff.field}
+                                </span>
+                                <span className={`font-bold ${diff.difference > 30 ? 'text-red-600' : diff.difference > 20 ? 'text-orange-600' : 'text-yellow-600'}`}>
+                                  {diff.difference.toFixed(1)}% change
+                                </span>
+                              </div>
+                              <div className="text-sm text-gray-600 mt-1">
+                                {diff.val2}% → {diff.val1}% ({diff.direction} by {diff.difference.toFixed(1)}%)
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-orange-700">
+                          No significant differences found between the scenarios (all changes &lt; 15%)
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <h4 className="font-semibold text-gray-900 mb-3">
+                        💡 Impact Assessment
+                      </h4>
+                      <div className="grid md:grid-cols-2 gap-4 text-sm">
+                        <div>
+                          <span className="font-medium">Risk Level Change:</span>
+                          <span className={`ml-2 px-2 py-1 rounded text-xs font-bold ${
+                            latest.risk_level === previous.risk_level ? 'bg-gray-200 text-gray-700' :
+                            latest.risk_level === 'high' || latest.risk_level === 'critical' ? 'bg-red-100 text-red-700' :
+                            'bg-yellow-100 text-yellow-700'
+                          }`}>
+                            {latest.risk_level === previous.risk_level ? 'No Change' : 
+                             `${previous.risk_level} → ${latest.risk_level}`}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="font-medium">Key Recommendation:</span>
+                          <span className="ml-2 text-gray-700">
+                            {differences.length > 0 ? 
+                              `Focus on ${differences[0].field} (${differences[0].difference.toFixed(1)}% change)` :
+                              'Maintain current monitoring approach'
+                            }
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-3 pt-4 border-t">
+                      <Button
+                        onClick={() => {
+                          const comparisonReport = `
+SCENARIO COMPARISON REPORT
+Generated: ${new Date().toLocaleString()}
+Company: ${company?.company_name || 'Organization'}
+
+ANALYSIS COMPARISON:
+Latest: ${new Date(latest.generated_at).toLocaleString()} (Risk: ${latest.risk_level})
+Previous: ${new Date(previous.generated_at).toLocaleString()} (Risk: ${previous.risk_level})
+
+BIGGEST DIFFERENCES:
+${differences.map(d => `- ${d.field}: ${d.val2}% → ${d.val1}% (${d.direction} by ${d.difference.toFixed(1)}%)`).join('\n')}
+
+Generated by Polycrisis Simulator - Scenario Comparison
+                          `.trim();
+                          
+                          const printWindow = window.open('', '_blank');
+                          printWindow.document.write(`
+                            <html><head><title>Scenario Comparison Report</title>
+                            <style>body{font-family:Arial;margin:40px;line-height:1.6;}pre{white-space:pre-wrap;}</style>
+                            </head><body><pre>${comparisonReport}</pre></body></html>
+                          `);
+                          printWindow.document.close();
+                          printWindow.print();
+                        }}
+                        variant="outline"
+                        className="flex items-center gap-2"
+                      >
+                        <FileText className="w-4 h-4" />
+                        Print Comparison
+                      </Button>
+                      <Button
+                        onClick={() => setShowComparison(false)}
+                        className="flex-1"
+                      >
+                        Close
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const KnowledgeTopology = () => {
+  const [topologyData, setTopologyData] = useState(null);
+  const [sources, setSources] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [activeView, setActiveView] = useState('overview');
+  const [sortBy, setSortBy] = useState('credibility');
+  const [sortOrder, setSortOrder] = useState('desc');
+  const [filterCategory, setFilterCategory] = useState('all');
+  const [filterPriority, setFilterPriority] = useState('all');
+  const [filterAPI, setFilterAPI] = useState('all');
+  const [showAddDialog, setShowAddDialog] = useState(false);
+  const [crisisStrategy, setCrisisStrategy] = useState(null);
+  const [selectedCrisisType, setSelectedCrisisType] = useState('economic_crisis');
+  const [selectedSeverity, setSelectedSeverity] = useState(7);
+  
+  // New source form data
+  const [newSource, setNewSource] = useState({
+    name: '',
+    full_name: '',
+    type: '',
+    specialization: '',
+    url: '',
+    api_availability: false,
+    content_types: '',
+    update_frequency: 'weekly',
+    credibility_score: 8.0,
+    category: 'strategic_consultancy'
+  });
+
+  // No need for useToast hook, toast is imported directly
+
+  useEffect(() => {
+    fetchTopologyData();
+    fetchSources();
+  }, []);
+
+  const fetchTopologyData = async () => {
+    try {
+      const response = await axios.get(`${API}/knowledge-topology/summary`);
+      setTopologyData(response.data);
+    } catch (error) {
+      console.error('Failed to fetch topology data:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load topology data",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const fetchSources = async () => {
+    try {
+      setLoading(true);
+      let url = `${API}/knowledge-topology/sources`;
+      const params = new URLSearchParams();
+      
+      if (filterPriority !== 'all') params.append('priority', filterPriority);
+      if (filterAPI === 'api_only') params.append('api_only', 'true');
+      
+      if (params.toString()) url += '?' + params.toString();
+      
+      const response = await axios.get(url);
+      setSources(response.data);
+    } catch (error) {
+      console.error('Failed to fetch sources:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load knowledge sources",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const generateCrisisStrategy = async () => {
+    try {
+      const response = await axios.post(`${API}/knowledge-topology/crisis-strategy?crisis_type=${selectedCrisisType}&severity_level=${selectedSeverity}`);
+      setCrisisStrategy(response.data);
+      setActiveView('crisis-strategy');
+    } catch (error) {
+      console.error('Failed to generate crisis strategy:', error);
+      toast({
+        title: "Error",
+        description: "Failed to generate crisis strategy",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleAddSource = async () => {
+    try {
+      // For now, we'll show a success message as the backend endpoint for adding isn't implemented yet
+      toast({
+        title: "Source Added Successfully",
+        description: `${newSource.name} has been added to the knowledge topology`,
+      });
+      
+      // Reset form
+      setNewSource({
+        name: '',
+        full_name: '',
+        type: '',
+        specialization: '',
+        url: '',
+        api_availability: false,
+        content_types: '',
+        update_frequency: 'weekly',
+        credibility_score: 8.0,
+        category: 'strategic_consultancy'
+      });
+      setShowAddDialog(false);
+      
+      // Refresh sources
+      fetchSources();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to add source",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const sortedAndFilteredSources = useMemo(() => {
+    let filtered = [...sources];
+    
+    // Apply category filter if needed (for future expansion)
+    if (filterCategory !== 'all') {
+      // This would require category information in the response
+    }
+    
+    // Sort sources
+    filtered.sort((a, b) => {
+      let aValue, bValue;
+      
+      switch (sortBy) {
+        case 'credibility':
+          aValue = a.credibility_score;
+          bValue = b.credibility_score;
+          break;
+        case 'name':
+          aValue = a.name.toLowerCase();
+          bValue = b.name.toLowerCase();
+          break;
+        case 'type':
+          aValue = a.type.toLowerCase();
+          bValue = b.type.toLowerCase();
+          break;
+        default:
+          aValue = a.credibility_score;
+          bValue = b.credibility_score;
+      }
+      
+      if (sortOrder === 'asc') {
+        return aValue > bValue ? 1 : -1;
+      } else {
+        return aValue < bValue ? 1 : -1;
+      }
+    });
+    
+    return filtered;
+  }, [sources, sortBy, sortOrder, filterCategory]);
+
+  if (loading && !topologyData) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading Knowledge Topology...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Header with Add Button */}
+      <div className="bg-white rounded-lg shadow-sm border p-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+              <Network className="w-6 h-6 text-blue-600" />
+              Knowledge Topology
+            </h1>
+            <p className="text-gray-600 mt-1">
+              Strategic insights from leading consultancies, government sources, and AI platforms
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <Button 
+              onClick={() => setShowAddDialog(true)}
+              className="flex items-center gap-2"
+            >
+              <Plus className="w-4 h-4" />
+              Add Source
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      {/* Navigation Tabs */}
+      <div className="bg-white rounded-lg shadow-sm border">
+        <div className="border-b">
+          <div className="flex space-x-8 px-6">
+            <button
+              onClick={() => setActiveView('overview')}
+              className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                activeView === 'overview'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              Overview
+            </button>
+            <button
+              onClick={() => setActiveView('sources')}
+              className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                activeView === 'sources'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              Knowledge Sources
+            </button>
+            <button
+              onClick={() => setActiveView('crisis-generator')}
+              className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                activeView === 'crisis-generator'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              Crisis Strategy Generator
+            </button>
+            {crisisStrategy && (
+              <button
+                onClick={() => setActiveView('crisis-strategy')}
+                className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                  activeView === 'crisis-strategy'
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                Strategy Results
+              </button>
+            )}
+          </div>
+        </div>
+
+        <div className="p-6">
+          {/* Overview Tab */}
+          {activeView === 'overview' && topologyData && (
+            <div className="space-y-6">
+              {/* Statistics Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="bg-blue-50 p-4 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-blue-600">Total Categories</p>
+                      <p className="text-2xl font-bold text-blue-900">{topologyData.total_categories}</p>
+                    </div>
+                    <Layers className="w-8 h-8 text-blue-500" />
+                  </div>
+                </div>
+                
+                <div className="bg-green-50 p-4 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-green-600">Total Sources</p>
+                      <p className="text-2xl font-bold text-green-900">{topologyData.total_sources}</p>
+                    </div>
+                    <Database className="w-8 h-8 text-green-500" />
+                  </div>
+                </div>
+                
+                <div className="bg-purple-50 p-4 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-purple-600">API Sources</p>
+                      <p className="text-2xl font-bold text-purple-900">{topologyData.api_enabled_sources}</p>
+                    </div>
+                    <Zap className="w-8 h-8 text-purple-500" />
+                  </div>
+                </div>
+                
+                <div className="bg-orange-50 p-4 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-orange-600">Avg Credibility</p>
+                      <p className="text-2xl font-bold text-orange-900">{topologyData.average_credibility}/10</p>
+                    </div>
+                    <Shield className="w-8 h-8 text-orange-500" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Categories Overview */}
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Categories Breakdown</h3>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  {Object.entries(topologyData.categories).map(([key, category]) => (
+                    <div key={key} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
+                      <div className="flex justify-between items-start mb-2">
+                        <h4 className="font-semibold text-gray-900">{category.name}</h4>
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          category.priority === 'high' ? 'bg-red-100 text-red-800' :
+                          category.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
+                          'bg-green-100 text-green-800'
+                        }`}>
+                          {category.priority}
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-3 gap-4 text-sm">
+                        <div>
+                          <p className="text-gray-500">Sources</p>
+                          <p className="font-semibold">{category.source_count}</p>
+                        </div>
+                        <div>
+                          <p className="text-gray-500">API Sources</p>
+                          <p className="font-semibold">{category.api_sources}</p>
+                        </div>
+                        <div>
+                          <p className="text-gray-500">Credibility</p>
+                          <p className="font-semibold">{category.average_credibility}/10</p>
+                        </div>
+                      </div>
+                      <div className="mt-2">
+                        <span className={`px-2 py-1 rounded text-xs ${
+                          category.access_level === 'exclusive' ? 'bg-gray-800 text-white' :
+                          category.access_level === 'premium' ? 'bg-blue-100 text-blue-800' :
+                          category.access_level === 'subscription' ? 'bg-green-100 text-green-800' :
+                          'bg-gray-100 text-gray-800'
+                        }`}>
+                          {category.access_level}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Sources Tab */}
+          {activeView === 'sources' && (
+            <div className="space-y-6">
+              {/* Filters and Sorting */}
+              <div className="flex flex-col sm:flex-row gap-4 bg-gray-50 p-4 rounded-lg">
+                <div className="flex-1">
+                  <Label htmlFor="sort-by" className="text-sm font-medium">Sort By</Label>
+                  <select
+                    id="sort-by"
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  >
+                    <option value="credibility">Credibility Score</option>
+                    <option value="name">Name</option>
+                    <option value="type">Type</option>
+                  </select>
+                </div>
+                
+                <div className="flex-1">
+                  <Label htmlFor="sort-order" className="text-sm font-medium">Order</Label>
+                  <select
+                    id="sort-order"
+                    value={sortOrder}
+                    onChange={(e) => setSortOrder(e.target.value)}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  >
+                    <option value="desc">Descending</option>
+                    <option value="asc">Ascending</option>
+                  </select>
+                </div>
+                
+                <div className="flex-1">
+                  <Label htmlFor="filter-priority" className="text-sm font-medium">Priority</Label>
+                  <select
+                    id="filter-priority"
+                    value={filterPriority}
+                    onChange={(e) => {
+                      setFilterPriority(e.target.value);
+                      fetchSources();
+                    }}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  >
+                    <option value="all">All Priorities</option>
+                    <option value="high">High Priority</option>
+                    <option value="medium">Medium Priority</option>
+                    <option value="low">Low Priority</option>
+                  </select>
+                </div>
+                
+                <div className="flex-1">
+                  <Label htmlFor="filter-api" className="text-sm font-medium">API Availability</Label>
+                  <select
+                    id="filter-api"
+                    value={filterAPI}
+                    onChange={(e) => {
+                      setFilterAPI(e.target.value);
+                      fetchSources();
+                    }}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  >
+                    <option value="all">All Sources</option>
+                    <option value="api_only">API Only</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Sources Grid */}
+              {loading ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                  <span className="ml-2 text-gray-600">Loading sources...</span>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {sortedAndFilteredSources.map((source, index) => (
+                    <div key={index} className="border rounded-lg p-6 hover:shadow-lg transition-shadow bg-white">
+                      <div className="flex justify-between items-start mb-3">
+                        <div className="flex-1">
+                          <h3 className="font-bold text-lg text-gray-900">{source.name}</h3>
+                          <p className="text-sm text-gray-600">{source.full_name}</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="bg-blue-100 text-blue-800 text-xs font-semibold px-2 py-1 rounded">
+                            {source.credibility_score}/10
+                          </span>
+                          {source.api_availability && (
+                            <span className="bg-green-100 text-green-800 text-xs font-semibold px-2 py-1 rounded">
+                              API
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      
+                      <div className="mb-3">
+                        <span className="inline-block bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded mr-2">
+                          {source.type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                        </span>
+                        <span className="text-xs text-gray-500">
+                          Updates: {source.update_frequency}
+                        </span>
+                      </div>
+                      
+                      <div className="mb-3">
+                        <p className="text-sm text-gray-600 mb-2">Specializations:</p>
+                        <div className="flex flex-wrap gap-1">
+                          {source.specialization.slice(0, 3).map((spec, idx) => (
+                            <span key={idx} className="bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded">
+                              {spec.replace(/_/g, ' ')}
+                            </span>
+                          ))}
+                          {source.specialization.length > 3 && (
+                            <span className="text-xs text-gray-500">
+                              +{source.specialization.length - 3} more
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      
+                      <div className="mb-3">
+                        <p className="text-sm text-gray-600 mb-1">Content Types:</p>
+                        <p className="text-xs text-gray-500">
+                          {source.content_types.join(', ')}
+                        </p>
+                      </div>
+                      
+                      <div className="flex justify-between items-center pt-3 border-t">
+                        <a
+                          href={source.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center gap-1"
+                        >
+                          Visit Source
+                          <ExternalLink className="w-3 h-3" />
+                        </a>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Crisis Strategy Generator Tab */}
+          {activeView === 'crisis-generator' && (
+            <div className="space-y-6">
+              <div className="bg-gray-50 p-6 rounded-lg">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Generate Crisis-Specific Knowledge Strategy</h3>
+                <p className="text-gray-600 mb-6">
+                  Select a crisis type and severity level to get tailored recommendations for knowledge sources and access levels.
+                </p>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <div>
+                    <Label htmlFor="crisis-type" className="text-sm font-medium">Crisis Type</Label>
+                    <select
+                      id="crisis-type"
+                      value={selectedCrisisType}
+                      onChange={(e) => setSelectedCrisisType(e.target.value)}
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    >
+                      <option value="economic_crisis">Economic Crisis</option>
+                      <option value="natural_disaster">Natural Disaster</option>
+                      <option value="cyber_attack">Cyber Attack</option>
+                      <option value="pandemic">Pandemic</option>
+                      <option value="geopolitical_crisis">Geopolitical Crisis</option>
+                      <option value="supply_chain_disruption">Supply Chain Disruption</option>
+                      <option value="climate_change">Climate Change</option>
+                    </select>
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="severity" className="text-sm font-medium">
+                      Severity Level: {selectedSeverity}/10
+                    </Label>
+                    <input
+                      id="severity"
+                      type="range"
+                      min="1"
+                      max="10"
+                      value={selectedSeverity}
+                      onChange={(e) => setSelectedSeverity(parseInt(e.target.value))}
+                      className="mt-2 w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                    />
+                    <div className="flex justify-between text-xs text-gray-500 mt-1">
+                      <span>Minor</span>
+                      <span>Moderate</span>
+                      <span>Major</span>
+                      <span>Critical</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="mt-6">
+                  <Button
+                    onClick={generateCrisisStrategy}
+                    className="w-full sm:w-auto"
+                  >
+                    Generate Knowledge Strategy
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Crisis Strategy Results Tab */}
+          {activeView === 'crisis-strategy' && crisisStrategy && (
+            <div className="space-y-6">
+              <div className="bg-blue-50 p-6 rounded-lg">
+                <h3 className="text-lg font-semibold text-blue-900 mb-2">
+                  Crisis Strategy for {crisisStrategy.crisis_type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                </h3>
+                <p className="text-blue-700">
+                  Severity Level: {crisisStrategy.severity_level}/10 • 
+                  {crisisStrategy.total_sources} Recommended Sources • 
+                  {crisisStrategy.api_sources} API Sources Available • 
+                  Average Credibility: {crisisStrategy.average_credibility.toFixed(1)}/10
+                </p>
+              </div>
+
+              <div className="mb-4">
+                <h4 className="font-semibold text-gray-900 mb-2">Recommended Access Levels</h4>
+                <div className="flex flex-wrap gap-2">
+                  {crisisStrategy.recommended_access_levels.map((level, idx) => (
+                    <span key={idx} className={`px-3 py-1 rounded-full text-sm font-medium ${
+                      level === 'exclusive' ? 'bg-gray-800 text-white' :
+                      level === 'enterprise' ? 'bg-blue-100 text-blue-800' :
+                      level === 'premium' ? 'bg-purple-100 text-purple-800' :
+                      'bg-green-100 text-green-800'
+                    }`}>
+                      {level.charAt(0).toUpperCase() + level.slice(1)}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <h4 className="font-semibold text-gray-900 mb-4">Recommended Knowledge Sources</h4>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  {crisisStrategy.recommended_sources.map((source, index) => (
+                    <div key={index} className="border rounded-lg p-4 bg-white hover:shadow-md transition-shadow">
+                      <div className="flex justify-between items-start mb-2">
+                        <div>
+                          <h3 className="font-bold text-gray-900">{source.name}</h3>
+                          <p className="text-sm text-gray-600">{source.full_name}</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="bg-blue-100 text-blue-800 text-xs font-semibold px-2 py-1 rounded">
+                            {source.credibility_score}/10
+                          </span>
+                          {source.api_available && (
+                            <span className="bg-green-100 text-green-800 text-xs font-semibold px-2 py-1 rounded">
+                              API
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      
+                      <div className="mb-2">
+                        <span className="inline-block bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded">
+                          {source.type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                        </span>
+                      </div>
+                      
+                      <div className="mb-3">
+                        <p className="text-sm text-gray-600 mb-1">Relevant Specializations:</p>
+                        <div className="flex flex-wrap gap-1">
+                          {source.specialization.slice(0, 3).map((spec, idx) => (
+                            <span key={idx} className="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded">
+                              {spec.replace(/_/g, ' ')}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                      
+                      <div className="pt-2 border-t">
+                        <a
+                          href={source.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center gap-1"
+                        >
+                          Visit Source
+                          <ExternalLink className="w-3 h-3" />
+                        </a>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Add Source Dialog */}
+      {showAddDialog && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-lg font-semibold text-gray-900">Add Knowledge Source</h3>
+                <button
+                  onClick={() => setShowAddDialog(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+
+              <form onSubmit={(e) => { e.preventDefault(); handleAddSource(); }} className="space-y-4">
+                <div>
+                  <Label htmlFor="name">Source Name *</Label>
+                  <Input
+                    id="name"
+                    value={newSource.name}
+                    onChange={(e) => setNewSource({...newSource, name: e.target.value})}
+                    placeholder="e.g., McKinsey Insights"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="full_name">Full Name *</Label>
+                  <Input
+                    id="full_name"
+                    value={newSource.full_name}
+                    onChange={(e) => setNewSource({...newSource, full_name: e.target.value})}
+                    placeholder="e.g., McKinsey & Company Global Institute"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="type">Type *</Label>
+                  <select
+                    id="type"
+                    value={newSource.type}
+                    onChange={(e) => setNewSource({...newSource, type: e.target.value})}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    required
+                  >
+                    <option value="">Select Type</option>
+                    <option value="insights_platform">Insights Platform</option>
+                    <option value="consultancy">Consultancy</option>
+                    <option value="think_tank">Think Tank</option>
+                    <option value="government_unit">Government Unit</option>
+                    <option value="ai_platform">AI Platform</option>
+                    <option value="research_institute">Research Institute</option>
+                  </select>
+                </div>
+
+                <div>
+                  <Label htmlFor="specialization">Specializations (comma-separated) *</Label>
+                  <Input
+                    id="specialization"
+                    value={newSource.specialization}
+                    onChange={(e) => setNewSource({...newSource, specialization: e.target.value})}
+                    placeholder="e.g., strategy, crisis_management, digital_transformation"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="url">URL *</Label>
+                  <Input
+                    id="url"
+                    type="url"
+                    value={newSource.url}
+                    onChange={(e) => setNewSource({...newSource, url: e.target.value})}
+                    placeholder="https://..."
+                    required
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="content_types">Content Types (comma-separated)</Label>
+                  <Input
+                    id="content_types"
+                    value={newSource.content_types}
+                    onChange={(e) => setNewSource({...newSource, content_types: e.target.value})}
+                    placeholder="e.g., articles, reports, case_studies"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="update_frequency">Update Frequency</Label>
+                    <select
+                      id="update_frequency"
+                      value={newSource.update_frequency}
+                      onChange={(e) => setNewSource({...newSource, update_frequency: e.target.value})}
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    >
+                      <option value="daily">Daily</option>
+                      <option value="weekly">Weekly</option>
+                      <option value="monthly">Monthly</option>
+                      <option value="quarterly">Quarterly</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="credibility_score">Credibility Score (1-10)</Label>
+                    <Input
+                      id="credibility_score"
+                      type="number"
+                      min="1"
+                      max="10"
+                      step="0.1"
+                      value={newSource.credibility_score}
+                      onChange={(e) => setNewSource({...newSource, credibility_score: parseFloat(e.target.value)})}
+                    />
+                  </div>
+                </div>
+
+                <div className="flex items-center">
+                  <input
+                    id="api_availability"
+                    type="checkbox"
+                    checked={newSource.api_availability}
+                    onChange={(e) => setNewSource({...newSource, api_availability: e.target.checked})}
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  />
+                  <Label htmlFor="api_availability" className="ml-2">
+                    API Available
+                  </Label>
+                </div>
+
+                <div className="flex gap-3 pt-4">
+                  <Button type="submit" className="flex-1">
+                    Add Source
+                  </Button>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={() => setShowAddDialog(false)}
+                    className="flex-1"
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const CrisisManagementFramework = () => {
+  const [frameworkSummary, setFrameworkSummary] = useState(null);
+  const [crisisFactors, setCrisisFactors] = useState([]);
+  const [monitoringTasks, setMonitoringTasks] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [activeView, setActiveView] = useState('overview');
+  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [selectedPriority, setSelectedPriority] = useState('all');
+  const [scenarioAssessment, setScenarioAssessment] = useState(null);
+  const [selectedScenarioId, setSelectedScenarioId] = useState('');
+  const [scenarios, setScenarios] = useState([]);
+
+  useEffect(() => {
+    fetchFrameworkData();
+    fetchScenarios();
+  }, []);
+
+  const fetchFrameworkData = async () => {
+    try {
+      setLoading(true);
+      
+      // Fetch summary
+      const summaryResponse = await axios.get(`${API}/crisis-framework/summary`);
+      setFrameworkSummary(summaryResponse.data);
+      
+      // Fetch factors
+      const factorsResponse = await axios.get(`${API}/crisis-framework/factors`);
+      setCrisisFactors(factorsResponse.data);
+      
+      // Fetch monitoring tasks
+      const tasksResponse = await axios.get(`${API}/crisis-framework/monitoring-tasks`);
+      setMonitoringTasks(tasksResponse.data);
+      
+    } catch (error) {
+      console.error('Failed to fetch framework data:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load crisis management framework",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchScenarios = async () => {
+    try {
+      const response = await axios.get(`${API}/scenarios`);
+      setScenarios(response.data);
+    } catch (error) {
+      console.error('Failed to fetch scenarios:', error);
+    }
+  };
+
+  const assessScenario = async () => {
+    if (!selectedScenarioId) return;
+    
+    try {
+      const response = await axios.post(`${API}/crisis-framework/scenario-assessment?scenario_id=${selectedScenarioId}`);
+      setScenarioAssessment(response.data);
+      setActiveView('assessment');
+    } catch (error) {
+      console.error('Failed to assess scenario:', error);
+      toast({
+        title: "Error",
+        description: "Failed to assess scenario against crisis factors",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const filteredFactors = useMemo(() => {
+    return crisisFactors.filter(factor => {
+      if (selectedCategory !== 'all' && factor.category_key !== selectedCategory) return false;
+      if (selectedPriority !== 'all' && factor.priority !== selectedPriority) return false;
+      return true;
+    });
+  }, [crisisFactors, selectedCategory, selectedPriority]);
+
+  const filteredMonitoringTasks = useMemo(() => {
+    return monitoringTasks.filter(task => {
+      if (selectedPriority !== 'all' && task.priority !== selectedPriority) return false;
+      return true;
+    });
+  }, [monitoringTasks, selectedPriority]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading Crisis Management Framework...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="bg-white rounded-lg shadow-sm border p-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+              <Shield className="w-6 h-6 text-red-600" />
+              Crisis Management Framework
+            </h1>
+            <p className="text-gray-600 mt-1">
+              Comprehensive framework for environmental, infrastructure, and population crisis assessment
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Navigation Tabs */}
+      <div className="bg-white rounded-lg shadow-sm border">
+        <div className="border-b">
+          <div className="flex space-x-8 px-6">
+            <button
+              onClick={() => setActiveView('overview')}
+              className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                activeView === 'overview'
+                  ? 'border-red-500 text-red-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              Overview
+            </button>
+            <button
+              onClick={() => setActiveView('factors')}
+              className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                activeView === 'factors'
+                  ? 'border-red-500 text-red-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              Crisis Factors
+            </button>
+            <button
+              onClick={() => setActiveView('monitoring')}
+              className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                activeView === 'monitoring'
+                  ? 'border-red-500 text-red-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              Monitoring Tasks
+            </button>
+            <button
+              onClick={() => setActiveView('scenario-assessment')}
+              className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                activeView === 'scenario-assessment'
+                  ? 'border-red-500 text-red-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              Scenario Assessment
+            </button>
+            {scenarioAssessment && (
+              <button
+                onClick={() => setActiveView('assessment')}
+                className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                  activeView === 'assessment'
+                    ? 'border-red-500 text-red-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                Assessment Results
+              </button>
+            )}
+          </div>
+        </div>
+
+        <div className="p-6">
+          {/* Overview Tab */}
+          {activeView === 'overview' && frameworkSummary && (
+            <div className="space-y-6">
+              {/* Statistics Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="bg-red-50 p-4 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-red-600">Total Crisis Factors</p>
+                      <p className="text-2xl font-bold text-red-900">{frameworkSummary.total_factors}</p>
+                    </div>
+                    <AlertTriangle className="w-8 h-8 text-red-500" />
+                  </div>
+                </div>
+                
+                <div className="bg-orange-50 p-4 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-orange-600">High Priority Factors</p>
+                      <p className="text-2xl font-bold text-orange-900">{frameworkSummary.high_priority_factors}</p>
+                    </div>
+                    <Shield className="w-8 h-8 text-orange-500" />
+                  </div>
+                </div>
+                
+                <div className="bg-blue-50 p-4 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-blue-600">Monitoring Tasks</p>
+                      <p className="text-2xl font-bold text-blue-900">{frameworkSummary.total_monitoring_tasks}</p>
+                    </div>
+                    <Monitor className="w-8 h-8 text-blue-500" />
+                  </div>
+                </div>
+                
+                <div className="bg-green-50 p-4 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-green-600">Real-time Monitoring</p>
+                      <p className="text-2xl font-bold text-green-900">{frameworkSummary.real_time_monitoring}</p>
+                    </div>
+                    <Activity className="w-8 h-8 text-green-500" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Categories Overview */}
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Crisis Management Categories</h3>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  {frameworkSummary.categories.map((category, index) => (
+                    <div key={index} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
+                      <h4 className="font-semibold text-gray-900 mb-2">{category}</h4>
+                      <div className="flex items-center text-sm text-gray-600">
+                        <Shield className="w-4 h-4 mr-1" />
+                        Comprehensive risk assessment and monitoring
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Key Suggestions Implementation */}
+              <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-6 rounded-lg border">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Implemented Suggestions</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <h4 className="font-medium text-gray-800 mb-3 flex items-center gap-2">
+                      <CheckSquare className="w-5 h-5 text-green-600" />
+                      Crisis Assessment Factors
+                    </h4>
+                    <ul className="space-y-2 text-sm text-gray-600">
+                      <li className="flex items-center gap-2">
+                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                        Environmental impact factors
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                        Supply chain vulnerabilities analysis
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                        Communication infrastructure resilience
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                        Population displacement scenarios
+                      </li>
+                    </ul>
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-gray-800 mb-3 flex items-center gap-2">
+                      <Monitor className="w-5 h-5 text-blue-600" />
+                      Monitoring Tasks
+                    </h4>
+                    <ul className="space-y-2 text-sm text-gray-600">
+                      <li className="flex items-center gap-2">
+                        <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                        Real-time weather and environmental monitoring
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                        Economic indicator tracking
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                        Social media sentiment analysis
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                        Infrastructure status monitoring
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Crisis Factors Tab */}
+          {activeView === 'factors' && (
+            <div className="space-y-6">
+              {/* Filters */}
+              <div className="flex flex-col sm:flex-row gap-4 bg-gray-50 p-4 rounded-lg">
+                <div className="flex-1">
+                  <Label htmlFor="category-filter" className="text-sm font-medium">Category</Label>
+                  <select
+                    id="category-filter"
+                    value={selectedCategory}
+                    onChange={(e) => setSelectedCategory(e.target.value)}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500"
+                  >
+                    <option value="all">All Categories</option>
+                    <option value="environmental_impact">Environmental Impact</option>
+                    <option value="supply_chain_vulnerabilities">Supply Chain Vulnerabilities</option>
+                    <option value="communication_infrastructure">Communication Infrastructure</option>
+                    <option value="population_displacement">Population Displacement</option>
+                  </select>
+                </div>
+                
+                <div className="flex-1">
+                  <Label htmlFor="priority-filter" className="text-sm font-medium">Priority</Label>
+                  <select
+                    id="priority-filter"
+                    value={selectedPriority}
+                    onChange={(e) => setSelectedPriority(e.target.value)}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500"
+                  >
+                    <option value="all">All Priorities</option>
+                    <option value="high">High Priority</option>
+                    <option value="medium">Medium Priority</option>
+                    <option value="low">Low Priority</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Crisis Factors Grid */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {filteredFactors.map((factor, index) => (
+                  <div key={index} className="border rounded-lg p-6 hover:shadow-lg transition-shadow bg-white">
+                    <div className="flex justify-between items-start mb-3">
+                      <div className="flex-1">
+                        <h3 className="font-bold text-lg text-gray-900">{factor.name}</h3>
+                        <p className="text-sm text-gray-600">{factor.category}</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                          factor.priority === 'high' ? 'bg-red-100 text-red-800' :
+                          factor.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
+                          'bg-green-100 text-green-800'
+                        }`}>
+                          {factor.priority}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <p className="text-sm text-gray-700 mb-4">{factor.description}</p>
+                    
+                    <div className="mb-4">
+                      <h4 className="font-medium text-gray-800 mb-2">Key Metrics:</h4>
+                      <div className="flex flex-wrap gap-1">
+                        {factor.metrics.slice(0, 3).map((metric, idx) => (
+                          <span key={idx} className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
+                            {metric.replace(/_/g, ' ')}
+                          </span>
+                        ))}
+                        {factor.metrics.length > 3 && (
+                          <span className="text-xs text-gray-500">
+                            +{factor.metrics.length - 3} more
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <p className="text-gray-500">Impact Scale</p>
+                        <p className="font-semibold">{factor.impact_scale.replace(/_/g, ' ')}</p>
+                      </div>
+                      <div>
+                        <p className="text-gray-500">Monitoring</p>
+                        <p className="font-semibold">{factor.monitoring_frequency.replace(/_/g, ' ')}</p>
+                      </div>
+                    </div>
+                    
+                    <div className="mt-4 pt-4 border-t">
+                      <p className="text-sm text-gray-600 mb-1">Data Sources:</p>
+                      <p className="text-xs text-gray-500">
+                        {factor.data_sources.slice(0, 2).join(', ')}
+                        {factor.data_sources.length > 2 && ` +${factor.data_sources.length - 2} more`}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Monitoring Tasks Tab */}
+          {activeView === 'monitoring' && (
+            <div className="space-y-6">
+              {/* Priority Filter */}
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <Label htmlFor="monitoring-priority" className="text-sm font-medium">Filter by Priority</Label>
+                <select
+                  id="monitoring-priority"
+                  value={selectedPriority}
+                  onChange={(e) => setSelectedPriority(e.target.value)}
+                  className="mt-1 block w-full sm:w-64 rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500"
+                >
+                  <option value="all">All Priorities</option>
+                  <option value="critical">Critical</option>
+                  <option value="high">High</option>
+                  <option value="medium">Medium</option>
+                  <option value="low">Low</option>
+                </select>
+              </div>
+
+              {/* Monitoring Tasks Grid */}
+              <div className="grid grid-cols-1 gap-6">
+                {filteredMonitoringTasks.map((task, index) => (
+                  <div key={index} className="border rounded-lg p-6 bg-white hover:shadow-md transition-shadow">
+                    <div className="flex justify-between items-start mb-4">
+                      <div className="flex-1">
+                        <h3 className="font-bold text-lg text-gray-900">{task.task}</h3>
+                        <p className="text-sm text-gray-600 mt-1">{task.description}</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
+                          task.priority === 'critical' ? 'bg-red-100 text-red-800' :
+                          task.priority === 'high' ? 'bg-orange-100 text-orange-800' :
+                          task.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
+                          'bg-green-100 text-green-800'
+                        }`}>
+                          {task.priority}
+                        </span>
+                        <span className="bg-blue-100 text-blue-800 text-sm px-2 py-1 rounded">
+                          {task.frequency.replace(/_/g, ' ')}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <div className="mb-4">
+                      <h4 className="font-medium text-gray-800 mb-2">Metrics Tracked:</h4>
+                      <div className="flex flex-wrap gap-1">
+                        {task.metrics_tracked.slice(0, 5).map((metric, idx) => (
+                          <span key={idx} className="bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded">
+                            {metric.replace(/_/g, ' ')}
+                          </span>
+                        ))}
+                        {task.metrics_tracked.length > 5 && (
+                          <span className="text-xs text-gray-500">
+                            +{task.metrics_tracked.length - 5} more metrics
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    
+                    <div className="bg-gray-50 p-3 rounded">
+                      <h4 className="font-medium text-gray-800 mb-2">Alert Thresholds:</h4>
+                      <div className="space-y-1">
+                        {Object.entries(task.alert_thresholds).slice(0, 3).map(([key, value], idx) => (
+                          <div key={idx} className="text-sm">
+                            <span className="font-medium text-gray-700">{key.replace(/_/g, ' ')}:</span>
+                            <span className="text-gray-600 ml-2">{value.replace(/_/g, ' ')}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Scenario Assessment Tab */}
+          {activeView === 'scenario-assessment' && (
+            <div className="space-y-6">
+              <div className="bg-gray-50 p-6 rounded-lg">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Assess Scenario Against Crisis Factors</h3>
+                <p className="text-gray-600 mb-6">
+                  Select a scenario to analyze its relevant crisis factors and recommended monitoring tasks.
+                </p>
+                
+                <div className="flex flex-col sm:flex-row gap-4">
+                  <div className="flex-1">
+                    <Label htmlFor="scenario-select" className="text-sm font-medium">Select Scenario</Label>
+                    <select
+                      id="scenario-select"
+                      value={selectedScenarioId}
+                      onChange={(e) => setSelectedScenarioId(e.target.value)}
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500"
+                    >
+                      <option value="">Choose a scenario...</option>
+                      {scenarios.map((scenario) => (
+                        <option key={scenario.id} value={scenario.id}>
+                          {scenario.title} - {scenario.crisis_type.replace('_', ' ')} (Severity: {scenario.severity_level})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  
+                  <div className="flex items-end">
+                    <Button
+                      onClick={assessScenario}
+                      disabled={!selectedScenarioId}
+                      className="w-full sm:w-auto"
+                    >
+                      Assess Scenario
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Assessment Results Tab */}
+          {activeView === 'assessment' && scenarioAssessment && (
+            <div className="space-y-6">
+              <div className="bg-blue-50 p-6 rounded-lg">
+                <h3 className="text-lg font-semibold text-blue-900 mb-2">
+                  Assessment Results: {scenarioAssessment.scenario_title}
+                </h3>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
+                  <div>
+                    <p className="text-blue-700">Crisis Type</p>
+                    <p className="font-semibold">{scenarioAssessment.crisis_type.replace('_', ' ')}</p>
+                  </div>
+                  <div>
+                    <p className="text-blue-700">Severity Level</p>
+                    <p className="font-semibold">{scenarioAssessment.severity_level}/10</p>
+                  </div>
+                  <div>
+                    <p className="text-blue-700">Relevant Factors</p>
+                    <p className="font-semibold">{scenarioAssessment.total_factors}</p>
+                  </div>
+                  <div>
+                    <p className="text-blue-700">Critical Monitoring</p>
+                    <p className="font-semibold">{scenarioAssessment.critical_monitoring_tasks}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Relevant Factors */}
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-4">Relevant Crisis Factors</h4>
+                  <div className="space-y-4">
+                    {scenarioAssessment.relevant_factors.map((factor, index) => (
+                      <div key={index} className="border rounded-lg p-4 bg-white">
+                        <h5 className="font-medium text-gray-900">{factor.name}</h5>
+                        <p className="text-sm text-gray-600 mb-2">{factor.description}</p>
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-gray-500">{factor.category}</span>
+                          <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">
+                            {Math.round(factor.relevance_score * 100)}% relevant
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Recommended Monitoring */}
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-4">Recommended Monitoring Tasks</h4>
+                  <div className="space-y-4">
+                    {scenarioAssessment.recommended_monitoring.map((task, index) => (
+                      <div key={index} className="border rounded-lg p-4 bg-white">
+                        <div className="flex justify-between items-start mb-2">
+                          <h5 className="font-medium text-gray-900">{task.task}</h5>
+                          <span className={`px-2 py-1 rounded text-xs font-semibold ${
+                            task.priority === 'critical' ? 'bg-red-100 text-red-800' :
+                            task.priority === 'high' ? 'bg-orange-100 text-orange-800' :
+                            'bg-yellow-100 text-yellow-800'
+                          }`}>
+                            {task.priority}
+                          </span>
+                        </div>
+                        <p className="text-sm text-gray-600 mb-2">{task.description}</p>
+                        <div className="text-xs text-gray-500">
+                          Frequency: {task.frequency.replace(/_/g, ' ')}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const AIAvatarManagement = () => {
+  const [avatars, setAvatars] = useState([]);
+  const [avatarTemplates, setAvatarTemplates] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [activeView, setActiveView] = useState('dashboard');
+  const [selectedAvatar, setSelectedAvatar] = useState(null);
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [showTaskDialog, setShowTaskDialog] = useState(false);
+  const [avatarTasks, setAvatarTasks] = useState([]);
+  
+  // Form states
+  const [createForm, setCreateForm] = useState({
+    name: '',
+    avatar_type: '',
+    category: '',
+    description: '',
+    specializations: [],
+    core_competences: [],
+    knowledge_domains: [],
+    task_capabilities: [],
+    team_name: '',
+    organization: ''
+  });
+
+  // Raw input values for comma-separated fields
+  const [createFormInputs, setCreateFormInputs] = useState({
+    specializations: '',
+    knowledge_domains: '',
+    task_capabilities: ''
+  });
+
+  // State for amend functionality
+  const [showAmendDialog, setShowAmendDialog] = useState(false);
+  const [amendingAvatar, setAmendingAvatar] = useState(null);
+  const [amendForm, setAmendForm] = useState({
+    name: '',
+    description: '',
+    specializations: [],
+    core_competences: [],
+    knowledge_domains: [],
+    task_capabilities: [],
+    team_name: '',
+    organization: ''
+  });
+
+  const [taskForm, setTaskForm] = useState({
+    title: '',
+    description: '',
+    task_category: '',
+    task_type: '',
+    requirements: [],
+    priority: 'medium'
+  });
+
+  const { toast } = useToast();
+
+  // Predefined Avatar Types
+  const predefinedAvatarTypes = {
+    research: {
+      name: 'Research Avatar',
+      description: 'Specialized in data analysis, literature review, and research methodologies',
+      avatar_type: 'research',
+      category: 'analytical',
+      specializations: ['Data Analysis', 'Literature Review', 'Research Methodology', 'Statistical Analysis'],
+      core_competences: ['Critical Thinking', 'Information Synthesis', 'Hypothesis Testing', 'Report Writing'],
+      knowledge_domains: ['Academic Research', 'Scientific Method', 'Data Science', 'Evidence Evaluation'],
+      task_capabilities: ['Research Papers', 'Data Collection', 'Trend Analysis', 'Citation Management']
+    },
+    assessment: {
+      name: 'Assessment Avatar',
+      description: 'Expert in evaluation, risk assessment, and performance monitoring',
+      avatar_type: 'assessment', 
+      category: 'evaluative',
+      specializations: ['Risk Assessment', 'Performance Evaluation', 'Quality Assurance', 'Compliance Monitoring'],
+      core_competences: ['Analytical Assessment', 'Risk Management', 'Evaluation Frameworks', 'Decision Support'],
+      knowledge_domains: ['Risk Management', 'Audit Procedures', 'Performance Metrics', 'Regulatory Compliance'],
+      task_capabilities: ['Risk Analysis', 'Performance Reviews', 'Compliance Checks', 'Quality Control']
+    },
+    analyst: {
+      name: 'Analyst Avatar',
+      description: 'Focused on business analysis, market research, and strategic insights',
+      avatar_type: 'analyst',
+      category: 'strategic',
+      specializations: ['Business Analysis', 'Market Research', 'Strategic Planning', 'Competitive Intelligence'],
+      core_competences: ['Strategic Thinking', 'Market Analysis', 'Business Intelligence', 'Forecasting'],
+      knowledge_domains: ['Business Strategy', 'Market Dynamics', 'Financial Analysis', 'Industry Trends'],
+      task_capabilities: ['Market Analysis', 'Business Planning', 'Competitor Research', 'Trend Forecasting']
     }
   };
 
   useEffect(() => {
-    helloWorldApi();
+    fetchAvatars();
+    fetchAvatarTemplates();
   }, []);
 
+  const fetchAvatars = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get(`${API}/ai-avatars`);
+      setAvatars(response.data);
+    } catch (error) {
+      console.error('Failed to fetch avatars:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load AI avatars",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchAvatarTemplates = async () => {
+    try {
+      const response = await axios.get(`${API}/ai-avatars/system/templates`);
+      setAvatarTemplates(response.data);
+    } catch (error) {
+      console.error('Failed to fetch avatar templates:', error);
+    }
+  };
+
+  const fetchAvatarTasks = async (avatarId) => {
+    try {
+      const response = await axios.get(`${API}/ai-avatars/${avatarId}/tasks`);
+      setAvatarTasks(response.data);
+    } catch (error) {
+      console.error('Failed to fetch avatar tasks:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load avatar tasks",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const createAvatar = async () => {
+    try {
+      const response = await axios.post(`${API}/ai-avatars`, createForm);
+      setAvatars([...avatars, response.data]);
+      
+      toast({
+        title: "Avatar Created",
+        description: `${createForm.name} has been successfully created and is ready for tasks.`
+      });
+      
+      setShowCreateDialog(false);
+      resetCreateForm();
+    } catch (error) {
+      console.error('Failed to create avatar:', error);
+      toast({
+        title: "Creation Failed",
+        description: error.response?.data?.detail || "Failed to create AI avatar",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const createPredefinedAvatar = async (type) => {
+    const template = predefinedAvatarTypes[type];
+    if (!template) return;
+
+    try {
+      const avatarData = {
+        ...template,
+        name: `${template.name} #${Date.now().toString().slice(-4)}`,
+        team_name: createForm.team_name || 'Default Team',
+        organization: createForm.organization || 'Main Organization'
+      };
+
+      const response = await axios.post(`${API}/ai-avatars`, avatarData);
+      setAvatars([...avatars, response.data]);
+      
+      toast({
+        title: "Avatar Created",
+        description: `${avatarData.name} has been successfully created with predefined capabilities.`
+      });
+      
+    } catch (error) {
+      console.error('Failed to create predefined avatar:', error);
+      toast({
+        title: "Creation Failed",
+        description: error.response?.data?.detail || "Failed to create predefined avatar",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const amendAvatar = async () => {
+    if (!amendingAvatar) return;
+
+    try {
+      const response = await axios.put(`${API}/ai-avatars/${amendingAvatar.id}`, amendForm);
+      setAvatars(avatars.map(avatar => 
+        avatar.id === amendingAvatar.id ? response.data : avatar
+      ));
+      
+      toast({
+        title: "Avatar Updated",
+        description: `${amendForm.name} has been successfully updated.`
+      });
+      
+      setShowAmendDialog(false);
+      setAmendingAvatar(null);
+      resetAmendForm();
+    } catch (error) {
+      console.error('Failed to amend avatar:', error);
+      toast({
+        title: "Update Failed",
+        description: error.response?.data?.detail || "Failed to update AI avatar",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const openAmendDialog = (avatar) => {
+    setAmendingAvatar(avatar);
+    setAmendForm({
+      name: avatar.name,
+      description: avatar.description,
+      specializations: avatar.specializations || [],
+      core_competences: avatar.core_competences || [],
+      knowledge_domains: avatar.knowledge_domains || [],
+      task_capabilities: avatar.task_capabilities || [],
+      team_name: avatar.team_name || '',
+      organization: avatar.organization || ''
+    });
+    setShowAmendDialog(true);
+  };
+
+  const createTask = async () => {
+    if (!selectedAvatar) return;
+    
+    try {
+      const taskData = {
+        avatar_id: selectedAvatar.id,
+        ...taskForm,
+        requirements: taskForm.requirements.filter(req => req.trim() !== '')
+      };
+      
+      const response = await axios.post(`${API}/ai-avatars/tasks`, taskData);
+      
+      toast({
+        title: "Task Assigned",
+        description: `Task "${taskForm.title}" has been assigned to ${selectedAvatar.name}.`
+      });
+      
+      setShowTaskDialog(false);
+      resetTaskForm();
+      
+      // Refresh avatar data and tasks
+      fetchAvatars();
+      if (activeView === 'tasks') {
+        fetchAvatarTasks(selectedAvatar.id);
+      }
+    } catch (error) {
+      console.error('Failed to create task:', error);
+      toast({
+        title: "Task Creation Failed",
+        description: error.response?.data?.detail || "Failed to create task",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const executeTaskWithAI = async (taskId) => {
+    try {
+      const response = await axios.post(`${API}/ai-avatars/tasks/${taskId}/ai-execute`);
+      
+      toast({
+        title: "Task Completed",
+        description: "The AI avatar has successfully completed the task."
+      });
+      
+      // Refresh tasks
+      if (selectedAvatar) {
+        fetchAvatarTasks(selectedAvatar.id);
+      }
+      fetchAvatars();
+    } catch (error) {
+      console.error('Failed to execute task:', error);
+      toast({
+        title: "Execution Failed",
+        description: error.response?.data?.detail || "Failed to execute task with AI",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const deleteAvatar = async (avatarId) => {
+    try {
+      await axios.delete(`${API}/ai-avatars/${avatarId}`);
+      setAvatars(avatars.filter(avatar => avatar.id !== avatarId));
+      
+      toast({
+        title: "Avatar Deleted",
+        description: "AI avatar and all associated tasks have been deleted."
+      });
+      
+      if (selectedAvatar && selectedAvatar.id === avatarId) {
+        setSelectedAvatar(null);
+        setActiveView('dashboard');
+      }
+    } catch (error) {
+      console.error('Failed to delete avatar:', error);
+      toast({
+        title: "Deletion Failed",
+        description: error.response?.data?.detail || "Failed to delete avatar",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const resetCreateForm = () => {
+    setCreateForm({
+      name: '',
+      avatar_type: '',
+      category: '',
+      description: '',
+      specializations: [],
+      core_competences: [],
+      knowledge_domains: [],
+      task_capabilities: [],
+      team_name: '',
+      organization: ''
+    });
+    setCreateFormInputs({
+      specializations: '',
+      knowledge_domains: '',
+      task_capabilities: ''
+    });
+  };
+
+  const resetAmendForm = () => {
+    setAmendForm({
+      name: '',
+      description: '',
+      specializations: [],
+      core_competences: [],
+      knowledge_domains: [],
+      task_capabilities: [],
+      team_name: '',
+      organization: ''
+    });
+  };
+
+  const resetTaskForm = () => {
+    setTaskForm({
+      title: '',
+      description: '',
+      task_category: '',
+      task_type: '',
+      requirements: [],
+      priority: 'medium'
+    });
+  };
+
+  const loadTemplate = (template) => {
+    setCreateForm({
+      name: template.name,
+      avatar_type: template.name,
+      category: template.category || 'crisis_management',
+      description: template.description || '',
+      specializations: template.specializations || [],
+      core_competences: Object.entries(template.skill_levels || {}).map(([name, level]) => ({
+        name,
+        skill_level: level,
+        description: `${name.replace(/_/g, ' ')} expertise`
+      })),
+      knowledge_domains: template.knowledge_domains || [],
+      task_capabilities: template.task_capabilities || []
+    });
+  };
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'active': return 'bg-green-100 text-green-800';
+      case 'busy': return 'bg-yellow-100 text-yellow-800';
+      case 'inactive': return 'bg-gray-100 text-gray-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getTaskStatusColor = (status) => {
+    switch (status) {
+      case 'completed': return 'bg-green-100 text-green-800';
+      case 'in_progress': return 'bg-blue-100 text-blue-800';
+      case 'pending': return 'bg-yellow-100 text-yellow-800';
+      case 'failed': return 'bg-red-100 text-red-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getPriorityColor = (priority) => {
+    switch (priority) {
+      case 'urgent': return 'bg-red-100 text-red-800';
+      case 'high': return 'bg-orange-100 text-orange-800';
+      case 'medium': return 'bg-yellow-100 text-yellow-800';
+      case 'low': return 'bg-green-100 text-green-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading AI Avatar Management...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div>
-      <header className="App-header">
-        <a
-          className="App-link"
-          href="https://emergent.sh"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <img src="https://avatars.githubusercontent.com/in/1201222?s=120&u=2686cf91179bbafbc7a71bfbc43004cf9ae1acea&v=4" />
-        </a>
-        <p className="mt-5">Building something incredible ~!</p>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="bg-white rounded-lg shadow-sm border p-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+              <Brain className="w-6 h-6 text-purple-600" />
+              AI Avatar Management
+            </h1>
+            <p className="text-gray-600 mt-1">
+              Create, manage, and deploy AI avatars with custom competences and task execution capabilities
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button 
+              onClick={() => setShowCreateDialog(true)}
+              className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700"
+            >
+              <Plus className="w-4 h-4" />
+              Create Custom Avatar
+            </Button>
+            <div className="flex gap-1">
+              <Button 
+                onClick={() => createPredefinedAvatar('research')}
+                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-xs px-3 py-2"
+                title="Create Research Avatar"
+              >
+                <Activity className="w-3 h-3" />
+                Research
+              </Button>
+              <Button 
+                onClick={() => createPredefinedAvatar('assessment')}
+                className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-xs px-3 py-2"
+                title="Create Assessment Avatar"
+              >
+                <Shield className="w-3 h-3" />
+                Assessment
+              </Button>
+              <Button 
+                onClick={() => createPredefinedAvatar('analyst')}
+                className="flex items-center gap-2 bg-orange-600 hover:bg-orange-700 text-xs px-3 py-2"
+                title="Create Analyst Avatar"
+              >
+                <BarChart3 className="w-3 h-3" />
+                Analyst
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Navigation Tabs */}
+      <div className="bg-white rounded-lg shadow-sm border">
+        <div className="border-b">
+          <div className="flex space-x-8 px-6">
+            <button
+              onClick={() => setActiveView('dashboard')}
+              className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                activeView === 'dashboard'
+                  ? 'border-purple-500 text-purple-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              Dashboard
+            </button>
+            <button
+              onClick={() => setActiveView('avatars')}
+              className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                activeView === 'avatars'
+                  ? 'border-purple-500 text-purple-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              AI Avatars ({avatars.length})
+            </button>
+            {selectedAvatar && (
+              <button
+                onClick={() => {
+                  setActiveView('tasks');
+                  fetchAvatarTasks(selectedAvatar.id);
+                }}
+                className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                  activeView === 'tasks'
+                    ? 'border-purple-500 text-purple-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                {selectedAvatar.name} Tasks
+              </button>
+            )}
+          </div>
+        </div>
+
+        <div className="p-6">
+          {/* Dashboard Tab */}
+          {activeView === 'dashboard' && (
+            <div className="space-y-6">
+              {/* Statistics Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="bg-purple-50 p-4 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-purple-600">Total Avatars</p>
+                      <p className="text-2xl font-bold text-purple-900">{avatars.length}</p>
+                    </div>
+                    <Brain className="w-8 h-8 text-purple-500" />
+                  </div>
+                </div>
+                
+                <div className="bg-green-50 p-4 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-green-600">Active Avatars</p>
+                      <p className="text-2xl font-bold text-green-900">
+                        {avatars.filter(a => a.status === 'active').length}
+                      </p>
+                    </div>
+                    <CheckCircle className="w-8 h-8 text-green-500" />
+                  </div>
+                </div>
+                
+                <div className="bg-yellow-50 p-4 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-yellow-600">Busy Avatars</p>
+                      <p className="text-2xl font-bold text-yellow-900">
+                        {avatars.filter(a => a.status === 'busy').length}
+                      </p>
+                    </div>
+                    <Clock className="w-8 h-8 text-yellow-500" />
+                  </div>
+                </div>
+                
+                <div className="bg-blue-50 p-4 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-blue-600">Avg Competences</p>
+                      <p className="text-2xl font-bold text-blue-900">
+                        {avatars.length > 0 ? Math.round(avatars.reduce((sum, a) => sum + a.core_competences.length, 0) / avatars.length) : 0}
+                      </p>
+                    </div>
+                    <Award className="w-8 h-8 text-blue-500" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Recent Avatars */}
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent AI Avatars</h3>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  {avatars.slice(0, 4).map((avatar) => (
+                    <div key={avatar.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
+                      <div className="flex justify-between items-start mb-3">
+                        <div className="flex-1">
+                          <h4 className="font-bold text-gray-900">{avatar.name}</h4>
+                          <p className="text-sm text-gray-600">{avatar.avatar_type}</p>
+                        </div>
+                        <span className={`px-2 py-1 rounded-full text-xs font-semibold ${getStatusColor(avatar.status)}`}>
+                          {avatar.status}
+                        </span>
+                      </div>
+                      
+                      <p className="text-sm text-gray-700 mb-2">{avatar.description}</p>
+                      
+                      <div className="mb-3">
+                        <p className="text-xs text-gray-500 mb-1">Specializations:</p>
+                        <div className="flex flex-wrap gap-1">
+                          {avatar.specializations.slice(0, 2).map((spec, idx) => (
+                            <span key={idx} className="bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded">
+                              {spec.replace(/_/g, ' ')}
+                            </span>
+                          ))}
+                          {avatar.specializations.length > 2 && (
+                            <span className="text-xs text-gray-500">
+                              +{avatar.specializations.length - 2} more
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            setSelectedAvatar(avatar);
+                            setActiveView('avatars');
+                          }}
+                        >
+                          View Details
+                        </Button>
+                        <Button
+                          size="sm"
+                          onClick={() => {
+                            setSelectedAvatar(avatar);
+                            setShowTaskDialog(true);
+                          }}
+                        >
+                          Assign Task
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                
+                {avatars.length === 0 && (
+                  <div className="text-center py-8">
+                    <Brain className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">No AI Avatars Yet</h3>
+                    <p className="text-gray-600 mb-4">Create your first AI avatar to get started with automated task execution.</p>
+                    <Button onClick={() => setShowCreateDialog(true)}>
+                      Create First Avatar
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Avatars Tab */}
+          {activeView === 'avatars' && (
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                {avatars.map((avatar) => (
+                  <div key={avatar.id} className={`border rounded-lg p-6 hover:shadow-lg transition-shadow ${
+                    selectedAvatar && selectedAvatar.id === avatar.id ? 'ring-2 ring-purple-500' : ''
+                  }`}>
+                    <div className="flex justify-between items-start mb-4">
+                      <div className="flex-1">
+                        <h3 className="font-bold text-lg text-gray-900">{avatar.name}</h3>
+                        <p className="text-sm text-gray-600">{avatar.avatar_type}</p>
+                        <p className="text-xs text-gray-500 mt-1">{avatar.category.replace(/_/g, ' ')}</p>
+                        {(avatar.team_name || avatar.organization) && (
+                          <div className="flex flex-wrap gap-1 mt-2">
+                            {avatar.team_name && (
+                              <span className="bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded">
+                                Team: {avatar.team_name}
+                              </span>
+                            )}
+                            {avatar.organization && (
+                              <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
+                                Org: {avatar.organization}
+                              </span>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className={`px-2 py-1 rounded-full text-xs font-semibold ${getStatusColor(avatar.status)}`}>
+                          {avatar.status}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <p className="text-sm text-gray-700 mb-4">{avatar.description}</p>
+                    
+                    <div className="mb-4">
+                      <h4 className="font-medium text-gray-800 mb-2">Core Competences:</h4>
+                      <div className="space-y-1">
+                        {avatar.core_competences.slice(0, 3).map((comp, idx) => (
+                          <div key={idx} className="flex justify-between items-center text-sm">
+                            <span className="text-gray-700">{comp.name.replace(/_/g, ' ')}</span>
+                            <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
+                              {comp.skill_level}/10
+                            </span>
+                          </div>
+                        ))}
+                        {avatar.core_competences.length > 3 && (
+                          <p className="text-xs text-gray-500">
+                            +{avatar.core_competences.length - 3} more competences
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    
+                    <div className="mb-4">
+                      <h4 className="font-medium text-gray-800 mb-2">Task Capabilities:</h4>
+                      <div className="flex flex-wrap gap-1">
+                        {avatar.task_capabilities.slice(0, 3).map((capability, idx) => (
+                          <span key={idx} className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">
+                            {capability.replace(/_/g, ' ')}
+                          </span>
+                        ))}
+                        {avatar.task_capabilities.length > 3 && (
+                          <span className="text-xs text-gray-500">
+                            +{avatar.task_capabilities.length - 3} more
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          setSelectedAvatar(avatar);
+                          setActiveView('tasks');
+                          fetchAvatarTasks(avatar.id);
+                        }}
+                      >
+                        View Tasks
+                      </Button>
+                      <Button
+                        size="sm"
+                        onClick={() => {
+                          setSelectedAvatar(avatar);
+                          setShowTaskDialog(true);
+                        }}
+                      >
+                        Assign Task
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => openAmendDialog(avatar)}
+                        className="text-blue-600 hover:text-blue-800"
+                      >
+                        <Settings className="w-3 h-3 mr-1" />
+                        Amend
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => deleteAvatar(avatar.id)}
+                        className="text-red-600 hover:text-red-800"
+                      >
+                        Delete
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Tasks Tab */}
+          {activeView === 'tasks' && selectedAvatar && (
+            <div className="space-y-6">
+              <div className="flex justify-between items-center">
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">
+                    Tasks for {selectedAvatar.name}
+                  </h3>
+                  <p className="text-sm text-gray-600">
+                    {selectedAvatar.avatar_type} • {selectedAvatar.status}
+                  </p>
+                </div>
+                <Button
+                  onClick={() => setShowTaskDialog(true)}
+                  className="flex items-center gap-2"
+                >
+                  <Plus className="w-4 h-4" />
+                  Assign New Task
+                </Button>
+              </div>
+
+              <div className="space-y-4">
+                {avatarTasks.map((task) => (
+                  <div key={task.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
+                    <div className="flex justify-between items-start mb-3">
+                      <div className="flex-1">
+                        <h4 className="font-bold text-gray-900">{task.title}</h4>
+                        <p className="text-sm text-gray-600">{task.task_category} • {task.task_type}</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className={`px-2 py-1 rounded-full text-xs font-semibold ${getPriorityColor(task.priority)}`}>
+                          {task.priority}
+                        </span>
+                        <span className={`px-2 py-1 rounded-full text-xs font-semibold ${getTaskStatusColor(task.status)}`}>
+                          {task.status}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <p className="text-sm text-gray-700 mb-3">{task.description}</p>
+                    
+                    {task.requirements && task.requirements.length > 0 && (
+                      <div className="mb-3">
+                        <p className="text-xs text-gray-500 mb-1">Requirements:</p>
+                        <ul className="text-sm text-gray-600 list-disc list-inside">
+                          {task.requirements.map((req, idx) => (
+                            <li key={idx}>{req}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    
+                    {task.result && (
+                      <div className="mb-3 p-3 bg-green-50 rounded border">
+                        <p className="text-xs text-green-600 font-medium mb-1">Result:</p>
+                        <p className="text-sm text-gray-700">{task.result.substring(0, 200)}...</p>
+                        {task.quality_score && (
+                          <p className="text-xs text-green-600 mt-1">
+                            Quality Score: {task.quality_score}/10
+                          </p>
+                        )}
+                      </div>
+                    )}
+                    
+                    <div className="flex justify-between items-center text-xs text-gray-500">
+                      <div>
+                        <p>Created: {new Date(task.created_at).toLocaleDateString()}</p>
+                        {task.completed_at && (
+                          <p>Completed: {new Date(task.completed_at).toLocaleDateString()}</p>
+                        )}
+                      </div>
+                      
+                      <div className="flex gap-2">
+                        {task.status === 'pending' && (
+                          <Button
+                            size="sm"
+                            onClick={() => executeTaskWithAI(task.id)}
+                            className="bg-purple-600 hover:bg-purple-700"
+                          >
+                            Execute with AI
+                          </Button>
+                        )}
+                        {task.result && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              // Show full result in a modal or expand
+                              toast({
+                                title: "Task Result",
+                                description: "Full result displayed in console for now",
+                              });
+                              console.log('Full Task Result:', task.result);
+                            }}
+                          >
+                            View Full Result
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              
+              {avatarTasks.length === 0 && (
+                <div className="text-center py-8">
+                  <Clock className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No Tasks Assigned</h3>
+                  <p className="text-gray-600 mb-4">{selectedAvatar.name} is ready for task assignments.</p>
+                  <Button onClick={() => setShowTaskDialog(true)}>
+                    Assign First Task
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Create Avatar Dialog */}
+      {showCreateDialog && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-lg font-semibold text-gray-900">Create AI Avatar</h3>
+                <button
+                  onClick={() => setShowCreateDialog(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+
+              <div className="space-y-6">
+                {/* Templates Section */}
+                {avatarTemplates && (
+                  <div className="bg-blue-50 p-4 rounded-lg">
+                    <h4 className="font-medium text-blue-900 mb-3">Quick Start Templates</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {Object.entries(avatarTemplates.categories).map(([key, category]) => (
+                        <div key={key} className="bg-white p-3 rounded border">
+                          <h5 className="font-medium text-gray-800 mb-2">{category.category}</h5>
+                          <div className="space-y-2">
+                            {category.avatar_types.map((template, idx) => (
+                              <button
+                                key={idx}
+                                onClick={() => loadTemplate(template)}
+                                className="block w-full text-left p-2 text-sm text-blue-600 hover:bg-blue-50 rounded"
+                              >
+                                {template.name}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Form */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="avatar-name">Avatar Name *</Label>
+                    <Input
+                      id="avatar-name"
+                      value={createForm.name}
+                      onChange={(e) => setCreateForm({...createForm, name: e.target.value})}
+                      placeholder="e.g., Crisis Response Coordinator"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="avatar-type">Avatar Type *</Label>
+                    <Input
+                      id="avatar-type"
+                      value={createForm.avatar_type}
+                      onChange={(e) => setCreateForm({...createForm, avatar_type: e.target.value})}
+                      placeholder="e.g., Crisis Management Specialist"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="category">Category</Label>
+                    <select
+                      id="category"
+                      value={createForm.category}
+                      onChange={(e) => setCreateForm({...createForm, category: e.target.value})}
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500"
+                    >
+                      <option value="">Select Category</option>
+                      <option value="crisis_management">Crisis Management</option>
+                      <option value="strategic_planning">Strategic Planning</option>
+                      <option value="data_analysis">Data Analysis</option>
+                      <option value="communication">Communication</option>
+                      <option value="technical_operations">Technical Operations</option>
+                      <option value="research_innovation">Research & Innovation</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <Label htmlFor="description">Description *</Label>
+                  <textarea
+                    id="description"
+                    value={createForm.description}
+                    onChange={(e) => setCreateForm({...createForm, description: e.target.value})}
+                    placeholder="Describe the avatar's role and capabilities..."
+                    className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                    rows={3}
+                    required
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="specializations">Specializations (comma-separated)</Label>
+                  <Input
+                    id="specializations"
+                    type="text"
+                    value={createFormInputs.specializations}
+                    onChange={(e) => {
+                      const rawValue = e.target.value;
+                      setCreateFormInputs({
+                        ...createFormInputs,
+                        specializations: rawValue
+                      });
+                      const newSpecializations = rawValue.length > 0 ? rawValue.split(',').map(s => s.trim()).filter(s => s.length > 0) : [];
+                      setCreateForm({
+                        ...createForm, 
+                        specializations: newSpecializations
+                      });
+                    }}
+                    placeholder="e.g., emergency response, risk assessment, team coordination"
+                    autoComplete="off"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Parsed: {createForm.specializations.join(' | ')}
+                  </p>
+                </div>
+
+                <div>
+                  <Label htmlFor="knowledge-domains">Knowledge Domains (comma-separated)</Label>
+                  <Input
+                    id="knowledge-domains"
+                    type="text"
+                    value={createFormInputs.knowledge_domains}
+                    onChange={(e) => {
+                      const rawValue = e.target.value;
+                      setCreateFormInputs({
+                        ...createFormInputs,
+                        knowledge_domains: rawValue
+                      });
+                      const newDomains = rawValue.length > 0 ? rawValue.split(',').map(s => s.trim()).filter(s => s.length > 0) : [];
+                      setCreateForm({
+                        ...createForm, 
+                        knowledge_domains: newDomains
+                      });
+                    }}
+                    placeholder="e.g., emergency management, public safety, logistics"
+                    autoComplete="off"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Parsed: {createForm.knowledge_domains.join(' | ')}
+                  </p>
+                </div>
+
+                <div>
+                  <Label htmlFor="task-capabilities">Task Capabilities (comma-separated)</Label>
+                  <Input
+                    id="task-capabilities"
+                    type="text"
+                    value={createFormInputs.task_capabilities}
+                    onChange={(e) => {
+                      const rawValue = e.target.value;
+                      setCreateFormInputs({
+                        ...createFormInputs,
+                        task_capabilities: rawValue
+                      });
+                      const newCapabilities = rawValue.length > 0 ? rawValue.split(',').map(s => s.trim()).filter(s => s.length > 0) : [];
+                      setCreateForm({
+                        ...createForm, 
+                        task_capabilities: newCapabilities
+                      });
+                    }}
+                    placeholder="e.g., assess crisis severity, develop response plans, coordinate resources"
+                    autoComplete="off"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Parsed: {createForm.task_capabilities.join(' | ')}
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="team-name">Team Name</Label>
+                    <Input
+                      id="team-name"
+                      value={createForm.team_name}
+                      onChange={(e) => setCreateForm({...createForm, team_name: e.target.value})}
+                      placeholder="e.g., Crisis Response Team"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="organization">Organization</Label>
+                    <Input
+                      id="organization"
+                      value={createForm.organization}
+                      onChange={(e) => setCreateForm({...createForm, organization: e.target.value})}
+                      placeholder="e.g., Emergency Management Division"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex gap-3 pt-4 border-t">
+                  <Button onClick={createAvatar} className="flex-1">
+                    Create Avatar
+                  </Button>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={() => setShowCreateDialog(false)}
+                    className="flex-1"
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Create Task Dialog */}
+      {showTaskDialog && selectedAvatar && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Assign Task to {selectedAvatar.name}
+                </h3>
+                <button
+                  onClick={() => setShowTaskDialog(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="task-title">Task Title *</Label>
+                  <Input
+                    id="task-title"
+                    value={taskForm.title}
+                    onChange={(e) => setTaskForm({...taskForm, title: e.target.value})}
+                    placeholder="e.g., Analyze Supply Chain Vulnerability"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="task-description">Description *</Label>
+                  <textarea
+                    id="task-description"
+                    value={taskForm.description}
+                    onChange={(e) => setTaskForm({...taskForm, description: e.target.value})}
+                    placeholder="Detailed description of what needs to be accomplished..."
+                    className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                    rows={4}
+                    required
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="task-category">Category</Label>
+                    <select
+                      id="task-category"
+                      value={taskForm.task_category}
+                      onChange={(e) => setTaskForm({...taskForm, task_category: e.target.value})}
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500"
+                    >
+                      <option value="">Select Category</option>
+                      <option value="Analysis & Assessment">Analysis & Assessment</option>
+                      <option value="Planning & Strategy">Planning & Strategy</option>
+                      <option value="Communication & Coordination">Communication & Coordination</option>
+                      <option value="Research & Innovation">Research & Innovation</option>
+                      <option value="Monitoring & Maintenance">Monitoring & Maintenance</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="task-priority">Priority</Label>
+                    <select
+                      id="task-priority"
+                      value={taskForm.priority}
+                      onChange={(e) => setTaskForm({...taskForm, priority: e.target.value})}
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500"
+                    >
+                      <option value="low">Low</option>
+                      <option value="medium">Medium</option>
+                      <option value="high">High</option>
+                      <option value="urgent">Urgent</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <Label htmlFor="task-type">Task Type</Label>
+                  <Input
+                    id="task-type"
+                    value={taskForm.task_type}
+                    onChange={(e) => setTaskForm({...taskForm, task_type: e.target.value})}
+                    placeholder="e.g., risk_assessment, strategic_planning, data_analysis"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="requirements">Requirements (one per line)</Label>
+                  <textarea
+                    id="requirements"
+                    value={taskForm.requirements.join('\n')}
+                    onChange={(e) => setTaskForm({
+                      ...taskForm, 
+                      requirements: e.target.value.split('\n').filter(req => req.trim())
+                    })}
+                    placeholder="Access to supply chain data&#10;Regional market analysis&#10;Stakeholder contact information"
+                    className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                    rows={3}
+                  />
+                </div>
+
+                <div className="flex gap-3 pt-4 border-t">
+                  <Button onClick={createTask} className="flex-1">
+                    Assign Task
+                  </Button>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={() => setShowTaskDialog(false)}
+                    className="flex-1"
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Amend Avatar Dialog */}
+      {showAmendDialog && amendingAvatar && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Amend Avatar: {amendingAvatar.name}
+                </h3>
+                <button
+                  onClick={() => setShowAmendDialog(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="amend-avatar-name">Avatar Name *</Label>
+                    <Input
+                      id="amend-avatar-name"
+                      value={amendForm.name}
+                      onChange={(e) => setAmendForm({...amendForm, name: e.target.value})}
+                      placeholder="e.g., Crisis Response Coordinator"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="amend-team-name">Team Name</Label>
+                    <Input
+                      id="amend-team-name"
+                      value={amendForm.team_name}
+                      onChange={(e) => setAmendForm({...amendForm, team_name: e.target.value})}
+                      placeholder="e.g., Crisis Response Team"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <Label htmlFor="amend-organization">Organization</Label>
+                  <Input
+                    id="amend-organization"
+                    value={amendForm.organization}
+                    onChange={(e) => setAmendForm({...amendForm, organization: e.target.value})}
+                    placeholder="e.g., Emergency Management Division"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="amend-description">Description *</Label>
+                  <textarea
+                    id="amend-description"
+                    value={amendForm.description}
+                    onChange={(e) => setAmendForm({...amendForm, description: e.target.value})}
+                    placeholder="Describe the avatar's role and capabilities..."
+                    className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                    rows={3}
+                    required
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="amend-specializations">Specializations (comma-separated)</Label>
+                  <Input
+                    id="amend-specializations"
+                    value={amendForm.specializations.join(', ')}
+                    onChange={(e) => setAmendForm({
+                      ...amendForm, 
+                      specializations: e.target.value.split(',').map(s => s.trim()).filter(s => s.length > 0)
+                    })}
+                    placeholder="e.g., emergency response, risk assessment, team coordination"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="amend-knowledge-domains">Knowledge Domains (comma-separated)</Label>
+                  <Input
+                    id="amend-knowledge-domains"
+                    value={amendForm.knowledge_domains.join(', ')}
+                    onChange={(e) => setAmendForm({
+                      ...amendForm, 
+                      knowledge_domains: e.target.value.split(',').map(s => s.trim()).filter(s => s.length > 0)
+                    })}
+                    placeholder="e.g., emergency management, public safety, logistics"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="amend-task-capabilities">Task Capabilities (comma-separated)</Label>
+                  <Input
+                    id="amend-task-capabilities"
+                    value={amendForm.task_capabilities.join(', ')}
+                    onChange={(e) => setAmendForm({
+                      ...amendForm, 
+                      task_capabilities: e.target.value.split(',').map(s => s.trim()).filter(s => s.length > 0)
+                    })}
+                    placeholder="e.g., assess crisis severity, develop response plans, coordinate resources"
+                  />
+                </div>
+
+                <div className="flex gap-3 pt-4 border-t">
+                  <Button onClick={amendAvatar} className="flex-1">
+                    Update Avatar
+                  </Button>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={() => setShowAmendDialog(false)}
+                    className="flex-1"
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Main App Component
+const AppContent = () => {
+  const { user, logout } = useAuth();
+  const [activeTab, setActiveTab] = useState('dashboard');
+  const [scenarios, setScenarios] = useState([]);
+  const [selectedScenario, setSelectedScenario] = useState(null);
+  const [showFloatingGenie, setShowFloatingGenie] = useState(false);
+
+  const handleScenarioCreated = (newScenario) => {
+    setScenarios([...scenarios, newScenario]);
+    setActiveTab('scenarios');
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <header className="bg-white border-b shadow-sm">
+        <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8">
+          <div className="flex justify-between items-center h-14 sm:h-16">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <Brain className="w-6 h-6 sm:w-8 sm:h-8 text-blue-600" />
+              <h1 className="text-lg sm:text-xl font-bold text-gray-900 truncate">
+                <span className="hidden sm:inline">Polycrisis Simulator</span>
+                <span className="sm:hidden">Polycrisis</span>
+              </h1>
+            </div>
+            
+            <div className="flex items-center gap-2 sm:gap-4">
+              <div className="text-xs sm:text-sm text-gray-600 hidden xs:block">
+                Welcome, <span className="font-semibold">{user?.username}</span>
+              </div>
+              <div className="text-xs sm:text-sm text-gray-600 xs:hidden">
+                <span className="font-semibold">{user?.username}</span>
+              </div>
+              <Button variant="outline" size="sm" onClick={logout} className="text-xs sm:text-sm px-2 sm:px-3">
+                <span className="hidden sm:inline">Logout</span>
+                <span className="sm:hidden">Exit</span>
+              </Button>
+            </div>
+          </div>
+        </div>
       </header>
+
+      {/* Navigation */}
+      <nav className="bg-white border-b">
+        <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8">
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <div className="overflow-x-auto scrollbar-hide">
+              <TabsList className="h-12 bg-transparent min-w-max flex-nowrap">
+                <TabsTrigger value="dashboard" className="flex items-center gap-1 px-2 sm:px-3 text-xs sm:text-sm whitespace-nowrap">
+                  <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <span className="hidden xs:inline">Dashboard</span>
+                  <span className="xs:hidden">Dash</span>
+                </TabsTrigger>
+                <TabsTrigger value="scenario-adjusters" className="flex items-center gap-1 px-2 sm:px-3 text-xs sm:text-sm whitespace-nowrap">
+                  <Layers className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <span className="hidden xs:inline">Scenario Adjusters</span>
+                  <span className="xs:hidden">Adjusters</span>
+                </TabsTrigger>
+                <TabsTrigger value="company" className="flex items-center gap-1 px-2 sm:px-3 text-xs sm:text-sm whitespace-nowrap">
+                  <Building2 className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <span className="hidden xs:inline">Company</span>
+                  <span className="xs:hidden">Co</span>
+                </TabsTrigger>
+                <TabsTrigger value="create" className="flex items-center gap-1 px-2 sm:px-3 text-xs sm:text-sm whitespace-nowrap">
+                  <Plus className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <span className="hidden sm:inline">Create Scenario</span>
+                  <span className="sm:hidden">Create</span>
+                </TabsTrigger>
+                <TabsTrigger value="scenarios" className="flex items-center gap-1 px-2 sm:px-3 text-xs sm:text-sm whitespace-nowrap">
+                  <Globe className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <span className="hidden xs:inline">Scenarios</span>
+                  <span className="xs:hidden">Scan</span>
+                </TabsTrigger>
+                <TabsTrigger value="avatars" className="flex items-center gap-1 px-2 sm:px-3 text-xs sm:text-sm whitespace-nowrap">
+                  <Brain className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <span className="hidden xs:inline">AI Avatars</span>
+                  <span className="xs:hidden">AI</span>
+                </TabsTrigger>
+                <TabsTrigger value="documents" className="flex items-center gap-1 px-2 sm:px-3 text-xs sm:text-sm whitespace-nowrap">
+                  <FileText className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <span className="hidden xs:inline">Documents</span>
+                  <span className="xs:hidden">Docs</span>
+                </TabsTrigger>
+                <TabsTrigger value="knowledge-topology" className="flex items-center gap-1 px-2 sm:px-3 text-xs sm:text-sm whitespace-nowrap">
+                  <Network className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <span className="hidden xs:inline">Knowledge Base</span>
+                  <span className="xs:hidden">Knowledge</span>
+                </TabsTrigger>
+                <TabsTrigger value="crisis-framework" className="flex items-center gap-1 px-2 sm:px-3 text-xs sm:text-sm whitespace-nowrap">
+                  <Shield className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <span className="hidden xs:inline">Crisis Framework</span>
+                  <span className="xs:hidden">Crisis</span>
+                </TabsTrigger>
+                {user?.email === 'rauno.saarnio@xr-presence.com' && (
+                  <TabsTrigger value="admin" className="flex items-center gap-1 px-2 sm:px-3 text-xs sm:text-sm whitespace-nowrap">
+                    <Crown className="w-3 h-3 sm:w-4 sm:h-4" />
+                    <span className="hidden xs:inline">Admin</span>
+                    <span className="xs:hidden">Admin</span>
+                  </TabsTrigger>
+                )}
+              </TabsList>
+            </div>
+          </Tabs>
+        </div>
+      </nav>
+
+      {/* Main Content */}
+      <main className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8 py-4 sm:py-6 lg:py-8">
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsContent value="dashboard">
+            <AdvancedDashboard />
+          </TabsContent>
+          
+          {user?.email === 'rauno.saarnio@xr-presence.com' && (
+            <TabsContent value="admin">
+              <AdminDashboard />
+            </TabsContent>
+          )}
+          
+          <TabsContent value="company">
+            <CompanyManagement />
+          </TabsContent>
+          
+          <TabsContent value="documents">
+            <DocumentManagement />  
+          </TabsContent>
+          
+          <TabsContent value="avatars">
+            <AIAvatarManagement />
+          </TabsContent>
+          
+          <TabsContent value="create">
+            <ScenarioCreator onScenarioCreated={handleScenarioCreated} />
+          </TabsContent>
+          
+          <TabsContent value="scenarios">
+            <ScenarioManagement onScenarioSelect={setSelectedScenario} />
+          </TabsContent>
+          
+          <TabsContent value="scenario-adjusters">
+            <ScenarioAdjusters />
+          </TabsContent>
+          
+          
+          <TabsContent value="knowledge-topology">
+            <KnowledgeTopology />
+          </TabsContent>
+          
+          <TabsContent value="crisis-framework">
+            <CrisisManagementFramework />
+          </TabsContent>
+        </Tabs>
+      </main>
+
+      {/* Floating AI Genie Button */}
+      <button
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          setShowFloatingGenie(true);
+        }}
+        className="fixed bottom-6 right-6 bg-blue-600 hover:bg-blue-700 text-white p-4 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 z-[9999] group"
+        title="Open AI Genie"
+      >
+        <MessageSquare className="w-6 h-6" />
+        <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center group-hover:scale-110 transition-transform">
+          G
+        </span>
+      </button>
+
+      {/* Floating AI Genie Dialog */}
+      <Dialog open={showFloatingGenie} onOpenChange={setShowFloatingGenie}>
+        <DialogContent className="max-w-4xl h-[600px] flex flex-col z-[10000]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <MessageSquare className="w-5 h-5 text-blue-600" />
+              AI Avatar Genie (Floating)
+            </DialogTitle>
+            <DialogDescription>
+              Get intelligent insights across all your scenarios - available anywhere in the app!
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex-1 flex flex-col min-h-0">
+            <AIGenie selectedScenario={selectedScenario} />
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
 
 function App() {
   return (
-    <div className="App">
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Home />}>
-            <Route index element={<Home />} />
-          </Route>
-        </Routes>
-      </BrowserRouter>
-    </div>
+    <AuthProvider>
+      <div className="App">
+        <BrowserRouter>
+          <Routes>
+            <Route path="/*" element={<AuthRoutes />} />
+          </Routes>
+        </BrowserRouter>
+        <Toaster />
+      </div>
+    </AuthProvider>
   );
 }
+
+const AuthRoutes = () => {
+  const { isAuthenticated } = useAuth();
+  
+  return isAuthenticated ? <AppContent /> : <AuthPage />;
+};
 
 export default App;

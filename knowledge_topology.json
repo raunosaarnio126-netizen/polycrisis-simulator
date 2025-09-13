@@ -1,0 +1,385 @@
+{
+  "knowledge_topology": {
+    "meta": {
+      "name": "Crisis Management Knowledge Topology",
+      "version": "1.0",
+      "description": "Structured framework of leading insights sources for crisis management and strategic planning",
+      "created_at": "2025-09-09",
+      "categories_count": 8,
+      "total_sources": 23
+    },
+    "topology": {
+      "strategic_consultancy": {
+        "category": "Strategic Consultancy",
+        "description": "Leading management consulting firms providing strategic insights and crisis management frameworks",
+        "priority": "high",
+        "access_level": "premium",
+        "sources": [
+          {
+            "name": "BCG Perspectives",
+            "full_name": "Boston Consulting Group Perspectives",
+            "type": "insights_platform",
+            "specialization": ["strategy", "digital_transformation", "crisis_management"],
+            "url": "https://www.bcg.com/insights",
+            "api_availability": false,
+            "content_types": ["articles", "reports", "case_studies"],
+            "update_frequency": "weekly",
+            "credibility_score": 9.5
+          },
+          {
+            "name": "Bain Insights",
+            "full_name": "Bain & Company Insights",
+            "type": "insights_platform",
+            "specialization": ["private_equity", "performance_improvement", "crisis_response"],
+            "url": "https://www.bain.com/insights",
+            "api_availability": false,
+            "content_types": ["articles", "reports", "tools"],
+            "update_frequency": "weekly",
+            "credibility_score": 9.4
+          },
+          {
+            "name": "McKinsey Insights",
+            "full_name": "McKinsey & Company Insights",
+            "type": "insights_platform",
+            "specialization": ["global_management", "digital", "risk_management"],
+            "url": "https://www.mckinsey.com/insights",
+            "api_availability": false,
+            "content_types": ["articles", "reports", "surveys"],
+            "update_frequency": "daily",
+            "credibility_score": 9.6
+          },
+          {
+            "name": "Accenture Insights",
+            "full_name": "Accenture Strategy & Consulting Insights",
+            "type": "insights_platform",
+            "specialization": ["technology", "digital_strategy", "industry_transformation"],
+            "url": "https://www.accenture.com/insights",
+            "api_availability": false,
+            "content_types": ["research", "thought_leadership", "case_studies"],
+            "update_frequency": "weekly",
+            "credibility_score": 9.2
+          },
+          {
+            "name": "PWC Future",
+            "full_name": "PwC Future of Work & Insights",
+            "type": "insights_platform",
+            "specialization": ["future_of_work", "regulatory", "crisis_governance"],
+            "url": "https://www.pwc.com/insights",
+            "api_availability": false,
+            "content_types": ["trend_analysis", "regulatory_updates", "industry_reports"],
+            "update_frequency": "weekly",
+            "credibility_score": 9.3
+          }
+        ]
+      },
+      "government_policy": {
+        "category": "Government & Policy Think Tanks",
+        "description": "Government bodies and independent organizations providing policy insights and behavioral research",
+        "priority": "high",
+        "access_level": "public",
+        "sources": [
+          {
+            "name": "NESTA",
+            "full_name": "National Endowment for Science, Technology and the Arts",
+            "type": "innovation_foundation",
+            "specialization": ["innovation", "social_policy", "public_sector_transformation"],
+            "url": "https://www.nesta.org.uk",
+            "api_availability": true,
+            "content_types": ["research", "policy_papers", "innovation_methods"],
+            "update_frequency": "weekly",
+            "credibility_score": 9.1
+          },
+          {
+            "name": "Behavioral Insights Team",
+            "full_name": "UK Behavioral Insights Team",
+            "type": "government_unit",
+            "specialization": ["behavioral_economics", "policy_design", "crisis_communication"],
+            "url": "https://www.bi.team",
+            "api_availability": false,
+            "content_types": ["behavioral_research", "policy_tools", "case_studies"],
+            "update_frequency": "monthly",
+            "credibility_score": 9.0
+          },
+          {
+            "name": "RSA",
+            "full_name": "Royal Society for the Encouragement of Arts",
+            "type": "think_tank",
+            "specialization": ["social_change", "economic_development", "21st_century_challenges"],
+            "url": "https://www.thersa.org",
+            "api_availability": false,
+            "content_types": ["research", "events", "fellowships"],
+            "update_frequency": "weekly",
+            "credibility_score": 8.8
+          }
+        ]
+      },
+      "executive_education": {
+        "category": "Executive Education & MBA Programs",
+        "description": "Leading business schools providing executive education and strategic thinking frameworks",
+        "priority": "medium",
+        "access_level": "subscription",
+        "sources": [
+          {
+            "name": "HBX",
+            "full_name": "Harvard Business School HBX",
+            "type": "executive_education",
+            "specialization": ["leadership", "strategy", "crisis_leadership"],
+            "url": "https://hbx.hbs.edu",
+            "api_availability": false,
+            "content_types": ["courses", "case_studies", "simulations"],
+            "update_frequency": "quarterly",
+            "credibility_score": 9.7
+          },
+          {
+            "name": "CORe",
+            "full_name": "Harvard Business School Credential of Readiness",
+            "type": "executive_program",
+            "specialization": ["business_fundamentals", "analytical_thinking", "decision_making"],
+            "url": "https://www.hbs.edu/core",
+            "api_availability": false,
+            "content_types": ["modules", "assessments", "frameworks"],
+            "update_frequency": "annually",
+            "credibility_score": 9.5
+          }
+        ]
+      },
+      "digital_innovation": {
+        "category": "Digital & Innovation Consultancy",
+        "description": "Digital transformation specialists and innovation consultancies",
+        "priority": "high",
+        "access_level": "premium",
+        "sources": [
+          {
+            "name": "RCG Digital Venture",
+            "full_name": "Roland Berger Digital Venture",
+            "type": "digital_consultancy",
+            "specialization": ["digital_strategy", "venture_building", "innovation_management"],
+            "url": "https://www.rolandberger.com/digital",
+            "api_availability": false,
+            "content_types": ["digital_insights", "trend_reports", "innovation_tools"],
+            "update_frequency": "monthly",
+            "credibility_score": 8.7
+          },
+          {
+            "name": "Deloitte Digital",
+            "full_name": "Deloitte Digital Consulting",
+            "type": "digital_consultancy",
+            "specialization": ["digital_transformation", "experience_design", "technology_strategy"],
+            "url": "https://www.deloittedigital.com",
+            "api_availability": false,
+            "content_types": ["digital_research", "industry_insights", "technology_trends"],
+            "update_frequency": "weekly",
+            "credibility_score": 9.0
+          }
+        ]
+      },
+      "crowdsourcing_platforms": {
+        "category": "Crowdsourcing & Collective Intelligence",
+        "description": "Platforms leveraging collective intelligence for problem-solving and innovation",
+        "priority": "medium",
+        "access_level": "freemium",
+        "sources": [
+          {
+            "name": "Open IDEO",
+            "full_name": "OpenIDEO Innovation Platform",
+            "type": "crowdsourcing_platform",
+            "specialization": ["design_thinking", "social_innovation", "collaborative_problem_solving"],
+            "url": "https://www.openideo.com",
+            "api_availability": true,
+            "content_types": ["challenges", "solutions", "methodologies"],
+            "update_frequency": "daily",
+            "credibility_score": 8.5
+          },
+          {
+            "name": "Wikistrat",
+            "full_name": "Wikistrat Crowdsourced Analysis",
+            "type": "geopolitical_analysis",
+            "specialization": ["geopolitical_risk", "scenario_planning", "strategic_forecasting"],
+            "url": "https://www.wikistrat.com",
+            "api_availability": false,
+            "content_types": ["geopolitical_analysis", "scenarios", "risk_assessments"],
+            "update_frequency": "daily",
+            "credibility_score": 8.3
+          },
+          {
+            "name": "Kaggle",
+            "full_name": "Kaggle Data Science Platform",
+            "type": "data_science_platform",
+            "specialization": ["machine_learning", "data_analysis", "predictive_modeling"],
+            "url": "https://www.kaggle.com",
+            "api_availability": true,
+            "content_types": ["datasets", "models", "competitions"],
+            "update_frequency": "daily",
+            "credibility_score": 8.8
+          },
+          {
+            "name": "Open Policy Making Team",
+            "full_name": "UK Government Open Policy Making",
+            "type": "government_innovation",
+            "specialization": ["policy_innovation", "citizen_engagement", "collaborative_governance"],
+            "url": "https://openpolicy.blog.gov.uk",
+            "api_availability": false,
+            "content_types": ["policy_tools", "case_studies", "methodologies"],
+            "update_frequency": "monthly",
+            "credibility_score": 8.4
+          }
+        ]
+      },
+      "merged_entities": {
+        "category": "Merged Consultancies & Strategic Alliances",
+        "description": "Result of major consultancy mergers combining complementary expertise",
+        "priority": "high",
+        "access_level": "premium",
+        "sources": [
+          {
+            "name": "Strategy& (PwC)",
+            "full_name": "Strategy& (formerly Booz & Company)",
+            "type": "strategy_consultancy",
+            "specialization": ["corporate_strategy", "operational_excellence", "crisis_management"],
+            "url": "https://www.strategyand.pwc.com",
+            "api_availability": false,
+            "content_types": ["strategic_insights", "industry_analysis", "transformation_guides"],
+            "update_frequency": "weekly",
+            "credibility_score": 9.1,
+            "merger_history": {
+              "original_firms": ["PwC", "Booz & Company", "Strategy&"],
+              "merger_date": "2014",
+              "combined_expertise": ["strategy", "operations", "technology"]
+            }
+          },
+          {
+            "name": "Monitor Deloitte",
+            "full_name": "Monitor Deloitte Strategy Consulting",
+            "type": "strategy_consultancy",
+            "specialization": ["strategy_development", "market_analysis", "digital_strategy"],
+            "url": "https://www2.deloitte.com/monitor",
+            "api_availability": false,
+            "content_types": ["strategy_research", "market_insights", "competitive_analysis"],
+            "update_frequency": "weekly",
+            "credibility_score": 9.0,
+            "merger_history": {
+              "original_firms": ["Deloitte", "Monitor Group"],
+              "merger_date": "2013",
+              "combined_expertise": ["strategy", "analytics", "implementation"]
+            }
+          }
+        ]
+      },
+      "ai_analytics": {
+        "category": "AI & Advanced Analytics",
+        "description": "AI-powered platforms providing advanced analytics and decision support",
+        "priority": "high",
+        "access_level": "enterprise",
+        "sources": [
+          {
+            "name": "IBM Watson",
+            "full_name": "IBM Watson AI Platform",
+            "type": "ai_platform",
+            "specialization": ["artificial_intelligence", "natural_language_processing", "predictive_analytics"],
+            "url": "https://www.ibm.com/watson",
+            "api_availability": true,
+            "content_types": ["ai_insights", "predictive_models", "automated_analysis"],
+            "update_frequency": "real_time",
+            "credibility_score": 9.2
+          },
+          {
+            "name": "Kensho",
+            "full_name": "Kensho Technologies (S&P Global)",
+            "type": "ai_analytics",
+            "specialization": ["machine_learning", "financial_analytics", "real_time_insights"],
+            "url": "https://www.kensho.com",
+            "api_availability": true,
+            "content_types": ["real_time_analytics", "market_intelligence", "risk_models"],
+            "update_frequency": "real_time",
+            "credibility_score": 8.9
+          }
+        ]
+      },
+      "financial_intelligence": {
+        "category": "Financial Intelligence & C-Suite Advisory",
+        "description": "Elite financial institutions providing C-suite advisory and market intelligence",
+        "priority": "high",
+        "access_level": "exclusive",
+        "sources": [
+          {
+            "name": "Goldman Sachs Research",
+            "full_name": "Goldman Sachs Global Investment Research",
+            "type": "investment_research",
+            "specialization": ["market_analysis", "economic_forecasting", "risk_assessment"],
+            "url": "https://www.goldmansachs.com/insights",
+            "api_availability": false,
+            "content_types": ["market_research", "economic_analysis", "sector_reports"],
+            "update_frequency": "daily",
+            "credibility_score": 9.8
+          },
+          {
+            "name": "C-Suite Adviser",
+            "full_name": "Executive Advisory Network",
+            "type": "executive_advisory",
+            "specialization": ["c_suite_guidance", "crisis_leadership", "strategic_decision_making"],
+            "url": "proprietary",
+            "api_availability": false,
+            "content_types": ["executive_briefings", "leadership_insights", "crisis_protocols"],
+            "update_frequency": "on_demand",
+            "credibility_score": 9.4
+          }
+        ]
+      }
+    },
+    "integration_framework": {
+      "data_flow": {
+        "collection": "automated_feeds_and_apis",
+        "processing": "ai_powered_analysis_and_synthesis",
+        "delivery": "contextualized_insights_for_crisis_scenarios"
+      },
+      "access_tiers": {
+        "public": "Free access to basic insights",
+        "freemium": "Limited free access with premium features",
+        "subscription": "Paid subscription required",
+        "premium": "High-value consultancy insights",
+        "enterprise": "Enterprise-level AI and analytics",
+        "exclusive": "Invite-only or ultra-premium access"
+      },
+      "priority_weighting": {
+        "high": "Core sources for critical decision making",
+        "medium": "Supporting sources for comprehensive analysis",
+        "low": "Supplementary sources for additional context"
+      },
+      "update_schedule": {
+        "real_time": "Continuous data feeds",
+        "daily": "Updated every 24 hours",
+        "weekly": "Updated weekly",
+        "monthly": "Updated monthly",
+        "quarterly": "Updated quarterly",
+        "annually": "Updated annually",
+        "on_demand": "Updated as needed"
+      }
+    },
+    "implementation_roadmap": {
+      "phase_1": {
+        "name": "Core Integration",
+        "duration": "3 months",
+        "sources": ["McKinsey Insights", "BCG Perspectives", "NESTA", "IBM Watson"],
+        "focus": "Essential strategic and analytical capabilities"
+      },
+      "phase_2": {
+        "name": "Extended Network",
+        "duration": "6 months",
+        "sources": ["Bain Insights", "Accenture Insights", "Kaggle", "Open IDEO"],
+        "focus": "Broader consultancy insights and crowdsourcing"
+      },
+      "phase_3": {
+        "name": "Specialized Sources",
+        "duration": "9 months",
+        "sources": ["Goldman Sachs Research", "Kensho", "HBX", "Wikistrat"],
+        "focus": "Specialized financial and geopolitical intelligence"
+      },
+      "phase_4": {
+        "name": "Complete Ecosystem",
+        "duration": "12 months",
+        "sources": "all_remaining_sources",
+        "focus": "Full knowledge topology integration"
+      }
+    }
+  }
+}
