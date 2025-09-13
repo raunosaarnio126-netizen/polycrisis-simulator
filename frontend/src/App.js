@@ -9531,14 +9531,40 @@ const AIAvatarManagement = () => {
               Create, manage, and deploy AI avatars with custom competences and task execution capabilities
             </p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <Button 
               onClick={() => setShowCreateDialog(true)}
               className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700"
             >
               <Plus className="w-4 h-4" />
-              Create Avatar
+              Create Custom Avatar
             </Button>
+            <div className="flex gap-1">
+              <Button 
+                onClick={() => createPredefinedAvatar('research')}
+                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-xs px-3 py-2"
+                title="Create Research Avatar"
+              >
+                <Activity className="w-3 h-3" />
+                Research
+              </Button>
+              <Button 
+                onClick={() => createPredefinedAvatar('assessment')}
+                className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-xs px-3 py-2"
+                title="Create Assessment Avatar"
+              >
+                <Shield className="w-3 h-3" />
+                Assessment
+              </Button>
+              <Button 
+                onClick={() => createPredefinedAvatar('analyst')}
+                className="flex items-center gap-2 bg-orange-600 hover:bg-orange-700 text-xs px-3 py-2"
+                title="Create Analyst Avatar"
+              >
+                <BarChart3 className="w-3 h-3" />
+                Analyst
+              </Button>
+            </div>
           </div>
         </div>
       </div>
