@@ -10728,7 +10728,7 @@ const AIAvatarManagement = () => {
                     value={amendForm.task_capabilities.join(', ')}
                     onChange={(e) => setAmendForm({
                       ...amendForm, 
-                      task_capabilities: e.target.value.split(',').map(s => s.trim()).filter(s => s)
+                      task_capabilities: e.target.value.split(',').map(s => s.trim()).filter(s => s.length > 0)
                     })}
                     placeholder="e.g., assess crisis severity, develop response plans, coordinate resources"
                   />
