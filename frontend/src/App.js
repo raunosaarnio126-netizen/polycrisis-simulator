@@ -10454,7 +10454,7 @@ const AIAvatarManagement = () => {
                     value={createForm.knowledge_domains.join(', ')}
                     onChange={(e) => setCreateForm({
                       ...createForm, 
-                      knowledge_domains: e.target.value.split(',').map(s => s.trim()).filter(s => s)
+                      knowledge_domains: e.target.value.split(',').map(s => s.trim()).filter(s => s.length > 0)
                     })}
                     placeholder="e.g., emergency management, public safety, logistics"
                   />
