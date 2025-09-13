@@ -268,6 +268,237 @@ const AuthPage = () => {
   );
 };
 
+// Scenario Analytics Summary Component
+const ScenarioAnalyticsSummary = ({ scenarios }) => {
+  const [userAnalytics, setUserAnalytics] = useState(null);
+  
+  useEffect(() => {
+    fetchUserAnalytics();
+  }, [scenarios]);
+
+  const fetchUserAnalytics = async () => {
+    try {
+      const response = await axios.get(`${API}/scenarios/user-analytics`);
+      setUserAnalytics(response.data);
+    } catch (error) {
+      console.error('Failed to fetch user analytics:', error);
+    }
+  };
+
+  // Calculate analytics from scenarios
+  const analytics = useMemo(() => {
+    if (!scenarios || scenarios.length === 0) {
+      return {
+        totalScenarios: 0,
+        abcDistribution: { A: 0, B: 0, C: 0 },
+        versionStats: { latest: '1.0.0', totalRevisions: 0 },
+        impactStats: { average: 50, highest: 50, trend: 'stable' },
+        modificationStats: { total: 0, average: 0, mostModified: null }
+      };
+    }
+
+    const abcDistribution = { A: 0, B: 0, C: 0 };
+    let totalImpact = 0;
+    let totalModifications = 0;
+    let totalRevisions = 0;
+    let highestImpact = 0;
+    let latestVersion = '1.0.0';
+    let mostModified = null;
+    let maxMods = 0;
+
+    scenarios.forEach(scenario => {
+      // ABC Distribution
+      const abc = scenario.abc_classification || 'B';
+      abcDistribution[abc] = (abcDistribution[abc] || 0) + 1;
+
+      // Impact calculations
+      const impact = scenario.calculated_total_impact || scenario.impact_score || 50;
+      totalImpact += impact;
+      if (impact > highestImpact) highestImpact = impact;
+
+      // Modification tracking
+      const modCount = scenario.modification_count || 0;
+      totalModifications += modCount;
+      if (modCount > maxMods) {
+        maxMods = modCount;
+        mostModified = scenario;
+      }
+
+      // Version tracking
+      totalRevisions += scenario.revision_count || 0;
+      const version = scenario.version_number || '1.0.0';
+      if (version > latestVersion) latestVersion = version;
+    });
+
+    return {
+      totalScenarios: scenarios.length,
+      abcDistribution,
+      versionStats: { latest: latestVersion, totalRevisions },
+      impactStats: { 
+        average: Math.round(totalImpact / scenarios.length), 
+        highest: Math.round(highestImpact),
+        trend: 'stable' // Could be enhanced with trend analysis
+      },
+      modificationStats: { 
+        total: totalModifications, 
+        average: Math.round(totalModifications / scenarios.length),
+        mostModified 
+      }
+    };
+  }, [scenarios]);
+
+  return (
+    <div className="space-y-6">
+      {/* Quick Stats Row */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="text-center p-4 bg-white rounded-lg border">
+          <div className="text-2xl font-bold text-blue-600">{analytics.totalScenarios}</div>
+          <div className="text-sm text-gray-600">Total Scenarios</div>
+        </div>
+        
+        <div className="text-center p-4 bg-white rounded-lg border">
+          <div className="text-2xl font-bold text-green-600">{analytics.impactStats.average}</div>
+          <div className="text-sm text-gray-600">Avg Impact Score</div>
+        </div>
+        
+        <div className="text-center p-4 bg-white rounded-lg border">
+          <div className="text-2xl font-bold text-purple-600">{analytics.versionStats.totalRevisions}</div>
+          <div className="text-sm text-gray-600">Total Revisions</div>
+        </div>
+        
+        <div className="text-center p-4 bg-white rounded-lg border">
+          <div className="text-2xl font-bold text-orange-600">{analytics.modificationStats.total}</div>
+          <div className="text-sm text-gray-600">Total Changes</div>
+        </div>
+      </div>
+
+      {/* ABC Distribution & Impact Analysis */}
+      <div className="grid md:grid-cols-2 gap-6">
+        {/* ABC Classification Distribution */}
+        <div className="bg-white p-4 rounded-lg border">
+          <h4 className="font-semibold text-gray-800 mb-4 flex items-center gap-2">
+            <Target className="w-4 h-4" />
+            ABC Priority Distribution
+          </h4>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 bg-red-500 rounded"></div>
+                <span className="text-sm">Class A (High Impact)</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-red-600">{analytics.abcDistribution.A}</span>
+                <div className="w-16 h-2 bg-gray-200 rounded">
+                  <div 
+                    className="h-2 bg-red-500 rounded" 
+                    style={{ width: `${(analytics.abcDistribution.A / analytics.totalScenarios) * 100}%` }}
+                  ></div>
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 bg-yellow-500 rounded"></div>
+                <span className="text-sm">Class B (Medium Impact)</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-yellow-600">{analytics.abcDistribution.B}</span>
+                <div className="w-16 h-2 bg-gray-200 rounded">
+                  <div 
+                    className="h-2 bg-yellow-500 rounded" 
+                    style={{ width: `${(analytics.abcDistribution.B / analytics.totalScenarios) * 100}%` }}
+                  ></div>
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 bg-green-500 rounded"></div>
+                <span className="text-sm">Class C (Low Impact)</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-green-600">{analytics.abcDistribution.C}</span>
+                <div className="w-16 h-2 bg-gray-200 rounded">
+                  <div 
+                    className="h-2 bg-green-500 rounded" 
+                    style={{ width: `${(analytics.abcDistribution.C / analytics.totalScenarios) * 100}%` }}
+                  ></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Impact & Modification Statistics */}
+        <div className="bg-white p-4 rounded-lg border">
+          <h4 className="font-semibold text-gray-800 mb-4 flex items-center gap-2">
+            <TrendingUp className="w-4 h-4" />
+            Change & Impact Metrics
+          </h4>
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-gray-600">Highest Impact Score</span>
+              <span className="font-bold text-blue-600">{analytics.impactStats.highest}/100</span>
+            </div>
+            
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-gray-600">Latest Version</span>
+              <span className="font-bold text-purple-600">v{analytics.versionStats.latest}</span>
+            </div>
+            
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-gray-600">Avg Modifications</span>
+              <span className="font-bold text-orange-600">{analytics.modificationStats.average}</span>
+            </div>
+            
+            {analytics.modificationStats.mostModified && (
+              <div className="pt-2 border-t border-gray-200">
+                <div className="text-xs text-gray-500">Most Modified Scenario:</div>
+                <div className="text-sm font-medium text-gray-800 truncate">
+                  {analytics.modificationStats.mostModified.title}
+                </div>
+                <div className="text-xs text-gray-500">
+                  {maxMods} changes, v{analytics.modificationStats.mostModified.version_number || '1.0.0'}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* User Analytics from Backend */}
+      {userAnalytics && (
+        <div className="bg-gradient-to-r from-indigo-50 to-blue-50 p-4 rounded-lg border border-indigo-200">
+          <h4 className="font-semibold text-indigo-800 mb-3 flex items-center gap-2">
+            <Database className="w-4 h-4" />
+            Advanced Analytics Summary
+          </h4>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+            <div className="text-center">
+              <div className="font-bold text-indigo-700">{userAnalytics.total_scenarios}</div>
+              <div className="text-indigo-600">Backend Total</div>
+            </div>
+            <div className="text-center">
+              <div className="font-bold text-indigo-700">{userAnalytics.impact_average}</div>
+              <div className="text-indigo-600">Impact Average</div>
+            </div>
+            <div className="text-center">
+              <div className="font-bold text-indigo-700">{userAnalytics.modification_stats?.total_modifications || 0}</div>
+              <div className="text-indigo-600">Total Mods</div>
+            </div>
+            <div className="text-center">
+              <div className="font-bold text-indigo-700">v{userAnalytics.latest_version}</div>
+              <div className="text-indigo-600">Latest Version</div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 // Advanced Analytics Dashboard
 const AdvancedDashboard = () => {
   const [stats, setStats] = useState({});
