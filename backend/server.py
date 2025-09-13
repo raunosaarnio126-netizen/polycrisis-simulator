@@ -1039,30 +1039,108 @@ async def update_scenario(scenario_id: str, scenario_data: ScenarioCreate, curre
 
 @api_router.patch("/scenarios/{scenario_id}/amend", response_model=Scenario)
 async def amend_scenario(scenario_id: str, amendment_data: ScenarioAmendment, current_user: User = Depends(get_current_user)):
-    """Amend specific fields of a scenario without requiring all fields"""
-    scenario = await db.scenarios.find_one({"id": scenario_id, "user_id": current_user.id})
-    if not scenario:
+    """Amend specific fields of a scenario with comprehensive change tracking"""
+    scenario_doc = await db.scenarios.find_one({"id": scenario_id, "user_id": current_user.id})
+    if not scenario_doc:
         raise HTTPException(status_code=404, detail="Scenario not found")
     
-    # Only update fields that are provided (not None)
+    scenario = Scenario(**scenario_doc)
+    change_records = []
     update_data = {}
-    if amendment_data.affected_regions is not None:
+    change_significance = "patch"  # Start with patch, upgrade if major changes
+    
+    # Track changes for each field
+    if amendment_data.affected_regions is not None and amendment_data.affected_regions != scenario.affected_regions:
+        change_records.append(create_change_record(
+            "updated", "affected_regions", scenario.affected_regions, amendment_data.affected_regions, current_user.id
+        ))
         update_data["affected_regions"] = amendment_data.affected_regions
-    if amendment_data.key_variables is not None:
+        change_significance = "minor"  # Region changes are significant
+        
+    if amendment_data.key_variables is not None and amendment_data.key_variables != scenario.key_variables:
+        change_records.append(create_change_record(
+            "updated", "key_variables", scenario.key_variables, amendment_data.key_variables, current_user.id
+        ))
         update_data["key_variables"] = amendment_data.key_variables
-    if amendment_data.additional_context is not None:
+        change_significance = "minor"
+        
+    if amendment_data.additional_context is not None and amendment_data.additional_context != scenario.additional_context:
+        change_records.append(create_change_record(
+            "updated", "additional_context", scenario.additional_context, amendment_data.additional_context, current_user.id
+        ))
         update_data["additional_context"] = amendment_data.additional_context
-    if amendment_data.stakeholders is not None:
+        
+    if amendment_data.stakeholders is not None and amendment_data.stakeholders != scenario.stakeholders:
+        change_records.append(create_change_record(
+            "updated", "stakeholders", scenario.stakeholders, amendment_data.stakeholders, current_user.id
+        ))
         update_data["stakeholders"] = amendment_data.stakeholders
-    if amendment_data.timeline is not None:
+        change_significance = "minor"
+        
+    if amendment_data.timeline is not None and amendment_data.timeline != scenario.timeline:
+        change_records.append(create_change_record(
+            "updated", "timeline", scenario.timeline, amendment_data.timeline, current_user.id
+        ))
         update_data["timeline"] = amendment_data.timeline
+        change_significance = "minor"
     
-    # Always update the timestamp
-    update_data["updated_at"] = datetime.now(timezone.utc)
+    if not update_data:
+        # No changes made
+        return scenario
     
-    if update_data:
-        await db.scenarios.update_one({"id": scenario_id}, {"$set": update_data})
+    # Update tracking fields
+    new_version, major, minor, patch = update_version_number(scenario.version_number, change_significance)
+    new_modification_count = scenario.modification_count + 1
+    new_revision_count = scenario.revision_count + 1
     
+    # Recalculate impact scores if regions or variables changed
+    if "affected_regions" in update_data or "key_variables" in update_data:
+        new_regions = update_data.get("affected_regions", scenario.affected_regions)
+        new_impact_score = (scenario.severity_level * 10 + len(new_regions) * 5) / 2
+        
+        # Slightly adjust individual impact scores
+        economic_impact = new_impact_score * 0.9
+        social_impact = new_impact_score * 1.1
+        environmental_impact = new_impact_score * 0.8
+        
+        total_impact = calculate_total_impact(economic_impact, social_impact, environmental_impact)
+        
+        # Recalculate ABC classification
+        abc_class, impact_category, priority_score = calculate_abc_classification(
+            scenario.severity_level, total_impact, scenario.crisis_type
+        )
+        
+        update_data.update({
+            "impact_score": total_impact,
+            "economic_impact": economic_impact,
+            "social_impact": social_impact,
+            "environmental_impact": environmental_impact,
+            "calculated_total_impact": total_impact,
+            "abc_classification": abc_class,
+            "impact_category": impact_category,
+            "priority_score": priority_score,
+            "impact_trend": "increasing" if total_impact > scenario.impact_score else "decreasing" if total_impact < scenario.impact_score else "stable"
+        })
+        
+        if abc_class != scenario.abc_classification:
+            change_records.append(create_change_record(
+                "recalculated", "abc_classification", scenario.abc_classification, abc_class, current_user.id
+            ))
+    
+    # Update tracking data
+    update_data.update({
+        "change_history": scenario.change_history + change_records,
+        "last_modified_by": current_user.id,
+        "modification_count": new_modification_count,
+        "version_number": new_version,
+        "major_version": major,
+        "minor_version": minor,
+        "patch_version": patch,
+        "revision_count": new_revision_count,
+        "updated_at": datetime.now(timezone.utc)
+    })
+    
+    await db.scenarios.update_one({"id": scenario_id}, {"$set": update_data})
     updated_scenario = await db.scenarios.find_one({"id": scenario_id})
     return Scenario(**updated_scenario)
 
