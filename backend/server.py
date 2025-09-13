@@ -1338,62 +1338,6 @@ async def update_scenario_impact_scores(
     updated_scenario = await db.scenarios.find_one({"id": scenario_id})
     return Scenario(**updated_scenario)
 
-@api_router.get("/scenarios/user-analytics")
-async def get_user_scenario_analytics(current_user: User = Depends(get_current_user)):
-    """Get analytics for all user scenarios"""
-    scenarios = await db.scenarios.find({"user_id": current_user.id}).to_list(1000)
-    
-    if not scenarios:
-        return {
-            "total_scenarios": 0,
-            "abc_distribution": {"A": 0, "B": 0, "C": 0},
-            "impact_average": 0,
-            "most_modified": None,
-            "latest_version": "1.0.0"
-        }
-    
-    abc_counts = {"A": 0, "B": 0, "C": 0}
-    total_impact = 0
-    most_modified = None
-    max_modifications = 0
-    latest_version = "1.0.0"
-    
-    for scenario in scenarios:
-        # ABC distribution
-        abc_class = scenario.get("abc_classification", "B")
-        abc_counts[abc_class] = abc_counts.get(abc_class, 0) + 1
-        
-        # Impact average
-        total_impact += scenario.get("calculated_total_impact", 50.0)
-        
-        # Most modified scenario
-        mod_count = scenario.get("modification_count", 0)
-        if mod_count > max_modifications:
-            max_modifications = mod_count
-            most_modified = {
-                "id": scenario.get("id"),
-                "title": scenario.get("title"),
-                "modifications": mod_count,
-                "version": scenario.get("version_number", "1.0.0")
-            }
-        
-        # Latest version
-        version = scenario.get("version_number", "1.0.0")
-        if version > latest_version:
-            latest_version = version
-    
-    return {
-        "total_scenarios": len(scenarios),
-        "abc_distribution": abc_counts,
-        "impact_average": round(total_impact / len(scenarios), 2),
-        "most_modified": most_modified,
-        "latest_version": latest_version,
-        "scenarios_by_type": {},  # Could expand this
-        "modification_stats": {
-            "total_modifications": sum(s.get("modification_count", 0) for s in scenarios),
-            "average_modifications": round(sum(s.get("modification_count", 0) for s in scenarios) / len(scenarios), 2)
-        }
-    }
 
 # AI Avatar Genie endpoints
 @api_router.post("/ai-genie", response_model=AIGenieResponse)
