@@ -10446,9 +10446,13 @@ const AIAvatarManagement = () => {
                   <Input
                     id="specializations"
                     type="text"
-                    defaultValue={createForm.specializations.join(', ')}
+                    value={createFormInputs.specializations}
                     onChange={(e) => {
                       const rawValue = e.target.value;
+                      setCreateFormInputs({
+                        ...createFormInputs,
+                        specializations: rawValue
+                      });
                       const newSpecializations = rawValue.length > 0 ? rawValue.split(',').map(s => s.trim()).filter(s => s.length > 0) : [];
                       setCreateForm({
                         ...createForm, 
