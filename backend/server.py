@@ -2880,7 +2880,7 @@ Focus on actionable intelligence for business continuity and crisis management.
         raise HTTPException(status_code=500, detail=f"File upload and analysis failed: {str(e)}")
 
 # Team Management
-@api_router.post("/companies/{company_id}/teams", response_model=Team)
+@api_router.post("/companies/{company_id}/teams")
 async def create_team(company_id: str, team_data: TeamCreate, current_user: User = Depends(get_current_user)):
     # Verify company access
     if current_user.company_id != company_id:
