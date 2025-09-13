@@ -349,7 +349,8 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Scenario Amendment Functionality (PATCH /api/scenarios/{id}/amend)"
+    - "Navigation Banner Order Changes"
+    - "Floating AI Genie Implementation"
   stuck_tasks: 
     - "Document Analysis with File Upload"
   test_all: false
