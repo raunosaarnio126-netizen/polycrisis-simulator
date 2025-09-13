@@ -395,11 +395,9 @@ metadata:
 test_plan:
   current_focus:
     - "Real-Time Impact Analysis Save Functionality"
-    - "Real-Time Impact Analysis PDF Export Functionality"
-    - "Real-Time Impact Analysis Print Functionality"
-    - "Scenario Comparison Functionality"
   stuck_tasks: 
     - "Document Analysis with File Upload"
+    - "Real-Time Impact Analysis Save Functionality"
   test_all: false
   test_priority: "high_first"
 
