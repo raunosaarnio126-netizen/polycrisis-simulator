@@ -501,8 +501,6 @@ class AddNewCustomerTester:
                     print(f"     Total scenarios: {response.get('total_scenarios', 'N/A')}")
                     print(f"     Active scenarios: {response.get('active_scenarios', 'N/A')}")
                     print(f"     User organization: {response.get('user_organization', 'N/A')}")
-                elif "companies" in endpoint and isinstance(response, list):
-                    print(f"     Total companies: {len(response)}")
                 elif "ai-avatars" in endpoint and isinstance(response, list):
                     print(f"     Total AI avatars: {len(response)}")
             else:
