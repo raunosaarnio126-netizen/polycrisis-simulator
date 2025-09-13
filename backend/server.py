@@ -3977,6 +3977,8 @@ class AvatarCreate(BaseModel):
     core_competences: List[Competence]
     knowledge_domains: List[str]
     task_capabilities: List[str]
+    team_name: Optional[str] = None
+    organization: Optional[str] = None
 
 class TaskCreate(BaseModel):
     avatar_id: str
