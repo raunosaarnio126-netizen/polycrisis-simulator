@@ -10439,29 +10439,20 @@ const AIAvatarManagement = () => {
                   <Input
                     id="specializations"
                     type="text"
-                    value={createForm.specializations.join(', ')}
+                    defaultValue={createForm.specializations.join(', ')}
                     onChange={(e) => {
-                      console.log('Raw input value:', e.target.value);
-                      console.log('Input contains comma:', e.target.value.includes(','));
                       const rawValue = e.target.value;
                       const newSpecializations = rawValue.length > 0 ? rawValue.split(',').map(s => s.trim()).filter(s => s.length > 0) : [];
-                      console.log('Parsed specializations:', newSpecializations);
                       setCreateForm({
                         ...createForm, 
                         specializations: newSpecializations
                       });
                     }}
-                    onKeyDown={(e) => {
-                      console.log('Key pressed:', e.key);
-                      if (e.key === ',' || e.key === 'Comma') {
-                        console.log('Comma key detected!');
-                      }
-                    }}
                     placeholder="e.g., emergency response, risk assessment, team coordination"
                     autoComplete="off"
                   />
                   <p className="text-xs text-gray-500 mt-1">
-                    Enter specializations separated by commas. Current: [{createForm.specializations.join(', ')}]
+                    Parsed: {createForm.specializations.join(' | ')}
                   </p>
                 </div>
 
