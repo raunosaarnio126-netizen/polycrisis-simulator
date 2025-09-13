@@ -5,7 +5,7 @@ import sys
 import json
 
 class URLPathTester:
-    def __init__(self, base_url="https://crisis-monitor-3.preview.emergentagent.com"):
+    def __init__(self, base_url="https://adapt-crisis-sim.preview.emergentagent.com"):
         self.base_url = base_url
         self.api_url = f"{base_url}/api"
         self.token = None

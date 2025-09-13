@@ -3,7 +3,7 @@ import json
 
 def test_strategic_implementation_endpoints():
     """Quick test of Strategic Implementation API endpoints"""
-    base_url = "https://crisis-monitor-3.preview.emergentagent.com/api"
+    base_url = "https://adapt-crisis-sim.preview.emergentagent.com/api"
     
     print("🚀 Quick Strategic Implementation API Test")
     print("=" * 50)

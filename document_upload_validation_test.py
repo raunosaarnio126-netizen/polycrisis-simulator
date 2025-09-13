@@ -6,7 +6,7 @@ def test_document_upload_validation():
     """Test document upload endpoint validation and error handling"""
     
     # Setup - would need proper authentication in real test
-    base_url = "https://crisis-monitor-3.preview.emergentagent.com"
+    base_url = "https://adapt-crisis-sim.preview.emergentagent.com"
     api_url = f"{base_url}/api"
     
     print("🔍 Testing Document Upload Validation...")

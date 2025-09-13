@@ -23,7 +23,7 @@ def test_endpoint_exists(url, method="GET"):
         return False, f"Error: {str(e)}"
 
 def main():
-    base_url = "https://crisis-monitor-3.preview.emergentagent.com/api"
+    base_url = "https://adapt-crisis-sim.preview.emergentagent.com/api"
     test_scenario_id = "test-scenario-id"
     
     print("🔍 Testing Intelligent Monitoring Network Endpoints")

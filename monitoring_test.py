@@ -9,7 +9,7 @@ from datetime import datetime
 
 class MonitoringNetworkTester:
     def __init__(self):
-        self.base_url = "https://crisis-monitor-3.preview.emergentagent.com"
+        self.base_url = "https://adapt-crisis-sim.preview.emergentagent.com"
         self.api_url = f"{self.base_url}/api"
         self.token = None
         self.scenario_id = None
