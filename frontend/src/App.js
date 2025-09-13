@@ -7387,6 +7387,38 @@ const AvatarCompetenceManager = () => {
   );
 };
 
+// Utility function to find biggest differences between analyses
+const findBiggestDifferences = (analysis1, analysis2) => {
+  const fields = [
+    'economic_crisis_pct', 'economic_stability_pct',
+    'social_unrest_pct', 'social_cohesion_pct', 
+    'political_instability_pct', 'political_stability_pct',
+    'technological_disruption_pct', 'technological_advancement_pct',
+    'environmental_degradation_pct', 'environmental_sustainability_pct'
+  ];
+  
+  const differences = [];
+  
+  fields.forEach(field => {
+    const val1 = analysis1[field] || 0;
+    const val2 = analysis2[field] || 0;
+    const difference = Math.abs(val1 - val2);
+    
+    if (difference >= 15) { // Only show significant differences
+      differences.push({
+        field: field.replace(/_pct$/, '').replace(/_/g, ' '),
+        val1,
+        val2,
+        difference,
+        direction: val1 > val2 ? 'increased' : 'decreased'
+      });
+    }
+  });
+  
+  // Sort by difference magnitude (highest first)
+  return differences.sort((a, b) => b.difference - a.difference);
+};
+
 // Scenario Adjusters - Fuzzy Logic Component
 const ScenarioAdjusters = () => {
   const [adjustments, setAdjustments] = useState([]);
