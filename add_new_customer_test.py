@@ -243,8 +243,9 @@ class AddNewCustomerTester:
                 
                 print(f"   ✅ Avatar created successfully")
                 print(f"   Avatar ID: {response.get('id')}")
-                print(f"   Name: {response.get('avatar_name', 'N/A')}")
+                print(f"   Name: {response.get('name', 'N/A')}")
                 print(f"   Type: {response.get('avatar_type', 'N/A')}")
+                print(f"   Category: {response.get('category', 'N/A')}")
                 print(f"   Status: {response.get('status', 'N/A')}")
                 print(f"   Team: {response.get('team_name', 'N/A')}")
                 print(f"   Organization: {response.get('organization', 'N/A')}")
