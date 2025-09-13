@@ -9805,6 +9805,11 @@ const AIAvatarManagement = () => {
       team_name: '',
       organization: ''
     });
+    setCreateFormInputs({
+      specializations: '',
+      knowledge_domains: '',
+      task_capabilities: ''
+    });
   };
 
   const resetAmendForm = () => {
