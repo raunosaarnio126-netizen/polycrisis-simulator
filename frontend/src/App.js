@@ -10497,13 +10497,26 @@ const AIAvatarManagement = () => {
                   <Label htmlFor="task-capabilities">Task Capabilities (comma-separated)</Label>
                   <Input
                     id="task-capabilities"
-                    value={createForm.task_capabilities.join(', ')}
-                    onChange={(e) => setCreateForm({
-                      ...createForm, 
-                      task_capabilities: e.target.value.split(',').map(s => s.trim()).filter(s => s.length > 0)
-                    })}
+                    type="text"
+                    value={createFormInputs.task_capabilities}
+                    onChange={(e) => {
+                      const rawValue = e.target.value;
+                      setCreateFormInputs({
+                        ...createFormInputs,
+                        task_capabilities: rawValue
+                      });
+                      const newCapabilities = rawValue.length > 0 ? rawValue.split(',').map(s => s.trim()).filter(s => s.length > 0) : [];
+                      setCreateForm({
+                        ...createForm, 
+                        task_capabilities: newCapabilities
+                      });
+                    }}
                     placeholder="e.g., assess crisis severity, develop response plans, coordinate resources"
+                    autoComplete="off"
                   />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Parsed: {createForm.task_capabilities.join(' | ')}
+                  </p>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
