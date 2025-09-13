@@ -145,6 +145,36 @@ class Scenario(BaseModel):
     additional_context: Optional[str] = None
     stakeholders: Optional[str] = None
     timeline: Optional[str] = None
+    
+    # Option 1: Sequential Numbering/Labeling
+    sequence_number: Optional[int] = None  # Auto-generated: 1, 2, 3, ...
+    sequence_letter: Optional[str] = None  # Auto-generated: A, B, C, ...
+    
+    # Option 2: Impact Change Tracking
+    change_history: List[dict] = Field(default_factory=list)  # Track all modifications
+    last_modified_by: Optional[str] = None
+    modification_count: int = 0  # Total number of modifications
+    
+    # Option 3: ABC Analysis Classification
+    abc_classification: str = "B"  # "A" (High Impact), "B" (Medium Impact), "C" (Low Impact)
+    priority_score: int = 5  # 1-10 priority scoring
+    impact_category: str = "medium"  # "high", "medium", "low"
+    
+    # Option 4: Version Control/Change Counter
+    version_number: str = "1.0.0"  # Semantic versioning
+    major_version: int = 1
+    minor_version: int = 0
+    patch_version: int = 0
+    revision_count: int = 0  # Total revisions
+    
+    # Option 5: Impact Measurement System
+    impact_score: float = 50.0  # 0-100 impact scoring
+    economic_impact: Optional[float] = None  # Economic impact scoring
+    social_impact: Optional[float] = None  # Social impact scoring
+    environmental_impact: Optional[float] = None  # Environmental impact scoring
+    calculated_total_impact: Optional[float] = None  # Auto-calculated total impact
+    impact_trend: str = "stable"  # "increasing", "decreasing", "stable"
+    
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
