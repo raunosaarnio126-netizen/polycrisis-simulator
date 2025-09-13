@@ -10218,6 +10218,36 @@ const AppContent = () => {
           </TabsContent>
         </Tabs>
       </main>
+
+      {/* Floating AI Genie Button */}
+      <button
+        onClick={() => setShowFloatingGenie(true)}
+        className="fixed bottom-6 right-6 bg-blue-600 hover:bg-blue-700 text-white p-4 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 z-50 group"
+        title="Open AI Genie"
+      >
+        <MessageSquare className="w-6 h-6" />
+        <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center group-hover:scale-110 transition-transform">
+          G
+        </span>
+      </button>
+
+      {/* Floating AI Genie Dialog */}
+      <Dialog open={showFloatingGenie} onOpenChange={setShowFloatingGenie}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <MessageSquare className="w-5 h-5 text-blue-600" />
+              AI Avatar Genie (Floating)
+            </DialogTitle>
+            <DialogDescription>
+              Get intelligent insights across all your scenarios - available anywhere in the app!
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex-1 min-h-0">
+            <AIGenie selectedScenario={selectedScenario} />
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
