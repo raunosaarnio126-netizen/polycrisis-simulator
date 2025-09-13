@@ -9165,6 +9165,40 @@ const AIAvatarManagement = () => {
 
   const { toast } = useToast();
 
+  // Predefined Avatar Types
+  const predefinedAvatarTypes = {
+    research: {
+      name: 'Research Avatar',
+      description: 'Specialized in data analysis, literature review, and research methodologies',
+      avatar_type: 'research',
+      category: 'analytical',
+      specializations: ['Data Analysis', 'Literature Review', 'Research Methodology', 'Statistical Analysis'],
+      core_competences: ['Critical Thinking', 'Information Synthesis', 'Hypothesis Testing', 'Report Writing'],
+      knowledge_domains: ['Academic Research', 'Scientific Method', 'Data Science', 'Evidence Evaluation'],
+      task_capabilities: ['Research Papers', 'Data Collection', 'Trend Analysis', 'Citation Management']
+    },
+    assessment: {
+      name: 'Assessment Avatar',
+      description: 'Expert in evaluation, risk assessment, and performance monitoring',
+      avatar_type: 'assessment', 
+      category: 'evaluative',
+      specializations: ['Risk Assessment', 'Performance Evaluation', 'Quality Assurance', 'Compliance Monitoring'],
+      core_competences: ['Analytical Assessment', 'Risk Management', 'Evaluation Frameworks', 'Decision Support'],
+      knowledge_domains: ['Risk Management', 'Audit Procedures', 'Performance Metrics', 'Regulatory Compliance'],
+      task_capabilities: ['Risk Analysis', 'Performance Reviews', 'Compliance Checks', 'Quality Control']
+    },
+    analyst: {
+      name: 'Analyst Avatar',
+      description: 'Focused on business analysis, market research, and strategic insights',
+      avatar_type: 'analyst',
+      category: 'strategic',
+      specializations: ['Business Analysis', 'Market Research', 'Strategic Planning', 'Competitive Intelligence'],
+      core_competences: ['Strategic Thinking', 'Market Analysis', 'Business Intelligence', 'Forecasting'],
+      knowledge_domains: ['Business Strategy', 'Market Dynamics', 'Financial Analysis', 'Industry Trends'],
+      task_capabilities: ['Market Analysis', 'Business Planning', 'Competitor Research', 'Trend Forecasting']
+    }
+  };
+
   useEffect(() => {
     fetchAvatars();
     fetchAvatarTemplates();
