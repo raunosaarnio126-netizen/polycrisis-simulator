@@ -3060,6 +3060,52 @@ async def generate_real_time_analysis(
             "generated_at": datetime.now(timezone.utc).isoformat()
         }
 
+@api_router.post("/companies/{company_id}/analyses")
+async def save_analysis(
+    company_id: str,
+    analysis_data: dict,
+    current_user: User = Depends(get_current_user)
+):
+    """Save a SEPTE analysis for later retrieval and comparison"""
+    # Verify company access
+    company = await db.companies.find_one({"id": company_id, "created_by": current_user.id})
+    if not company:
+        raise HTTPException(status_code=404, detail="Company not found")
+    
+    analysis_id = str(uuid.uuid4())
+    saved_analysis = {
+        "id": analysis_id,
+        "company_id": company_id,
+        "user_id": current_user.id,
+        "analysis_name": analysis_data.get("analysis_name", f"Analysis {datetime.now().strftime('%Y-%m-%d %H:%M')}"),
+        "analysis_content": analysis_data.get("analysis_content", ""),
+        "septe_values": analysis_data.get("septe_values", {}),
+        "risk_level": analysis_data.get("risk_level", "medium"),
+        "recommendations": analysis_data.get("recommendations", []),
+        "generated_at": analysis_data.get("generated_at", datetime.now(timezone.utc).isoformat()),
+        "saved_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.saved_analyses.insert_one(saved_analysis)
+    return {"message": "Analysis saved successfully", "analysis_id": analysis_id}
+
+@api_router.get("/companies/{company_id}/analyses")
+async def get_saved_analyses(
+    company_id: str,
+    current_user: User = Depends(get_current_user)
+):
+    """Get all saved analyses for a company"""
+    # Verify company access
+    company = await db.companies.find_one({"id": company_id, "created_by": current_user.id})
+    if not company:
+        raise HTTPException(status_code=404, detail="Company not found")
+    
+    analyses = await db.saved_analyses.find(
+        {"company_id": company_id, "user_id": current_user.id}
+    ).sort("saved_at", -1).to_list(50)  # Get latest 50 analyses
+    
+    return analyses
+
 @api_router.get("/companies/{company_id}/teams", response_model=List[Team])
 async def get_company_teams(company_id: str, current_user: User = Depends(get_current_user)):
     # Verify company access
