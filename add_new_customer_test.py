@@ -254,10 +254,12 @@ class AddNewCustomerTester:
                 specializations = response.get('specializations', [])
                 knowledge_domains = response.get('knowledge_domains', [])
                 task_capabilities = response.get('task_capabilities', [])
+                core_competences = response.get('core_competences', [])
                 
                 print(f"   Specializations count: {len(specializations)}")
                 print(f"   Knowledge domains count: {len(knowledge_domains)}")
                 print(f"   Task capabilities count: {len(task_capabilities)}")
+                print(f"   Core competences count: {len(core_competences)}")
                 
                 # Verify comma functionality is working
                 if len(specializations) >= 2 and len(knowledge_domains) >= 2 and len(task_capabilities) >= 2:
