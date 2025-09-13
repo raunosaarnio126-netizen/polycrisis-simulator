@@ -9266,6 +9266,78 @@ const AIAvatarManagement = () => {
     }
   };
 
+  const createPredefinedAvatar = async (type) => {
+    const template = predefinedAvatarTypes[type];
+    if (!template) return;
+
+    try {
+      const avatarData = {
+        ...template,
+        name: `${template.name} #${Date.now().toString().slice(-4)}`,
+        team_name: createForm.team_name || 'Default Team',
+        organization: createForm.organization || 'Main Organization'
+      };
+
+      const response = await axios.post(`${API}/ai-avatars`, avatarData);
+      setAvatars([...avatars, response.data]);
+      
+      toast({
+        title: "Avatar Created",
+        description: `${avatarData.name} has been successfully created with predefined capabilities.`
+      });
+      
+    } catch (error) {
+      console.error('Failed to create predefined avatar:', error);
+      toast({
+        title: "Creation Failed",
+        description: error.response?.data?.detail || "Failed to create predefined avatar",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const amendAvatar = async () => {
+    if (!amendingAvatar) return;
+
+    try {
+      const response = await axios.put(`${API}/ai-avatars/${amendingAvatar.id}`, amendForm);
+      setAvatars(avatars.map(avatar => 
+        avatar.id === amendingAvatar.id ? response.data : avatar
+      ));
+      
+      toast({
+        title: "Avatar Updated",
+        description: `${amendForm.name} has been successfully updated.`
+      });
+      
+      setShowAmendDialog(false);
+      setAmendingAvatar(null);
+      resetAmendForm();
+    } catch (error) {
+      console.error('Failed to amend avatar:', error);
+      toast({
+        title: "Update Failed",
+        description: error.response?.data?.detail || "Failed to update AI avatar",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const openAmendDialog = (avatar) => {
+    setAmendingAvatar(avatar);
+    setAmendForm({
+      name: avatar.name,
+      description: avatar.description,
+      specializations: avatar.specializations || [],
+      core_competences: avatar.core_competences || [],
+      knowledge_domains: avatar.knowledge_domains || [],
+      task_capabilities: avatar.task_capabilities || [],
+      team_name: avatar.team_name || '',
+      organization: avatar.organization || ''
+    });
+    setShowAmendDialog(true);
+  };
+
   const createTask = async () => {
     if (!selectedAvatar) return;
     
