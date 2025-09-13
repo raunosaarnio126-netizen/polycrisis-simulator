@@ -1160,7 +1160,7 @@ async def delete_scenario(scenario_id: str, current_user: User = Depends(get_cur
 
 # Advanced Scenario Tracking Endpoints
 
-@api_router.get("/scenarios/user-analytics")
+@api_router.get("/user/scenario-analytics")
 async def get_user_scenario_analytics(current_user: User = Depends(get_current_user)):
     """Get analytics for all user scenarios"""
     scenarios = await db.scenarios.find({"user_id": current_user.id}).to_list(1000)
