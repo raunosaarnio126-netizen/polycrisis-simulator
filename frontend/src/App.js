@@ -10070,6 +10070,7 @@ const AppContent = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [scenarios, setScenarios] = useState([]);
   const [selectedScenario, setSelectedScenario] = useState(null);
+  const [showFloatingGenie, setShowFloatingGenie] = useState(false);
 
   const handleScenarioCreated = (newScenario) => {
     setScenarios([...scenarios, newScenario]);
