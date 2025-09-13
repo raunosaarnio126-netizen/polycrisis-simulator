@@ -135,6 +135,9 @@ backend:
       - working: false
         agent: "testing"
         comment: "POST /api/companies/{company_id}/documents/upload endpoint implemented with PDF/DOCX support and AI analysis. File type validation working correctly (rejects non-PDF/DOCX files). However, PDF and DOCX text extraction failing due to PyPDF2 and python-docx parsing issues. AI analysis integration with Claude Sonnet 4 is working. Missing file size validation (no 10MB limit implemented)."
+      - working: false
+        agent: "testing"
+        comment: "DETAILED DOCUMENT UPLOAD TESTING COMPLETED: Results 3.5/5 tests passed (70% success rate). ✅ ENDPOINT STRUCTURE CORRECT: POST /api/companies/{company_id}/documents/upload endpoint exists and responds. File type validation working perfectly - correctly rejects non-PDF/DOCX files with 400 status. Document retrieval endpoint GET /api/companies/{company_id}/documents working correctly. ❌ CRITICAL ISSUES CONFIRMED: 1) PDF text extraction failing with error '400: Could not extract text from the file' - PyPDF2 parsing issues. 2) DOCX processing failing with 'negative seek value -16' error - python-docx parsing problems. 3) File size validation (10MB limit) not implemented - large files not rejected. ✅ PARTIAL FUNCTIONALITY: Endpoint architecture is sound, file type validation robust, AI analysis integration ready (Claude Sonnet 4). RECOMMENDATION: Fix text extraction libraries (PyPDF2/python-docx) and implement file size limits. Core endpoint structure is production-ready."
 
   - task: "Team Creation API"
     implemented: true
