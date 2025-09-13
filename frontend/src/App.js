@@ -1279,8 +1279,8 @@ const AIGenie = ({ selectedScenario }) => {
             Send
           </Button>
         </form>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 };
 
