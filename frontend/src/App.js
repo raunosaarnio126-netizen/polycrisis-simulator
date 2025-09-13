@@ -10222,7 +10222,9 @@ const AppContent = () => {
 
       {/* Floating AI Genie Button */}
       <button
-        onClick={() => {
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
           console.log('Floating Genie button clicked, current state:', showFloatingGenie);
           setShowFloatingGenie(true);
           console.log('State should now be true');
