@@ -654,9 +654,67 @@ def update_version_number(current_version: str, change_type: str = "patch") -> t
 # Scenario endpoints
 @api_router.post("/scenarios", response_model=Scenario)
 async def create_scenario(scenario_data: ScenarioCreate, current_user: User = Depends(get_current_user)):
+    # Get sequence numbering
+    sequence_number = await get_next_sequence_number(current_user.id)
+    sequence_letter = get_sequence_letter(sequence_number)
+    
+    # Calculate initial impact scores (can be refined later)
+    initial_impact_score = (scenario_data.severity_level * 10 + len(scenario_data.affected_regions) * 5) / 2
+    economic_impact = initial_impact_score * 0.9  # Slightly lower economic impact initially
+    social_impact = initial_impact_score * 1.1    # Slightly higher social impact initially
+    environmental_impact = initial_impact_score * 0.8  # Variable environmental impact
+    
+    total_impact = calculate_total_impact(economic_impact, social_impact, environmental_impact)
+    
+    # Calculate ABC classification
+    abc_class, impact_category, priority_score = calculate_abc_classification(
+        scenario_data.severity_level, total_impact, scenario_data.crisis_type
+    )
+    
+    # Create initial change record
+    initial_change = create_change_record(
+        "created", "scenario", None, f"Created scenario: {scenario_data.title}", current_user.id
+    )
+    
     scenario = Scenario(
         user_id=current_user.id,
-        **scenario_data.dict()
+        
+        # Original fields
+        title=scenario_data.title,
+        description=scenario_data.description,
+        crisis_type=scenario_data.crisis_type,
+        severity_level=scenario_data.severity_level,
+        affected_regions=scenario_data.affected_regions,
+        key_variables=scenario_data.key_variables,
+        
+        # Option 1: Sequential Numbering/Labeling
+        sequence_number=sequence_number,
+        sequence_letter=sequence_letter,
+        
+        # Option 2: Impact Change Tracking
+        change_history=[initial_change],
+        last_modified_by=current_user.id,
+        modification_count=0,
+        
+        # Option 3: ABC Analysis Classification
+        abc_classification=abc_class,
+        priority_score=priority_score,
+        impact_category=impact_category,
+        
+        # Option 4: Version Control/Change Counter
+        version_number="1.0.0",
+        major_version=1,
+        minor_version=0,
+        patch_version=0,
+        revision_count=0,
+        
+        # Option 5: Impact Measurement System
+        impact_score=total_impact,
+        economic_impact=economic_impact,
+        social_impact=social_impact,
+        environmental_impact=environmental_impact,
+        calculated_total_impact=total_impact,
+        impact_trend="stable"
     )
     
     await db.scenarios.insert_one(scenario.dict())
