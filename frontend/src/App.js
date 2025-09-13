@@ -7411,6 +7411,9 @@ const ScenarioAdjusters = () => {
   const [adjustmentName, setAdjustmentName] = useState('');
   const [realTimeAnalysis, setRealTimeAnalysis] = useState('');
   const [consensusData, setConsensusData] = useState(null);
+  const [savedAnalyses, setSavedAnalyses] = useState([]);
+  const [showComparison, setShowComparison] = useState(false);
+  const [currentAnalysisData, setCurrentAnalysisData] = useState(null);
 
   useEffect(() => {
     fetchCompany();
