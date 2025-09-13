@@ -568,6 +568,89 @@ async def login(login_data: UserLogin):
 async def get_me(current_user: User = Depends(get_current_user)):
     return current_user
 
+# Scenario Management Helper Functions
+
+async def get_next_sequence_number(user_id: str) -> int:
+    """Get the next sequence number for scenarios"""
+    count = await db.scenarios.count_documents({"user_id": user_id})
+    return count + 1
+
+def get_sequence_letter(sequence_number: int) -> str:
+    """Convert sequence number to letter (1->A, 2->B, etc.)"""
+    if sequence_number <= 26:
+        return chr(64 + sequence_number)  # A, B, C, ...
+    else:
+        # For numbers > 26, use AA, AB, AC pattern
+        first = chr(64 + ((sequence_number - 1) // 26))
+        second = chr(64 + ((sequence_number - 1) % 26) + 1)
+        return first + second
+
+def calculate_abc_classification(severity_level: int, impact_score: float, crisis_type: str) -> tuple:
+    """Calculate ABC classification based on scenario parameters"""
+    # Weight factors for different crisis types
+    crisis_weights = {
+        "pandemic": 1.3,
+        "natural_disaster": 1.2,
+        "economic_crisis": 1.1,
+        "social_unrest": 1.0,
+        "technological_crisis": 0.9,
+        "environmental_crisis": 1.2
+    }
+    
+    weight = crisis_weights.get(crisis_type, 1.0)
+    weighted_score = (severity_level * 10 + impact_score) * weight / 2
+    
+    if weighted_score >= 75:
+        return "A", "high", max(8, min(10, int(weighted_score / 10)))
+    elif weighted_score >= 50:
+        return "B", "medium", max(4, min(7, int(weighted_score / 10)))
+    else:
+        return "C", "low", max(1, min(3, int(weighted_score / 10)))
+
+def calculate_total_impact(economic: float = None, social: float = None, environmental: float = None) -> float:
+    """Calculate total impact score from individual impact scores"""
+    impacts = [impact for impact in [economic, social, environmental] if impact is not None]
+    if not impacts:
+        return 50.0  # Default neutral impact
+    
+    # Weighted average with emphasis on economic impact
+    weights = [0.4, 0.3, 0.3]  # Economic, Social, Environmental
+    weighted_sum = sum(impact * weight for impact, weight in zip(impacts, weights[:len(impacts)]))
+    weight_sum = sum(weights[:len(impacts)])
+    
+    return round(weighted_sum / weight_sum, 2)
+
+def create_change_record(action: str, field: str, old_value: any, new_value: any, user_id: str) -> dict:
+    """Create a change history record"""
+    return {
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "action": action,
+        "field": field,
+        "old_value": str(old_value) if old_value is not None else None,
+        "new_value": str(new_value) if new_value is not None else None,
+        "modified_by": user_id,
+        "change_id": str(uuid.uuid4())[:8]
+    }
+
+def update_version_number(current_version: str, change_type: str = "patch") -> tuple:
+    """Update version number based on change type"""
+    try:
+        major, minor, patch = map(int, current_version.split('.'))
+    except:
+        major, minor, patch = 1, 0, 0
+    
+    if change_type == "major":
+        major += 1
+        minor = 0
+        patch = 0
+    elif change_type == "minor":
+        minor += 1
+        patch = 0
+    else:  # patch
+        patch += 1
+    
+    return f"{major}.{minor}.{patch}", major, minor, patch
+
 # Scenario endpoints
 @api_router.post("/scenarios", response_model=Scenario)
 async def create_scenario(scenario_data: ScenarioCreate, current_user: User = Depends(get_current_user)):
