@@ -302,9 +302,17 @@ class AddNewCustomerTester:
             return False
             
         update_data = {
-            "avatar_name": "Enhanced Crisis Response Specialist",
+            "name": "Enhanced Crisis Response Specialist",
+            "avatar_type": "research",
+            "category": "crisis_management",
             "description": "Enhanced AI avatar with advanced crisis response capabilities",
             "specializations": ["advanced emergency response", "multi-hazard risk assessment", "crisis communication", "disaster recovery"],
+            "core_competences": [
+                {"name": "Advanced Emergency Response", "skill_level": 10, "description": "Expert-level emergency response capabilities"},
+                {"name": "Multi-hazard Risk Assessment", "skill_level": 9, "description": "Advanced multi-hazard analysis skills"},
+                {"name": "Crisis Communication", "skill_level": 8, "description": "Enhanced crisis communication abilities"},
+                {"name": "Disaster Recovery", "skill_level": 9, "description": "Comprehensive disaster recovery expertise"}
+            ],
             "knowledge_domains": ["comprehensive disaster management", "advanced public safety", "emergency protocols", "recovery planning"],
             "task_capabilities": ["analyze complex crisis scenarios", "develop comprehensive response plans", "coordinate multi-agency teams", "manage recovery operations"],
             "team_name": "Advanced Emergency Response Team",
