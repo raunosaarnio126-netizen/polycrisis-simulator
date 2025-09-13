@@ -9430,7 +9430,22 @@ const AIAvatarManagement = () => {
       specializations: [],
       core_competences: [],
       knowledge_domains: [],
-      task_capabilities: []
+      task_capabilities: [],
+      team_name: '',
+      organization: ''
+    });
+  };
+
+  const resetAmendForm = () => {
+    setAmendForm({
+      name: '',
+      description: '',
+      specializations: [],
+      core_competences: [],
+      knowledge_domains: [],
+      task_capabilities: [],
+      team_name: '',
+      organization: ''
     });
   };
 
