@@ -1158,6 +1158,186 @@ async def delete_scenario(scenario_id: str, current_user: User = Depends(get_cur
     
     return {"message": "Scenario deleted successfully"}
 
+# Advanced Scenario Tracking Endpoints
+
+@api_router.get("/scenarios/{scenario_id}/analytics")
+async def get_scenario_analytics(scenario_id: str, current_user: User = Depends(get_current_user)):
+    """Get comprehensive analytics for a scenario"""
+    scenario = await db.scenarios.find_one({"id": scenario_id, "user_id": current_user.id})
+    if not scenario:
+        raise HTTPException(status_code=404, detail="Scenario not found")
+    
+    return {
+        "scenario_id": scenario_id,
+        "sequence_info": {
+            "number": scenario.get("sequence_number"),
+            "letter": scenario.get("sequence_letter"),
+            "display": f"{scenario.get('sequence_letter', 'X')}{scenario.get('sequence_number', 0)}"
+        },
+        "classification": {
+            "abc_class": scenario.get("abc_classification", "B"),
+            "impact_category": scenario.get("impact_category", "medium"),
+            "priority_score": scenario.get("priority_score", 5)
+        },
+        "version_info": {
+            "current_version": scenario.get("version_number", "1.0.0"),
+            "major": scenario.get("major_version", 1),
+            "minor": scenario.get("minor_version", 0),
+            "patch": scenario.get("patch_version", 0),
+            "total_revisions": scenario.get("revision_count", 0),
+            "modifications": scenario.get("modification_count", 0)
+        },
+        "impact_analysis": {
+            "total_score": scenario.get("calculated_total_impact", 50.0),
+            "economic": scenario.get("economic_impact"),
+            "social": scenario.get("social_impact"),
+            "environmental": scenario.get("environmental_impact"),
+            "trend": scenario.get("impact_trend", "stable")
+        },
+        "change_summary": {
+            "total_changes": len(scenario.get("change_history", [])),
+            "last_modified_by": scenario.get("last_modified_by"),
+            "last_modified": scenario.get("updated_at")
+        }
+    }
+
+@api_router.get("/scenarios/{scenario_id}/change-history")
+async def get_scenario_change_history(scenario_id: str, current_user: User = Depends(get_current_user)):
+    """Get detailed change history for a scenario"""
+    scenario = await db.scenarios.find_one({"id": scenario_id, "user_id": current_user.id})
+    if not scenario:
+        raise HTTPException(status_code=404, detail="Scenario not found")
+    
+    return {
+        "scenario_id": scenario_id,
+        "change_history": scenario.get("change_history", []),
+        "total_changes": len(scenario.get("change_history", [])),
+        "modification_count": scenario.get("modification_count", 0),
+        "revision_count": scenario.get("revision_count", 0)
+    }
+
+@api_router.post("/scenarios/{scenario_id}/manual-impact-update")
+async def update_scenario_impact_scores(
+    scenario_id: str, 
+    economic: Optional[float] = None,
+    social: Optional[float] = None,
+    environmental: Optional[float] = None,
+    current_user: User = Depends(get_current_user)
+):
+    """Manually update impact scores for a scenario"""
+    scenario = await db.scenarios.find_one({"id": scenario_id, "user_id": current_user.id})
+    if not scenario:
+        raise HTTPException(status_code=404, detail="Scenario not found")
+    
+    update_data = {}
+    change_records = []
+    
+    if economic is not None:
+        change_records.append(create_change_record(
+            "manual_update", "economic_impact", scenario.get("economic_impact"), economic, current_user.id
+        ))
+        update_data["economic_impact"] = economic
+        
+    if social is not None:
+        change_records.append(create_change_record(
+            "manual_update", "social_impact", scenario.get("social_impact"), social, current_user.id
+        ))
+        update_data["social_impact"] = social
+        
+    if environmental is not None:
+        change_records.append(create_change_record(
+            "manual_update", "environmental_impact", scenario.get("environmental_impact"), environmental, current_user.id
+        ))
+        update_data["environmental_impact"] = environmental
+    
+    if update_data:
+        # Recalculate total impact
+        total_impact = calculate_total_impact(
+            update_data.get("economic_impact", scenario.get("economic_impact")),
+            update_data.get("social_impact", scenario.get("social_impact")),
+            update_data.get("environmental_impact", scenario.get("environmental_impact"))
+        )
+        
+        # Recalculate ABC classification
+        abc_class, impact_category, priority_score = calculate_abc_classification(
+            scenario.get("severity_level", 5), total_impact, scenario.get("crisis_type", "other")
+        )
+        
+        update_data.update({
+            "calculated_total_impact": total_impact,
+            "impact_score": total_impact,
+            "abc_classification": abc_class,
+            "impact_category": impact_category,
+            "priority_score": priority_score,
+            "impact_trend": "manual_update",
+            "change_history": scenario.get("change_history", []) + change_records,
+            "modification_count": scenario.get("modification_count", 0) + 1,
+            "last_modified_by": current_user.id,
+            "updated_at": datetime.now(timezone.utc)
+        })
+        
+        await db.scenarios.update_one({"id": scenario_id}, {"$set": update_data})
+    
+    updated_scenario = await db.scenarios.find_one({"id": scenario_id})
+    return Scenario(**updated_scenario)
+
+@api_router.get("/scenarios/user-analytics")
+async def get_user_scenario_analytics(current_user: User = Depends(get_current_user)):
+    """Get analytics for all user scenarios"""
+    scenarios = await db.scenarios.find({"user_id": current_user.id}).to_list(1000)
+    
+    if not scenarios:
+        return {
+            "total_scenarios": 0,
+            "abc_distribution": {"A": 0, "B": 0, "C": 0},
+            "impact_average": 0,
+            "most_modified": None,
+            "latest_version": "1.0.0"
+        }
+    
+    abc_counts = {"A": 0, "B": 0, "C": 0}
+    total_impact = 0
+    most_modified = None
+    max_modifications = 0
+    latest_version = "1.0.0"
+    
+    for scenario in scenarios:
+        # ABC distribution
+        abc_class = scenario.get("abc_classification", "B")
+        abc_counts[abc_class] = abc_counts.get(abc_class, 0) + 1
+        
+        # Impact average
+        total_impact += scenario.get("calculated_total_impact", 50.0)
+        
+        # Most modified scenario
+        mod_count = scenario.get("modification_count", 0)
+        if mod_count > max_modifications:
+            max_modifications = mod_count
+            most_modified = {
+                "id": scenario.get("id"),
+                "title": scenario.get("title"),
+                "modifications": mod_count,
+                "version": scenario.get("version_number", "1.0.0")
+            }
+        
+        # Latest version
+        version = scenario.get("version_number", "1.0.0")
+        if version > latest_version:
+            latest_version = version
+    
+    return {
+        "total_scenarios": len(scenarios),
+        "abc_distribution": abc_counts,
+        "impact_average": round(total_impact / len(scenarios), 2),
+        "most_modified": most_modified,
+        "latest_version": latest_version,
+        "scenarios_by_type": {},  # Could expand this
+        "modification_stats": {
+            "total_modifications": sum(s.get("modification_count", 0) for s in scenarios),
+            "average_modifications": round(sum(s.get("modification_count", 0) for s in scenarios) / len(scenarios), 2)
+        }
+    }
+
 # AI Avatar Genie endpoints
 @api_router.post("/ai-genie", response_model=AIGenieResponse)
 async def chat_with_ai_genie(request: AIGenieRequest, current_user: User = Depends(get_current_user)):
