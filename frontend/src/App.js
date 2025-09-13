@@ -7417,6 +7417,13 @@ const ScenarioAdjusters = () => {
     fetchAdjustments();
   }, []);
 
+  // Generate initial analysis when component loads
+  useEffect(() => {
+    if (company && !realTimeAnalysis) {
+      updateRealTimeAnalysis(septeValues);
+    }
+  }, [company]);
+
   const fetchCompany = async () => {
     try {
       const userResponse = await axios.get(`${API}/me`);
