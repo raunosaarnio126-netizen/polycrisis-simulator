@@ -10939,7 +10939,7 @@ const AppContent = () => {
               Get intelligent insights across all your scenarios - available anywhere in the app!
             </DialogDescription>
           </DialogHeader>
-          <div className="flex-1 overflow-hidden">
+          <div className="flex-1 flex flex-col min-h-0">
             <AIGenie selectedScenario={selectedScenario} />
           </div>
         </DialogContent>
