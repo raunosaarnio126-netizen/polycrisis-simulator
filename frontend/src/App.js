@@ -460,7 +460,7 @@ const ScenarioAnalyticsSummary = ({ scenarios }) => {
                   {analytics.modificationStats.mostModified.title}
                 </div>
                 <div className="text-xs text-gray-500">
-                  {maxMods} changes, v{analytics.modificationStats.mostModified.version_number || '1.0.0'}
+                  {analytics.modificationStats.mostModified.modification_count || 0} changes, v{analytics.modificationStats.mostModified.version_number || '1.0.0'}
                 </div>
               </div>
             )}
