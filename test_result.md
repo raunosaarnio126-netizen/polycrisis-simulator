@@ -388,7 +388,7 @@ metadata:
 
 test_plan:
   current_focus:
-    - "AI Avatar Comma Input Functionality"
+    - "Document Analysis with File Upload"
   stuck_tasks: 
     - "Document Analysis with File Upload"
   test_all: false
