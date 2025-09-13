@@ -3941,6 +3941,8 @@ class AIAvatar(BaseModel):
     core_competences: List[Competence]
     knowledge_domains: List[str]
     task_capabilities: List[str]
+    team_name: Optional[str] = None
+    organization: Optional[str] = None
     status: str = "active"  # "active", "busy", "inactive"
     performance_metrics: Dict = Field(default_factory=dict)
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
