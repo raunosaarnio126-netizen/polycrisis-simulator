@@ -2908,7 +2908,7 @@ async def generate_real_time_analysis(
 ):
     """Generate real-time SEPTE analysis for scenario adjustments"""
     # Verify company access
-    company = await db.companies.find_one({"id": company_id, "user_id": current_user.id})
+    company = await db.companies.find_one({"id": company_id, "created_by": current_user.id})
     if not company:
         raise HTTPException(status_code=404, detail="Company not found")
     
