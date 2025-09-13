@@ -2971,20 +2971,14 @@ async def generate_real_time_analysis(
         """
         
         # Generate AI analysis using the existing AI integration
-        from emergentintegrations import EmergentClient
-        client = EmergentClient()
+        chat = LlmChat(
+            api_key=EMERGENT_LLM_KEY,
+            session_id=f"real-time-analysis-{company_id}",
+            system_message="You are an expert crisis management analyst specializing in SEPTE framework analysis and organizational risk assessment."
+        ).with_model("anthropic", "claude-3-7-sonnet-20250219")
         
-        response = client.chat.completions.create(
-            model="claude-sonnet-4",
-            messages=[
-                {"role": "system", "content": "You are an expert crisis management analyst specializing in SEPTE framework analysis and organizational risk assessment."},
-                {"role": "user", "content": analysis_prompt}
-            ],
-            max_tokens=2000,
-            temperature=0.7
-        )
-        
-        analysis_result = response.choices[0].message.content
+        user_message = UserMessage(text=analysis_prompt)
+        analysis_result = await chat.send_message(user_message)
         
         # Calculate overall risk level
         risk_factors = [social_unrest, economic_recession, political_instability, technological_disruption, environmental_degradation]
