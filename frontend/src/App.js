@@ -9504,6 +9504,13 @@ const AIAvatarManagement = () => {
     organization: ''
   });
 
+  // Raw input values for comma-separated fields
+  const [createFormInputs, setCreateFormInputs] = useState({
+    specializations: '',
+    knowledge_domains: '',
+    task_capabilities: ''
+  });
+
   // State for amend functionality
   const [showAmendDialog, setShowAmendDialog] = useState(false);
   const [amendingAvatar, setAmendingAvatar] = useState(null);
