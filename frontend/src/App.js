@@ -1151,8 +1151,8 @@ const ScenarioCreator = ({ onScenarioCreated }) => {
             {loading ? 'Creating...' : 'Create Scenario'}
           </Button>
         </form>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 };
 
