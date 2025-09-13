@@ -7665,6 +7665,7 @@ const ScenarioAdjusters = () => {
         environmental_recovery_pct: values.environmental_recovery_pct || 50
       });
       setRealTimeAnalysis(response.data.analysis);
+      setCurrentAnalysisData(response.data);
     } catch (error) {
       console.error('Failed to update analysis:', error);
       // Fallback with mock analysis for demonstration
