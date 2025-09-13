@@ -10268,6 +10268,126 @@ const AIAvatarManagement = () => {
           </div>
         </div>
       )}
+      {/* Amend Avatar Dialog */}
+      {showAmendDialog && amendingAvatar && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Amend Avatar: {amendingAvatar.name}
+                </h3>
+                <button
+                  onClick={() => setShowAmendDialog(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="amend-avatar-name">Avatar Name *</Label>
+                    <Input
+                      id="amend-avatar-name"
+                      value={amendForm.name}
+                      onChange={(e) => setAmendForm({...amendForm, name: e.target.value})}
+                      placeholder="e.g., Crisis Response Coordinator"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="amend-team-name">Team Name</Label>
+                    <Input
+                      id="amend-team-name"
+                      value={amendForm.team_name}
+                      onChange={(e) => setAmendForm({...amendForm, team_name: e.target.value})}
+                      placeholder="e.g., Crisis Response Team"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <Label htmlFor="amend-organization">Organization</Label>
+                  <Input
+                    id="amend-organization"
+                    value={amendForm.organization}
+                    onChange={(e) => setAmendForm({...amendForm, organization: e.target.value})}
+                    placeholder="e.g., Emergency Management Division"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="amend-description">Description *</Label>
+                  <textarea
+                    id="amend-description"
+                    value={amendForm.description}
+                    onChange={(e) => setAmendForm({...amendForm, description: e.target.value})}
+                    placeholder="Describe the avatar's role and capabilities..."
+                    className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                    rows={3}
+                    required
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="amend-specializations">Specializations (comma-separated)</Label>
+                  <Input
+                    id="amend-specializations"
+                    value={amendForm.specializations.join(', ')}
+                    onChange={(e) => setAmendForm({
+                      ...amendForm, 
+                      specializations: e.target.value.split(',').map(s => s.trim()).filter(s => s)
+                    })}
+                    placeholder="e.g., emergency response, risk assessment, team coordination"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="amend-knowledge-domains">Knowledge Domains (comma-separated)</Label>
+                  <Input
+                    id="amend-knowledge-domains"
+                    value={amendForm.knowledge_domains.join(', ')}
+                    onChange={(e) => setAmendForm({
+                      ...amendForm, 
+                      knowledge_domains: e.target.value.split(',').map(s => s.trim()).filter(s => s)
+                    })}
+                    placeholder="e.g., emergency management, public safety, logistics"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="amend-task-capabilities">Task Capabilities (comma-separated)</Label>
+                  <Input
+                    id="amend-task-capabilities"
+                    value={amendForm.task_capabilities.join(', ')}
+                    onChange={(e) => setAmendForm({
+                      ...amendForm, 
+                      task_capabilities: e.target.value.split(',').map(s => s.trim()).filter(s => s)
+                    })}
+                    placeholder="e.g., assess crisis severity, develop response plans, coordinate resources"
+                  />
+                </div>
+
+                <div className="flex gap-3 pt-4 border-t">
+                  <Button onClick={amendAvatar} className="flex-1">
+                    Update Avatar
+                  </Button>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={() => setShowAmendDialog(false)}
+                    className="flex-1"
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
