@@ -329,7 +329,7 @@ class AddNewCustomerTester:
         
         if success:
             print(f"   ✅ Avatar updated successfully")
-            print(f"   Updated name: {response.get('avatar_name', 'N/A')}")
+            print(f"   Updated name: {response.get('name', 'N/A')}")
             print(f"   Updated specializations: {len(response.get('specializations', []))}")
             print(f"   Updated team: {response.get('team_name', 'N/A')}")
             return True
