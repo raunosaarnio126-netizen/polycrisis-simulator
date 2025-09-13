@@ -2900,6 +2900,172 @@ async def create_team(company_id: str, team_data: TeamCreate, current_user: User
     await db.teams.insert_one(team.dict())
     return {"message": "Team created successfully", "team_id": team.id}
 
+@api_router.post("/companies/{company_id}/real-time-analysis")
+async def generate_real_time_analysis(
+    company_id: str, 
+    analysis_data: dict,
+    current_user: User = Depends(get_current_user)
+):
+    """Generate real-time SEPTE analysis for scenario adjustments"""
+    # Verify company access
+    company = await db.companies.find_one({"id": company_id, "user_id": current_user.id})
+    if not company:
+        raise HTTPException(status_code=404, detail="Company not found")
+    
+    try:
+        # Extract SEPTE values from analysis_data
+        social_unrest = analysis_data.get('social_unrest_pct', 50)
+        social_cohesion = analysis_data.get('social_cohesion_pct', 50)
+        economic_recession = analysis_data.get('economic_recession_pct', 50)
+        economic_growth = analysis_data.get('economic_growth_pct', 50)
+        political_instability = analysis_data.get('political_instability_pct', 50)
+        political_stability = analysis_data.get('political_stability_pct', 50)
+        technological_disruption = analysis_data.get('technological_disruption_pct', 50)
+        technological_advancement = analysis_data.get('technological_advancement_pct', 50)
+        environmental_degradation = analysis_data.get('environmental_degradation_pct', 50)
+        environmental_recovery = analysis_data.get('environmental_recovery_pct', 50)
+        
+        # Create analysis prompt
+        analysis_prompt = f"""
+        You are analyzing a crisis scenario for {company.get('company_name', 'the organization')} using the SEPTE framework.
+        
+        Company Context:
+        - Industry: {company.get('industry', 'Unknown')}
+        - Size: {company.get('company_size', 'Unknown')}
+        - Description: {company.get('description', 'No description available')}
+        
+        Current SEPTE Framework Values:
+        
+        SOCIAL:
+        - Social Unrest: {social_unrest}%
+        - Social Cohesion: {social_cohesion}%
+        
+        ECONOMIC:
+        - Economic Recession Risk: {economic_recession}%
+        - Economic Growth Potential: {economic_growth}%
+        
+        POLITICAL:
+        - Political Instability: {political_instability}%
+        - Political Stability: {political_stability}%
+        
+        TECHNOLOGICAL:
+        - Technological Disruption: {technological_disruption}%
+        - Technological Advancement: {technological_advancement}%
+        
+        ENVIRONMENTAL:
+        - Environmental Degradation: {environmental_degradation}%
+        - Environmental Recovery: {environmental_recovery}%
+        
+        Please provide a comprehensive impact analysis that includes:
+
+        1. **SCENARIO ASSESSMENT**: Overall risk level and key concerns
+        2. **DOMAIN ANALYSIS**: Impact analysis for each SEPTE domain
+        3. **INTERCONNECTIONS**: How different factors influence each other
+        4. **BUSINESS IMPACT**: Specific implications for this company/industry
+        5. **RISK INDICATORS**: Key metrics to monitor
+        6. **STRATEGIC RECOMMENDATIONS**: Actionable steps for preparedness
+        7. **TIMELINE**: Expected development phases
+        
+        Keep the analysis practical, actionable, and specific to the company context.
+        Use clear headings and bullet points for readability.
+        """
+        
+        # Generate AI analysis using the existing AI integration
+        from emergentintegrations import EmergentClient
+        client = EmergentClient()
+        
+        response = client.chat.completions.create(
+            model="claude-sonnet-4",
+            messages=[
+                {"role": "system", "content": "You are an expert crisis management analyst specializing in SEPTE framework analysis and organizational risk assessment."},
+                {"role": "user", "content": analysis_prompt}
+            ],
+            max_tokens=2000,
+            temperature=0.7
+        )
+        
+        analysis_result = response.choices[0].message.content
+        
+        # Calculate overall risk level
+        risk_factors = [social_unrest, economic_recession, political_instability, technological_disruption, environmental_degradation]
+        avg_risk = sum(risk_factors) / len(risk_factors)
+        
+        if avg_risk > 70:
+            risk_level = "critical"
+        elif avg_risk > 55:
+            risk_level = "high"
+        elif avg_risk > 40:
+            risk_level = "medium"
+        else:
+            risk_level = "low"
+        
+        # Generate recommendations based on highest risk factors
+        recommendations = []
+        if social_unrest > 60:
+            recommendations.append("Implement community engagement programs")
+        if economic_recession > 60:
+            recommendations.append("Strengthen financial reserves and cash flow")
+        if political_instability > 60:
+            recommendations.append("Monitor regulatory changes and government stability")
+        if technological_disruption > 60:
+            recommendations.append("Accelerate digital transformation initiatives")
+        if environmental_degradation > 60:
+            recommendations.append("Develop environmental risk mitigation strategies")
+        
+        if not recommendations:
+            recommendations.append("Maintain current monitoring and preparedness levels")
+        
+        return {
+            "analysis": analysis_result,
+            "risk_level": risk_level,
+            "recommendations": recommendations,
+            "septe_values": analysis_data,
+            "generated_at": datetime.now(timezone.utc).isoformat()
+        }
+        
+    except Exception as e:
+        print(f"Error generating real-time analysis: {str(e)}")
+        # Return fallback analysis if AI service fails
+        fallback_analysis = f"""
+        **REAL-TIME SCENARIO ANALYSIS** for {company.get('company_name', 'Your Organization')}
+        
+        **🔍 CURRENT SITUATION OVERVIEW:**
+        Based on your SEPTE framework settings, here's the impact analysis:
+        
+        **📊 RISK ASSESSMENT:**
+        - Social Factors: {"High concern" if social_unrest > 60 else "Moderate levels"}
+        - Economic Factors: {"Recession risk elevated" if economic_recession > 60 else "Economic stability maintained"}
+        - Political Factors: {"Instability detected" if political_instability > 60 else "Political environment stable"}
+        - Technology Factors: {"Disruption anticipated" if technological_disruption > 60 else "Gradual tech evolution"}
+        - Environmental Factors: {"Degradation concerns" if environmental_degradation > 60 else "Environmental stability"}
+        
+        **⚡ KEY INSIGHTS:**
+        - Overall risk level appears {"HIGH" if (social_unrest + economic_recession + political_instability) / 3 > 60 else "MODERATE"}
+        - Primary attention needed for: {", ".join([
+            "Social tensions" if social_unrest > 60 else "",
+            "Economic pressures" if economic_recession > 60 else "",
+            "Political changes" if political_instability > 60 else "",
+            "Tech disruption" if technological_disruption > 60 else "",
+            "Environmental challenges" if environmental_degradation > 60 else ""
+        ]).strip(", ") or "Monitoring across all domains"}
+        
+        **🎯 RECOMMENDATIONS:**
+        - Monitor key indicators in elevated risk areas
+        - Strengthen organizational resilience
+        - Develop contingency plans for high-probability scenarios
+        - Maintain stakeholder communication channels
+        
+        *Note: This is a simplified analysis. For detailed AI-powered insights, ensure your AI integration is properly configured.*
+        """
+        
+        return {
+            "analysis": fallback_analysis,
+            "risk_level": "medium",
+            "recommendations": ["Monitor situation", "Maintain preparedness"],
+            "septe_values": analysis_data,
+            "generated_at": datetime.now(timezone.utc).isoformat()
+        }
+
 @api_router.get("/companies/{company_id}/teams", response_model=List[Team])
 async def get_company_teams(company_id: str, current_user: User = Depends(get_current_user)):
     # Verify company access
