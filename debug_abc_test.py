@@ -29,7 +29,7 @@ class DebugABCTester:
         headers = {'Authorization': f'Bearer {self.token}'}
         
         print("\n🔍 Testing user analytics endpoint...")
-        response = requests.get(f"{self.api_url}/scenarios/user-analytics", headers=headers)
+        response = requests.get(f"{self.api_url}/user/scenario-analytics", headers=headers)
         
         print(f"Status Code: {response.status_code}")
         print(f"Response: {response.text}")
