@@ -10521,7 +10521,7 @@ const AppContent = () => {
           </TabsContent>
           
           <TabsContent value="avatars">
-            <AvatarCompetenceManager />
+            <AIAvatarManagement />
           </TabsContent>
           
           <TabsContent value="create">
