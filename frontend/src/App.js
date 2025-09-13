@@ -15,7 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from './components/ui/tabs';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from './components/ui/dialog';
 import { Alert, AlertDescription } from './components/ui/alert';
 import { Progress } from './components/ui/progress';
-import { toast } from './hooks/use-toast';
+import { toast, useToast } from './hooks/use-toast';
 import { Toaster } from './components/ui/toaster';
 
 // Icons
