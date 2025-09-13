@@ -520,6 +520,19 @@ const AdvancedDashboard = () => {
         </Card>
       </div>
 
+      {/* ABC Counting & Analytics Summary */}
+      <Card className="bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <BarChart3 className="w-5 h-5 text-blue-600" />
+            Scenario Analytics & Impact Tracking
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ScenarioAnalyticsSummary scenarios={scenarios} />
+        </CardContent>
+      </Card>
+
       {/* Recent Scenarios with Enhanced Actions */}
       <Card>
         <CardHeader>
