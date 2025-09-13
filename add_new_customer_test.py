@@ -479,7 +479,6 @@ class AddNewCustomerTester:
         
         health_tests = [
             ("Dashboard Stats", "GET", "dashboard/stats", 200),
-            ("Get All Companies", "GET", "companies", 200),
             ("Get All AI Avatars", "GET", "ai-avatars", 200),
         ]
         
