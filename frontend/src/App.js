@@ -11769,14 +11769,25 @@ const AppContent = () => {
       {/* Floating AI Genie Dialog */}
       <Dialog open={showFloatingGenie} onOpenChange={setShowFloatingGenie}>
         <DialogContent className="max-w-4xl h-[600px] flex flex-col z-[10000]">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <MessageSquare className="w-5 h-5 text-blue-600" />
-              AI Avatar Genie (Floating)
-            </DialogTitle>
-            <DialogDescription>
-              Get intelligent insights across all your scenarios - available anywhere in the app!
-            </DialogDescription>
+          <DialogHeader className="flex-row items-center justify-between space-y-0 pb-2">
+            <div>
+              <DialogTitle className="flex items-center gap-2">
+                <MessageSquare className="w-5 h-5 text-blue-600" />
+                AI Avatar Genie (Floating)
+              </DialogTitle>
+              <DialogDescription>
+                Get intelligent insights across all your scenarios - available anywhere in the app!
+              </DialogDescription>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowFloatingGenie(false)}
+              className="flex items-center gap-1 text-gray-500 hover:text-gray-700"
+            >
+              <X className="w-4 h-4" />
+              Close
+            </Button>
           </DialogHeader>
           <div className="flex-1 flex flex-col min-h-0">
             <AIGenie selectedScenario={selectedScenario} />
