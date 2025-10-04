@@ -424,10 +424,9 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Fuzzy Logic Scenario Adjusters Frontend"
+    - "Company Profile Creation API Testing"
   stuck_tasks: 
     - "Document Analysis with File Upload"
-    - "Fuzzy Logic Scenario Adjusters Frontend"
   test_all: false
   test_priority: "high_first"
 
