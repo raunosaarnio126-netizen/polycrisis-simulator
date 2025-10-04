@@ -246,6 +246,9 @@ backend:
       - working: true
         agent: "testing"
         comment: "POST /api/companies/{company_id}/consensus endpoint working correctly. Creates consensus settings for team agreement on scenario adjustments. Links to existing scenario adjustments properly. Team size calculation working. Creator automatically added to agreed_by list. Final_settings contains all SEPTE parameters. ConsensusSettings model response format correct."
+      - working: true
+        agent: "testing"
+        comment: "SAVE CONSENSUS FUNCTIONALITY VERIFIED: POST /api/companies/{company_id}/consensus endpoint tested successfully. ✅ CONSENSUS CREATION: Created consensus ID cf01c794-999f-485b-8be4-1bcf3b09edc4 with name 'Team Agreement on Crisis Scenario'. Team members: 1, consensus percentage: 100.0%. Creator automatically added to agreed_by list. Final_settings properly contains all SEPTE parameters from linked scenario adjustment. All required ConsensusSettings model fields present. Save Consensus backend functionality is fully operational."
 
   - task: "Fuzzy Logic Scenario Adjusters - Consensus Agreement"
     implemented: true
