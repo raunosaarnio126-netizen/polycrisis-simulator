@@ -11956,6 +11956,7 @@ function App() {
 
 const AuthRoutes = () => {
   const { isAuthenticated, user } = useAuth();
+  const [isTransitioning, setIsTransitioning] = useState(false);
   
   console.log('AuthRoutes render - isAuthenticated:', isAuthenticated, 'user:', user);
   
@@ -11966,8 +11967,37 @@ const AuthRoutes = () => {
     setMounted(true);
   }, []);
   
+  useEffect(() => {
+    if (isAuthenticated) {
+      setIsTransitioning(true);
+      // Brief delay to show authentication success before showing app
+      const timer = setTimeout(() => {
+        setIsTransitioning(false);
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [isAuthenticated]);
+  
   if (!mounted) {
-    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-600 via-purple-600 to-blue-800">
+        <div className="text-center text-white">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto mb-4"></div>
+          <p>Loading application...</p>
+        </div>
+      </div>
+    );
+  }
+  
+  if (isTransitioning) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-green-600 via-blue-600 to-purple-600">
+        <div className="text-center text-white">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto mb-4"></div>
+          <p>Authentication successful! Loading dashboard...</p>
+        </div>
+      </div>
+    );
   }
   
   return isAuthenticated ? <AppContent /> : <AuthPage />;
