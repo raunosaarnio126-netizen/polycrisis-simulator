@@ -11934,7 +11934,20 @@ function App() {
 }
 
 const AuthRoutes = () => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
+  
+  console.log('AuthRoutes render - isAuthenticated:', isAuthenticated, 'user:', user);
+  
+  // Add a small loading buffer to handle rapid state changes
+  const [mounted, setMounted] = useState(false);
+  
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+  
+  if (!mounted) {
+    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
+  }
   
   return isAuthenticated ? <AppContent /> : <AuthPage />;
 };
