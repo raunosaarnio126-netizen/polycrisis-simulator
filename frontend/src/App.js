@@ -287,8 +287,10 @@ const AuthProvider = ({ children }) => {
     delete axios.defaults.headers.common['Authorization'];
   };
 
+  const isAuthenticated = Boolean(token && token.length > 0);
+  
   return (
-    <AuthContext.Provider value={{ user, login, logout, isAuthenticated: !!token }}>
+    <AuthContext.Provider value={{ user, login, logout, isAuthenticated }}>
       {children}
     </AuthContext.Provider>
   );
