@@ -403,9 +403,10 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Debug Scenario Adjusters Button Functionality - Save Adjustments, Download Settings, Save Consensus"
+    - "Frontend Authentication Session Management Fix Required"
   stuck_tasks: 
     - "Document Analysis with File Upload"
+    - "Scenario Adjusters Button Functionality Debug"
   test_all: false
   test_priority: "high_first"
 
