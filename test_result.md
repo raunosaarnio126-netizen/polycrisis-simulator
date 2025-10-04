@@ -287,6 +287,18 @@ backend:
         comment: "SCENARIO AMENDMENT FUNCTIONALITY TESTING COMPLETED SUCCESSFULLY: 8/8 tests passed (100% success rate). ✅ CRITICAL TESTS PASSED: 1) PATCH /api/scenarios/{scenario_id}/amend endpoint accepts partial data without validation errors - tested with scenario ID 9796a80e-976e-463d-ba00-aeb899b76a7a using test credentials test@example.com/password123. 2) Only provided fields are updated in database - verified affected_regions, key_variables, additional_context, stakeholders, timeline fields updated correctly while title, description, crisis_type, severity_level remained unchanged. 3) Response returns complete updated scenario with new fields - all required fields present in response including new Scenario model fields (additional_context, stakeholders, timeline). 4) GET /api/scenarios reflects amendments - verified updated scenario data persists correctly in database and retrieval operations. 5) Partial amendments work correctly - tested updating only some fields (affected_regions, additional_context) while others remain unchanged. 6) Authentication properly enforced - returns 403 for unauthenticated requests. 7) Invalid scenario ID handling - returns 404 for non-existent scenarios. 8) Empty amendment data handled gracefully - accepts empty payload without errors. ✅ SOLUTION VERIFICATION: The original PUT endpoint validation issue has been resolved. New ScenarioAmendment model with optional fields allows partial updates. PATCH endpoint only updates provided fields, solving the 'update failed' issue. All test data from review request (Finland, Sweden, Estonia regions; GDP Growth, Employment Rate, Trade Balance variables; Nordic Council stakeholders; 6-12 months timeline) processed correctly. CONCLUSION: Scenario amendment functionality is production-ready and fully resolves the reported 'update failed' issue."
 
 frontend:
+  - task: "Frontend Authentication Session Management Fix Required"
+    implemented: true
+    working: false
+    file: "/app/frontend/src/App.js"
+    stuck_count: 1
+    priority: "critical"
+    needs_retesting: false
+    status_history:
+      - working: false
+        agent: "testing"
+        comment: "CRITICAL AUTHENTICATION ISSUE CONFIRMED: Comprehensive testing reveals that the authentication fixes implemented are NOT working. The login form gets permanently stuck in 'Logging in...' state for 15+ seconds. Network monitoring shows login POST request is sent to /api/login but no response is received by frontend. Token is never stored in localStorage, indicating frontend session management/response handling failure. Registration form also gets stuck in 'Registering...' state with same issue. Backend logs show successful 200 OK responses, confirming backend authentication endpoints are working correctly. The issue is specifically in frontend authentication state management after receiving server response. Users cannot access Scenario Adjusters or any authenticated features. This is a high-priority blocking issue that prevents all authenticated functionality. Root cause: Frontend login/register response handling is broken - requests are sent but responses are not processed, leaving forms in permanent loading state."
+
   - task: "Navigation Banner Order Changes"
     implemented: true
     working: true
