@@ -4586,6 +4586,37 @@ Last Updated: ${new Date(scenario.updated_at).toLocaleString()}`}
                 </div>
               )}
 
+              {/* Export buttons for scenario details */}
+              <UniversalExportButtons
+                content={`${selectedScenario.title}
+
+Crisis Type: ${selectedScenario.crisis_type?.replace('_', ' ')}
+Severity Level: ${selectedScenario.severity_level}/10
+Status: ${selectedScenario.status}
+
+Description:
+${selectedScenario.description}
+
+Affected Regions:
+${selectedScenario.affected_regions?.map(region => `• ${region}`).join('\n') || 'None specified'}
+
+Key Variables:
+${selectedScenario.key_variables?.map(variable => `• ${variable}`).join('\n') || 'None specified'}
+
+${selectedScenario.additional_context ? `Additional Context:\n${selectedScenario.additional_context}` : ''}
+${selectedScenario.stakeholders ? `Stakeholders:\n${selectedScenario.stakeholders}` : ''}
+${selectedScenario.timeline ? `Timeline:\n${selectedScenario.timeline}` : ''}
+
+${selectedScenario.simulation_result ? `Simulation Results:\nRisk Level: ${selectedScenario.simulation_result.risk_level}\nImpact Score: ${selectedScenario.simulation_result.impact_score}\nAnalysis: ${selectedScenario.simulation_result.analysis}\nConfidence Score: ${(selectedScenario.simulation_result.confidence_score * 100).toFixed(1)}%` : ''}
+
+Created: ${new Date(selectedScenario.created_at).toLocaleString()}
+Last Updated: ${new Date(selectedScenario.updated_at).toLocaleString()}`}
+                title={`Scenario Details - ${selectedScenario.title}`}
+                companyName="Polycrisis Simulator"
+                onClose={() => setSelectedScenario(null)}
+                showClose={true}
+              />
+
               <div className="flex gap-3 pt-4">
                 <Button onClick={() => handleRunSimulation(selectedScenario)} disabled={loading} className="flex-1">
                   <Play className="w-4 h-4 mr-2" />
