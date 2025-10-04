@@ -451,7 +451,7 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Company Profile Creation API Testing"
+    - "Frontend Company Profile Creation Flow"
   stuck_tasks: 
     - "Document Analysis with File Upload"
   test_all: false
