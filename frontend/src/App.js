@@ -237,60 +237,107 @@ const AuthContext = React.createContext();
 
 const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [token, setToken] = useState(localStorage.getItem('token'));
+  const [token, setToken] = useState(() => {
+    // Initialize token from localStorage synchronously
+    try {
+      const storedToken = localStorage.getItem('token');
+      console.log('Initial token from localStorage:', storedToken ? 'Token found' : 'No token');
+      return storedToken;
+    } catch (error) {
+      console.error('Error reading token from localStorage:', error);
+      return null;
+    }
+  });
+  const [authLoading, setAuthLoading] = useState(false);
 
   useEffect(() => {
     if (token) {
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       fetchUserProfile();
+    } else {
+      // Clear axios headers if no token
+      delete axios.defaults.headers.common['Authorization'];
     }
   }, [token]);
 
   const fetchUserProfile = async () => {
     try {
+      setAuthLoading(true);
       const response = await axios.get(`${API}/me`);
       setUser(response.data);
+      console.log('User profile fetched successfully');
     } catch (error) {
       console.error('Failed to fetch user profile:', error);
       // Don't logout on profile fetch failure - allow user to continue using the app
-      // The user can still access the dashboard with just the token
       console.warn('Profile fetch failed but user remains authenticated');
+    } finally {
+      setAuthLoading(false);
     }
   };
 
-  const login = (newToken) => {
-    console.log('Login function called with token:', newToken);
-    if (!newToken) {
-      console.error('No token provided to login function');
-      return;
+  const login = async (newToken) => {
+    console.log('Login function called with token:', newToken ? 'Token received' : 'No token');
+    
+    if (!newToken || typeof newToken !== 'string' || newToken.trim() === '') {
+      console.error('Invalid token provided to login function');
+      throw new Error('Invalid token provided');
     }
     
     try {
-      localStorage.setItem('token', newToken);
-      setToken(newToken);
-      axios.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
-      console.log('Token set in localStorage and axios headers, authentication should be complete');
+      setAuthLoading(true);
       
-      // Force an immediate state update to ensure re-render
-      setTimeout(() => {
-        console.log('Authentication state after login:', { token: newToken, isAuthenticated: !!newToken });
-      }, 100);
+      // Store token in localStorage
+      localStorage.setItem('token', newToken);
+      
+      // Update axios headers
+      axios.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
+      
+      // Update token state - this will trigger useEffect to fetch user profile
+      setToken(newToken);
+      
+      console.log('Token stored and authentication state updated successfully');
+      
+      return true;
     } catch (error) {
       console.error('Error during login process:', error);
+      setAuthLoading(false);
+      throw error;
     }
   };
 
   const logout = () => {
-    localStorage.removeItem('token');
-    setToken(null);
-    setUser(null);
-    delete axios.defaults.headers.common['Authorization'];
+    console.log('Logout function called');
+    try {
+      localStorage.removeItem('token');
+      setToken(null);
+      setUser(null);
+      delete axios.defaults.headers.common['Authorization'];
+      setAuthLoading(false);
+      console.log('Logout completed successfully');
+    } catch (error) {
+      console.error('Error during logout:', error);
+    }
   };
 
-  const isAuthenticated = Boolean(token && token.length > 0);
+  const isAuthenticated = Boolean(token && token.length > 0 && token !== 'undefined' && token !== 'null');
+  
+  console.log('AuthProvider state:', { 
+    hasToken: !!token, 
+    tokenLength: token?.length, 
+    isAuthenticated, 
+    hasUser: !!user, 
+    authLoading 
+  });
   
   return (
-    <AuthContext.Provider value={{ user, login, logout, isAuthenticated }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      login, 
+      logout, 
+      isAuthenticated, 
+      authLoading,
+      token 
+    }}>
       {children}
     </AuthContext.Provider>
   );
