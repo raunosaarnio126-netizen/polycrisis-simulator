@@ -25,6 +25,30 @@ import { AlertTriangle, Brain, Globe, Shield, TrendingUp, Users, Plus, Play, Eye
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
+// Setup Axios response interceptor for token management
+let isInterceptorSet = false;
+
+const setupAxiosInterceptors = (logout) => {
+  if (isInterceptorSet) return;
+  
+  axios.interceptors.response.use(
+    (response) => response,
+    (error) => {
+      console.log('Axios interceptor caught error:', error.response?.status);
+      
+      if (error.response?.status === 401) {
+        console.log('401 Unauthorized - clearing authentication');
+        logout();
+      }
+      
+      return Promise.reject(error);
+    }
+  );
+  
+  isInterceptorSet = true;
+  console.log('Axios interceptors configured');
+};
+
 // Universal Document Export System
 class UniversalDocumentExporter {
   static exportToPDF(content, title = 'Document', companyName = 'Your Organization') {
