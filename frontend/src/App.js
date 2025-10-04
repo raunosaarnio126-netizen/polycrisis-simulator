@@ -11792,6 +11792,18 @@ const AppContent = () => {
           <div className="flex-1 flex flex-col min-h-0">
             <AIGenie selectedScenario={selectedScenario} />
           </div>
+          
+          {/* Export buttons for entire AI Genie conversation */}
+          <UniversalExportButtons
+            content={`AI Avatar Genie Conversation\n\nScenario: ${selectedScenario?.title || 'General Discussion'}\n\n${
+              // We would need to pass the conversation data here, but for now we'll add a placeholder
+              'Complete conversation available for export after each individual response.'
+            }`}
+            title="AI Genie Conversation"
+            companyName={selectedScenario?.title || 'Crisis Analysis'}
+            onClose={() => setShowFloatingGenie(false)}
+            showClose={true}
+          />
         </DialogContent>
       </Dialog>
     </div>
