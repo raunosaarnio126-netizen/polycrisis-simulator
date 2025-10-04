@@ -322,19 +322,40 @@ const AuthPage = () => {
         ? { email: formData.email, password: formData.password }
         : formData;
 
-      console.log('Attempting authentication:', endpoint, { email: payload.email });
+      console.log(`Attempting ${isLogin ? 'login' : 'registration'} with:`, { email: formData.email });
       const response = await axios.post(`${API}${endpoint}`, payload);
-      console.log('Authentication response received:', { token: response.data.access_token });
+      console.log('Authentication response received:', { 
+        status: response.status, 
+        token: response.data.access_token ? 'Token received' : 'No token',
+        tokenLength: response.data.access_token?.length 
+      });
+      
+      if (!response.data.access_token) {
+        throw new Error('No access token received from server');
+      }
       
       login(response.data.access_token);
-      console.log('Login function called, token should be set');
+      console.log('Login function called, checking authentication state...');
+      
+      // Add a small delay to ensure state updates properly
+      setTimeout(() => {
+        console.log('Authentication should be complete now');
+      }, 100);
       
       toast({ title: "Success", description: `${isLogin ? 'Logged in' : 'Registered'} successfully!` });
     } catch (error) {
       console.error('Authentication error:', error);
+      
+      let errorMessage = `${isLogin ? 'Login' : 'Registration'} failed`;
+      if (error.response?.data?.detail) {
+        errorMessage = error.response.data.detail;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
       toast({ 
         title: "Error", 
-        description: error.response?.data?.detail || `${isLogin ? 'Login' : 'Registration'} failed`,
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {
