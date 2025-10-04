@@ -403,7 +403,7 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Scenario Adjustments and Consensus Functionality Testing Complete"
+    - "Debug Scenario Adjusters Button Functionality - Save Adjustments, Download Settings, Save Consensus"
   stuck_tasks: 
     - "Document Analysis with File Upload"
   test_all: false
