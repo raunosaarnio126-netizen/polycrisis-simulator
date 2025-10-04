@@ -394,10 +394,9 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Universal Document Export System Testing Complete"
+    - "Scenario Adjustments and Consensus Functionality Testing Complete"
   stuck_tasks: 
     - "Document Analysis with File Upload"
-    - "Real-Time Impact Analysis Save Functionality"
   test_all: false
   test_priority: "high_first"
 
