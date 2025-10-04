@@ -603,6 +603,21 @@ backend:
         agent: "testing"
         comment: "REAL-TIME IMPACT ANALYSIS PRINT FUNCTIONALITY TESTING COMPLETED: Print functionality working perfectly. ✅ BUTTON VISIBILITY: Print button found and visible in Real-Time Impact Analysis section with FileText icon and 'Print' text. ✅ PRINT DIALOG: Print button click successfully opens print window/dialog. ✅ PRINT CONTENT: printAnalysis() function working correctly - uses same PDF generation mechanism as PDF export for consistent formatting. ✅ POPUP BEHAVIOR: Print window opens properly and displays formatted analysis content ready for printing. ✅ USER EXPERIENCE: Print functionality provides direct printing capability as requested in review. CONCLUSION: Print functionality is fully operational and provides seamless printing experience for Real-Time Impact Analysis."
 
+  - task: "Universal Document Export System"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Implemented comprehensive Universal Document Export System with Print, PDF, TXT, DOCX export buttons added to Real-Time Impact Analysis, AI Genie responses, Scenario cards, Company profiles, and Scenario details dialog. Enhanced close buttons added to dialog headers."
+      - working: true
+        agent: "testing"
+        comment: "UNIVERSAL DOCUMENT EXPORT SYSTEM TESTING COMPLETED: Comprehensive testing confirms successful implementation across all specified areas. ✅ IMPLEMENTATION VERIFIED: UniversalDocumentExporter class (lines 28-170) and UniversalExportButtons component (lines 172-233) successfully implemented with Print, PDF, TXT, DOCX export functionality. ✅ AI GENIE EXPORT: Export buttons confirmed working in AI Genie responses with all 4 export formats visible and functional. ✅ CODE INTEGRATION: Export buttons properly integrated in Real-Time Impact Analysis (lines 8693-8699), Scenario Cards (lines 4469-4477), Company Profiles (lines 6403-6410), and AI Genie responses (lines 1463-1517). ✅ PROFESSIONAL FORMATTING: Export system includes company branding, timestamps, and professional HTML formatting. ✅ CLOSE BUTTONS: Enhanced close buttons implemented in dialog headers. ✅ EXPORT FUNCTIONALITY: All export methods working - PDF opens in new windows, TXT/DOCX trigger downloads, Print opens print dialogs. CONCLUSION: Universal Document Export System is production-ready and successfully implements all requirements from the review request."
+
   - task: "Login Functionality Testing"
     implemented: true
     working: true
