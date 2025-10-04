@@ -4502,24 +4502,35 @@ Last Updated: ${new Date(scenario.updated_at).toLocaleString()}`}
       {selectedScenario && (
         <Dialog open={!!selectedScenario} onOpenChange={() => setSelectedScenario(null)}>
           <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <Globe className="w-5 h-5" />
-                {selectedScenario.title}
-              </DialogTitle>
-              <DialogDescription>
-                <div className="flex gap-2 mt-2">
-                  <Badge className={getCrisisTypeColor(selectedScenario.crisis_type)}>
-                    {selectedScenario.crisis_type.replace('_', ' ')}
-                  </Badge>
-                  <Badge className={getStatusColor(selectedScenario.status)}>
-                    {selectedScenario.status}
-                  </Badge>
-                  <Badge variant="outline">
-                    Severity {selectedScenario.severity_level}/10
-                  </Badge>
-                </div>
-              </DialogDescription>
+            <DialogHeader className="flex-row items-start justify-between space-y-0 pb-4">
+              <div className="flex-1">
+                <DialogTitle className="flex items-center gap-2">
+                  <Globe className="w-5 h-5" />
+                  {selectedScenario.title}
+                </DialogTitle>
+                <DialogDescription>
+                  <div className="flex gap-2 mt-2">
+                    <Badge className={getCrisisTypeColor(selectedScenario.crisis_type)}>
+                      {selectedScenario.crisis_type.replace('_', ' ')}
+                    </Badge>
+                    <Badge className={getStatusColor(selectedScenario.status)}>
+                      {selectedScenario.status}
+                    </Badge>
+                    <Badge variant="outline">
+                      Severity {selectedScenario.severity_level}/10
+                    </Badge>
+                  </div>
+                </DialogDescription>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setSelectedScenario(null)}
+                className="flex items-center gap-1 text-gray-500 hover:text-gray-700"
+              >
+                <X className="w-4 h-4" />
+                Close
+              </Button>
             </DialogHeader>
             
             <div className="space-y-6">
