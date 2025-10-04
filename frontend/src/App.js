@@ -1459,6 +1459,62 @@ const AIGenie = ({ selectedScenario }) => {
                       </ul>
                     </div>
                   )}
+                  
+                  {/* Export buttons for AI responses */}
+                  {message.type === 'assistant' && (
+                    <div className="mt-3 pt-2 border-t border-gray-100">
+                      <div className="flex flex-wrap gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            const fullContent = `${message.content}${message.suggestions ? '\n\nSuggestions:\n' + message.suggestions.map(s => '• ' + s).join('\n') : ''}${message.monitoring_tasks ? '\n\nMonitoring Tasks:\n' + message.monitoring_tasks.map(t => '• ' + t).join('\n') : ''}`;
+                            UniversalDocumentExporter.printDocument(fullContent, 'AI Genie Response', selectedScenario?.title || 'Crisis Analysis');
+                          }}
+                          className="text-xs px-2 py-1 h-auto"
+                        >
+                          <FileText className="w-3 h-3 mr-1" />
+                          Print
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            const fullContent = `${message.content}${message.suggestions ? '\n\nSuggestions:\n' + message.suggestions.map(s => '• ' + s).join('\n') : ''}${message.monitoring_tasks ? '\n\nMonitoring Tasks:\n' + message.monitoring_tasks.map(t => '• ' + t).join('\n') : ''}`;
+                            UniversalDocumentExporter.exportToPDF(fullContent, 'AI Genie Response', selectedScenario?.title || 'Crisis Analysis');
+                          }}
+                          className="text-xs px-2 py-1 h-auto"
+                        >
+                          <Download className="w-3 h-3 mr-1" />
+                          PDF
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            const fullContent = `${message.content}${message.suggestions ? '\n\nSuggestions:\n' + message.suggestions.map(s => '• ' + s).join('\n') : ''}${message.monitoring_tasks ? '\n\nMonitoring Tasks:\n' + message.monitoring_tasks.map(t => '• ' + t).join('\n') : ''}`;
+                            UniversalDocumentExporter.exportToTXT(fullContent, 'AI Genie Response', selectedScenario?.title || 'Crisis Analysis');
+                          }}
+                          className="text-xs px-2 py-1 h-auto"
+                        >
+                          <FileText className="w-3 h-3 mr-1" />
+                          TXT
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            const fullContent = `${message.content}${message.suggestions ? '\n\nSuggestions:\n' + message.suggestions.map(s => '• ' + s).join('\n') : ''}${message.monitoring_tasks ? '\n\nMonitoring Tasks:\n' + message.monitoring_tasks.map(t => '• ' + t).join('\n') : ''}`;
+                            UniversalDocumentExporter.exportToDOCX(fullContent, 'AI Genie Response', selectedScenario?.title || 'Crisis Analysis');
+                          }}
+                          className="text-xs px-2 py-1 h-auto"
+                        >
+                          <FileText className="w-3 h-3 mr-1" />
+                          DOCX
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             ))
