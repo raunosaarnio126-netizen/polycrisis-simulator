@@ -260,10 +260,24 @@ const AuthProvider = ({ children }) => {
 
   const login = (newToken) => {
     console.log('Login function called with token:', newToken);
-    localStorage.setItem('token', newToken);
-    setToken(newToken);
-    axios.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
-    console.log('Token set in localStorage and axios headers, authentication should be complete');
+    if (!newToken) {
+      console.error('No token provided to login function');
+      return;
+    }
+    
+    try {
+      localStorage.setItem('token', newToken);
+      setToken(newToken);
+      axios.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
+      console.log('Token set in localStorage and axios headers, authentication should be complete');
+      
+      // Force an immediate state update to ensure re-render
+      setTimeout(() => {
+        console.log('Authentication state after login:', { token: newToken, isAuthenticated: !!newToken });
+      }, 100);
+    } catch (error) {
+      console.error('Error during login process:', error);
+    }
   };
 
   const logout = () => {
