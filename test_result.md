@@ -424,11 +424,10 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Frontend Authentication Session Management Fix Required"
+    - "Fuzzy Logic Scenario Adjusters Frontend"
   stuck_tasks: 
     - "Document Analysis with File Upload"
-    - "Scenario Adjusters Button Functionality Debug"
-    - "Frontend Authentication Session Management Fix Required"
+    - "Fuzzy Logic Scenario Adjusters Frontend"
   test_all: false
   test_priority: "high_first"
 
