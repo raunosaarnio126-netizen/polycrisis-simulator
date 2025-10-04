@@ -407,6 +407,7 @@ test_plan:
   stuck_tasks: 
     - "Document Analysis with File Upload"
     - "Scenario Adjusters Button Functionality Debug"
+    - "Frontend Authentication Session Management Fix Required"
   test_all: false
   test_priority: "high_first"
 
