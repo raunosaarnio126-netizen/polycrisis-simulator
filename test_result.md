@@ -231,6 +231,9 @@ backend:
       - working: true
         agent: "testing"
         comment: "PUT /api/companies/{company_id}/scenario-adjustments/{adjustment_id} endpoint working correctly. Updates existing scenario adjustments with new SEPTE parameters. AI analysis regeneration working on updates. Percentage validation enforced on updates. Updated_at timestamp changes properly. Access control implemented."
+      - working: true
+        agent: "testing"
+        comment: "UPDATE FUNCTIONALITY RE-VERIFIED: PUT endpoint tested with updated SEPTE values (Economic Crisis increased to 80%, Political Instability to 75%). ✅ SUCCESSFUL UPDATE: Adjustment name changed from 'Test Economic Crisis Adjustment' to 'Updated Economic Crisis Adjustment', risk level escalated from 'medium' to 'high' based on increased crisis percentages. AI analysis regenerated successfully on update. All SEPTE validation rules enforced. Backend update functionality is production-ready."
 
   - task: "Fuzzy Logic Scenario Adjusters - Consensus Settings"
     implemented: true
