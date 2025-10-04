@@ -275,6 +275,9 @@ const AuthProvider = ({ children }) => {
   const [authLoading, setAuthLoading] = useState(false);
 
   useEffect(() => {
+    // Setup axios interceptors with logout function
+    setupAxiosInterceptors(logout);
+    
     if (token) {
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       fetchUserProfile();
