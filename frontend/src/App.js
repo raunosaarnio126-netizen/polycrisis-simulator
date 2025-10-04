@@ -362,6 +362,8 @@ const AuthPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+    
+    console.log(`Starting ${isLogin ? 'login' : 'registration'} process...`);
 
     try {
       const endpoint = isLogin ? '/login' : '/register';
@@ -369,11 +371,13 @@ const AuthPage = () => {
         ? { email: formData.email, password: formData.password }
         : formData;
 
-      console.log(`Attempting ${isLogin ? 'login' : 'registration'} with:`, { email: formData.email });
+      console.log(`Sending ${isLogin ? 'login' : 'registration'} request to:`, `${API}${endpoint}`);
+      
       const response = await axios.post(`${API}${endpoint}`, payload);
-      console.log('Authentication response received:', { 
+      
+      console.log('Server response received:', { 
         status: response.status, 
-        token: response.data.access_token ? 'Token received' : 'No token',
+        hasToken: !!response.data.access_token,
         tokenLength: response.data.access_token?.length 
       });
       
@@ -381,32 +385,42 @@ const AuthPage = () => {
         throw new Error('No access token received from server');
       }
       
-      login(response.data.access_token);
-      console.log('Login function called, checking authentication state...');
+      // Call the async login function and wait for completion
+      console.log('Calling login function with token...');
+      await login(response.data.access_token);
+      console.log('Login function completed successfully');
       
-      // Add a small delay to ensure state updates properly
-      setTimeout(() => {
-        console.log('Authentication should be complete now');
-      }, 100);
+      toast({ 
+        title: "Success", 
+        description: `${isLogin ? 'Logged in' : 'Registered'} successfully!` 
+      });
       
-      toast({ title: "Success", description: `${isLogin ? 'Logged in' : 'Registered'} successfully!` });
     } catch (error) {
       console.error('Authentication error:', error);
       
       let errorMessage = `${isLogin ? 'Login' : 'Registration'} failed`;
-      if (error.response?.data?.detail) {
+      if (error.response?.status === 401) {
+        errorMessage = 'Invalid email or password';
+      } else if (error.response?.status === 422) {
+        errorMessage = 'Invalid email format or missing required fields';
+      } else if (error.response?.status === 409) {
+        errorMessage = 'An account with this email already exists';
+      } else if (error.response?.data?.detail) {
         errorMessage = error.response.data.detail;
-      } else if (error.message) {
+      } else if (error.message && error.message !== 'Network Error') {
         errorMessage = error.message;
+      } else if (error.response?.status >= 500) {
+        errorMessage = 'Server error. Please try again later.';
       }
       
       toast({ 
-        title: "Error", 
+        title: "Authentication Error", 
         description: errorMessage,
         variant: "destructive"
       });
     } finally {
       setLoading(false);
+      console.log('Authentication process completed, loading state reset');
     }
   };
 
