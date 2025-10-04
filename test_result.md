@@ -204,6 +204,9 @@ backend:
       - working: true
         agent: "testing"
         comment: "POST /api/companies/{company_id}/scenario-adjustments endpoint fully functional. Creates scenario adjustments with SEPTE framework parameters. SEPTE percentage validation working correctly (opposing pairs must sum to 100%). AI analysis generation using Claude Sonnet 4 working perfectly. Response includes proper ScenarioAdjustment model with all required fields including real_time_analysis, impact_summary, risk_level, and recommendations. Risk level assessment (low/medium/high/critical) working appropriately based on crisis percentages."
+      - working: true
+        agent: "testing"
+        comment: "COMPREHENSIVE RE-TESTING COMPLETED: Save Adjustments functionality verified working perfectly. POST /api/companies/{company_id}/scenario-adjustments endpoint tested with full SEPTE framework data (Economic Crisis 70%, Social Unrest 60%, Political Instability 65%, etc.). ✅ CRITICAL VERIFICATION: Scenario adjustment created successfully with ID a175254a-d8c3-40f5-a5d8-f1aeb98e3ee4, risk level calculated as 'medium', AI analysis generated (real_time_analysis: True). All SEPTE percentages preserved correctly. SEPTE validation working - rejected invalid percentages with proper error message 'Each opposing pair must sum to 100%'. Backend endpoint is fully operational and ready for frontend integration."
 
   - task: "Fuzzy Logic Scenario Adjusters - Retrieve Scenario Adjustments"
     implemented: true
