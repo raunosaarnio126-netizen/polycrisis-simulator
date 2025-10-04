@@ -4465,6 +4465,34 @@ Comprehensive Scenario Analysis & Crisis Management Platform
                   </div>
                 </div>
               </CardContent>
+              
+              {/* Universal Export Buttons for Scenario */}
+              <UniversalExportButtons
+                content={`${scenario.title}
+
+Crisis Type: ${scenario.crisis_type?.replace('_', ' ')}
+Severity Level: ${scenario.severity_level}/10
+Status: ${scenario.status}
+
+Description:
+${scenario.description}
+
+Affected Regions:
+${scenario.affected_regions?.map(region => `• ${region}`).join('\n') || 'None specified'}
+
+Key Variables:
+${scenario.key_variables?.map(variable => `• ${variable}`).join('\n') || 'None specified'}
+
+${scenario.additional_context ? `Additional Context:\n${scenario.additional_context}` : ''}
+${scenario.stakeholders ? `Stakeholders:\n${scenario.stakeholders}` : ''}
+${scenario.timeline ? `Timeline:\n${scenario.timeline}` : ''}
+
+Created: ${new Date(scenario.created_at).toLocaleString()}
+Last Updated: ${new Date(scenario.updated_at).toLocaleString()}`}
+                title={`Crisis Scenario - ${scenario.title}`}
+                companyName="Polycrisis Simulator"
+                showClose={false}
+              />
             </Card>
           ))}
         </div>
