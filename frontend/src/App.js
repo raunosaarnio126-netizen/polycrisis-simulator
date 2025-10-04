@@ -12016,46 +12016,30 @@ function App() {
 }
 
 const AuthRoutes = () => {
-  const { isAuthenticated, user } = useAuth();
-  const [isTransitioning, setIsTransitioning] = useState(false);
-  
-  console.log('AuthRoutes render - isAuthenticated:', isAuthenticated, 'user:', user);
-  
-  // Add a small loading buffer to handle rapid state changes
+  const { isAuthenticated, authLoading, token } = useAuth();
   const [mounted, setMounted] = useState(false);
   
   useEffect(() => {
-    setMounted(true);
+    const timer = setTimeout(() => setMounted(true), 100);
+    return () => clearTimeout(timer);
   }, []);
   
-  useEffect(() => {
-    if (isAuthenticated) {
-      setIsTransitioning(true);
-      // Brief delay to show authentication success before showing app
-      const timer = setTimeout(() => {
-        setIsTransitioning(false);
-      }, 500);
-      return () => clearTimeout(timer);
-    }
-  }, [isAuthenticated]);
+  console.log('AuthRoutes render:', { 
+    isAuthenticated, 
+    authLoading, 
+    hasToken: !!token,
+    mounted 
+  });
   
-  if (!mounted) {
+  // Show loading while mounting or during auth operations
+  if (!mounted || authLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-600 via-purple-600 to-blue-800">
         <div className="text-center text-white">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto mb-4"></div>
-          <p>Loading application...</p>
-        </div>
-      </div>
-    );
-  }
-  
-  if (isTransitioning) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-green-600 via-blue-600 to-purple-600">
-        <div className="text-center text-white">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto mb-4"></div>
-          <p>Authentication successful! Loading dashboard...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
+          <p className="text-lg">
+            {!mounted ? 'Initializing application...' : 'Completing authentication...'}
+          </p>
         </div>
       </div>
     );
